@@ -1,1 +1,8 @@
-./env_*
+env_*
+export_openai_key.sh
+game_logs*
+llamp.egg-info*
+upload_to_pypi.sh
+dist*
+build*
+offload*
