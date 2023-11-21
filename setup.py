@@ -5,9 +5,10 @@ with open("README.md", 'r') as f:
 
 setup(
     name='llamp',
-    version='0.0.1',
+    version='0.0.2',
     description='LLAMP - Large Language Model for Planning',
     long_description=long_description,
+    long_description_content_type="markdown",
     author='Nikolai Rozanov',
     author_email='nikolai.rozanov@gmail.com',
     # url='',
