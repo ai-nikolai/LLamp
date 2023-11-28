@@ -3,6 +3,10 @@ import textworld.gym
 
 from llamp.openai_agent import OpenAIAgent
 from llamp.orca2_agent import Orca2Agent
+from llamp.mistral_orca_agent import MistralOrcaAgent
+from llamp.minichat_agent import MiniChatAgent
+
+
 
 # import warnings
 # warnings.filterwarnings("ignore")
@@ -15,7 +19,9 @@ if __name__=="__main__":
 
     # AGENT_TYPE = "openai"
     # AGENT_TYPE = "orca2"
-    AGENT_TYPE = "orca2_test"
+    # AGENT_TYPE = "orca_mistral_test"
+    # AGENT_TYPE="minichat_test"
+    AGENT_TYPE="minichat"
 
     ####################
     # Running the Agent
@@ -31,11 +37,18 @@ if __name__=="__main__":
         agent = OpenAIAgent()
     elif AGENT_TYPE=="orca2":
         agent = Orca2Agent()
-    elif AGENT_TYPE=="orca2_test":
-        agent = Orca2Agent(test_mode=True)
-        agent.act("yes?")
+    elif AGENT_TYPE=="orca_mistral_test":
+        agent = MistralOrcaAgent(test_mode=True)
+        agent.act("How are you?")
         agent.save()
         exit()
+    elif AGENT_TYPE=="minichat_test":
+        agent = MiniChatAgent(test_mode=True)
+        agent.act("Yes?")
+        agent.save()
+        exit()
+    elif AGENT_TYPE=="minichat":
+        agent=MiniChatAgent()
     else:
         NotImplementedError("This agent is not implemented.")
 
