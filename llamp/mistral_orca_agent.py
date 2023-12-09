@@ -3,6 +3,9 @@ import transformers
 
 from .basic_agent import BasicAgent
 
+import os
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
+
 class MistralOrcaAgent(BasicAgent):
 	def __init__(self, agent_name="MistralOrcaAgent",save_path="game_logs", test_mode=False):
 
