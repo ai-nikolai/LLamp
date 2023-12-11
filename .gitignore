@@ -6,3 +6,7 @@ upload_to_pypi.sh
 dist*
 build*
 offload*
+*whisper*
+*.wav
+*.mp3
+*.flac
