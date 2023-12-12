@@ -1,9 +1,9 @@
 import torch
 import transformers
 
-from .basic_agent import BasicAgent
+from .base_llm_agent import BaseLLMAgent
 
-class Orca2Agent(BasicAgent):
+class Orca2Agent(BaseLLMAgent):
 	def __init__(self, agent_name="OrcaAgent",save_path="game_logs", test_mode=False):
 
 		super().__init__(agent_name, save_path)

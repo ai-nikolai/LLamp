@@ -6,10 +6,11 @@ from llamp.orca2_agent import Orca2Agent
 from llamp.mistral_orca_agent import MistralOrcaAgent
 from llamp.minichat_agent import MiniChatAgent
 from llamp.yi_agent import YiAgent
-
+from llamp.human_agent import HumanAgent
+from llamp import utils
 
 import sys
-
+import os
 
 
 # import warnings
@@ -18,9 +19,12 @@ import sys
 if __name__=="__main__":
 
     ####################
-    # SET THE AGENT TYPE
+    # SET THE GLOBAL PARAMS
     ####################
     AGENT_TYPE = ""
+    MAX_MOVES = 50
+    GAME_TYPE = "custom"
+
     if sys.argv:
         print("Called TW script with:")
         print(sys.argv)
@@ -33,12 +37,49 @@ if __name__=="__main__":
         # AGENT_TYPE="minichat"
         pass
 
+
+    ##########
+    # PARAMS
+
+    if len(sys.argv)>2:
+        if sys.argv[2] == "--custom":
+            GAME_TYPE = "custom"
+            custom_params = sys.argv[3:]
+        elif sys.argv[2] == "--simple":
+            GAME_TYPE = "simple"
+            simple_params = sys.argv[3:]
+    else:
+        simple_params = ["dense","detailed",1234]
+        custom_params = [2,10,5,1234]
+    
+
     ####################
     # Running the Agent
     ####################
+
+    if GAME_TYPE=="simple":
+        # simple_params = ["dense","detailed",1234]
+        game_path = utils.construct_simple_game_name(*simple_params)
+        log_path = utils.construct_simple_game_name(*simple_params, log_path=True)
+        # game_header = "It's time to explore the amazing world of TextWorld!"
+    elif GAME_TYPE=="custom":
+        # custom_params = [2,10,5,1234]
+        game_path = utils.construct_custom_game_name(*custom_params)
+        log_path = utils.construct_custom_game_name(*custom_params, log_path=True)
+        # game_header = "Welcome to TextWorld!"
+    else:
+        # game_path = os.path.join("games","zork_games/zork1.z5")
+        exit()
+
+    ROOT_GAME_LOG = "game_logs"
+    # if not os.path.exists(ROOT_GAME_LOG):
+    #     os.mkdir(ROOT_GAME_LOG)
+    log_path = os.path.join(ROOT_GAME_LOG,log_path)
+       
+
     # Register a text-based game as a new Gym's environment.
-    env_id = textworld.gym.register_game("games/tw_games/w2_o10_l5_game.z8",
-                                         max_episode_steps=50)
+    env_id = textworld.gym.register_game(game_path,
+                                         max_episode_steps=MAX_MOVES)
     env = gym.make(env_id)  # Start the environment.
 
 
@@ -62,7 +103,10 @@ if __name__=="__main__":
     elif AGENT_TYPE=="minichat":
         agent=MiniChatAgent()
     elif AGENT_TYPE=="yi":
-        agent=YiAgent()    
+        agent=YiAgent()
+    elif AGENT_TYPE=="human":
+        print("You will play with the system")
+        agent = HumanAgent()
     else:
         NotImplementedError("This agent is not implemented.")
         exit()
@@ -72,7 +116,8 @@ if __name__=="__main__":
     obs, infos = env.reset()  # Start new episode.
     env.render()
 
-    cut_header_index = obs.index("Welcome to TextWorld!")
+    # cut_header_index = obs.index(game_header)
+    cut_header_index = 1211
     first_obs = obs[cut_header_index:]
 
     command = agent.act(first_obs)
@@ -85,17 +130,21 @@ if __name__=="__main__":
         #### MAIN GAME LOOP
         while not done:
             obs, score, done, infos = env.step(command)
+            print("="*20)
             env.render()
+            print("="*20)
 
             moves += 1
-            if moves % 10 == 0:
+            if moves % MAX_MOVES == 0:
                 done = True
                 continue
 
-            command = agent.act(obs)
-            print(command)
+            if not done:
+                command = agent.act(obs)
+                print(command)
 
     finally:
+        agent.update_save_path(log_path)
         agent.save()
         env.close()
         print("moves: {}; score: {}".format(moves, score))

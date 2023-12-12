@@ -20,64 +20,33 @@ The r_0 are rooms.
 Understand "attic" as r_0.
 The internal name of r_0 is "attic".
 The printed name of r_0 is "-= Attic =-".
-The attic part 0 is some text that varies. The attic part 0 is "You've just walked into an attic. Let's see what's in here.
+The attic part 0 is some text that varies. The attic part 0 is "You've entered an attic.
 
- Look over there! a type G chest.[if c_0 is open and there is something in the c_0] The type G chest contains [a list of things in the c_0].[end if]".
-The attic part 1 is some text that varies. The attic part 1 is "[if c_0 is open and the c_0 contains nothing] The type G chest is empty! This is the worst thing that could possibly happen, ever![end if]".
-The attic part 2 is some text that varies. The attic part 2 is " You make out a TextWorld style locker.[if c_1 is open and there is something in the c_1] The TextWorld style locker contains [a list of things in the c_1]. Make a note of this, you might have to put stuff on or in it later on.[end if]".
-The attic part 3 is some text that varies. The attic part 3 is "[if c_1 is open and the c_1 contains nothing] The TextWorld style locker is empty! This is the worst thing that could possibly happen, ever![end if]".
-The attic part 4 is some text that varies. The attic part 4 is " You smell an intriguing smell, and follow it to a case. There's something strange about this being here, but you can't put your finger on it.[if c_2 is open and there is something in the c_2] The case contains [a list of things in the c_2].[end if]".
-The attic part 5 is some text that varies. The attic part 5 is "[if c_2 is open and the c_2 contains nothing] The case is empty! This is the worst thing that could possibly happen, ever![end if]".
-The attic part 6 is some text that varies. The attic part 6 is "
+ You rest your hand against a wall, but you miss the wall and fall onto a chest.[if c_0 is open and there is something in the c_0] The chest contains [a list of things in the c_0].[end if]".
+The attic part 1 is some text that varies. The attic part 1 is "[if c_0 is open and the c_0 contains nothing] The chest is empty! This is the worst thing that could possibly happen, ever![end if]".
+The attic part 2 is some text that varies. The attic part 2 is "
 
 ".
-The description of r_0 is "[attic part 0][attic part 1][attic part 2][attic part 3][attic part 4][attic part 5][attic part 6]".
+The description of r_0 is "[attic part 0][attic part 1][attic part 2]".
 
 
-The c_0 and the c_1 and the c_2 are containers.
-The c_0 and the c_1 and the c_2 are privately-named.
-The k_0 and the k_1 are keys.
-The k_0 and the k_1 are privately-named.
+The c_0 are containers.
+The c_0 are privately-named.
+The k_0 are keys.
+The k_0 are privately-named.
 The r_0 are rooms.
 The r_0 are privately-named.
 
-The description of c_0 is "The type G chest looks strong, and impossible to crack. [if open]It is open.[else if closed]It is closed.[otherwise]It is locked.[end if]".
-The printed name of c_0 is "type G chest".
-Understand "type G chest" as c_0.
-Understand "type" as c_0.
-Understand "G" as c_0.
+The description of c_0 is "The chest looks strong, and impossible to break. [if open]You can see inside it.[else if closed]You can't see inside it because the lid's in your way.[otherwise]There is a lock on it.[end if]".
+The printed name of c_0 is "chest".
 Understand "chest" as c_0.
 The c_0 is in r_0.
 The c_0 is closed.
-The description of c_1 is "The TextWorld style locker looks strong, and impossible to destroy. [if open]It is open.[else if closed]It is closed.[otherwise]It is locked.[end if]".
-The printed name of c_1 is "TextWorld style locker".
-Understand "TextWorld style locker" as c_1.
-Understand "TextWorld" as c_1.
-Understand "style" as c_1.
-Understand "locker" as c_1.
-The c_1 is in r_0.
-The c_1 is closed.
-The description of c_2 is "The case looks strong, and impossible to destroy. [if open]You can see inside it.[else if closed]You can't see inside it because the lid's in your way.[otherwise]There is a lock on it.[end if]".
-The printed name of c_2 is "case".
-Understand "case" as c_2.
-The c_2 is in r_0.
-The c_2 is open.
-The description of k_0 is "The type G key is cold to the touch".
-The printed name of k_0 is "type G key".
-Understand "type G key" as k_0.
-Understand "type" as k_0.
-Understand "G" as k_0.
+The description of k_0 is "The key is cold to the touch".
+The printed name of k_0 is "key".
 Understand "key" as k_0.
-The k_0 is in the c_1.
+The k_0 is in r_0.
 The matching key of the c_0 is the k_0.
-The description of k_1 is "The TextWorld style passkey is light.".
-The printed name of k_1 is "TextWorld style passkey".
-Understand "TextWorld style passkey" as k_1.
-Understand "TextWorld" as k_1.
-Understand "style" as k_1.
-Understand "passkey" as k_1.
-The player carries the k_1.
-The matching key of the c_1 is the k_1.
 
 
 The player is in r_0.
@@ -85,7 +54,7 @@ The player is in r_0.
 The quest0 completed is a truth state that varies.
 The quest0 completed is usually false.
 
-Test quest0_0 with "open TextWorld style locker / take type G key from TextWorld style locker / lock type G chest with type G key"
+Test quest0_0 with "take key / lock chest with key"
 
 Every turn:
 	if quest0 completed is true:
@@ -273,8 +242,8 @@ The last property-aggregation rule (this is the print aggregated properties rule
 		rule succeeds;
 	rule fails;
 
-The objective part 0 is some text that varies. The objective part 0 is "You are now playing a exciting round of TextWorld! First of all, assure that the TextWorld style locker is opened. Then, retrieve the type G key from the TextWorld style locker inside the attic. And t".
-The objective part 1 is some text that varies. The objective part 1 is "hen, assure that the type G chest is locked with the type G key. Alright, thanks!".
+The objective part 0 is some text that varies. The objective part 0 is "Get ready to pick stuff up and put it in places, because you've just entered TextWorld! Here is how to play! First step, recover the key from the floor of the attic. Once you have got the key, assure ".
+The objective part 1 is some text that varies. The objective part 1 is "that the chest is locked. Alright, thanks!".
 
 An objective is some text that varies. The objective is "[objective part 0][objective part 1]".
 Printing the objective is an action applying to nothing.

@@ -1,7 +1,10 @@
 import openai
-from .basic_agent import BasicAgent
+import time
+import os
 
-class OpenAIAgent(BasicAgent):
+from .base_llm_agent import BaseLLMAgent
+
+class OpenAIAgent(BaseLLMAgent):
 	def __init__(self, agent_name="OpenAIAgent",save_path="game_logs"):
 		
 		super().__init__(agent_name, save_path)		
@@ -26,7 +29,7 @@ class OpenAIAgent(BasicAgent):
 			time.sleep(20)
 			self.openai_attempts+=1
 			if self.openai_attempts < attempt_limit:
-				return self.call_gpt()
+				return self.call_model()
 			else:
 				raise Exception("Exceeded Attempt Limit")
 

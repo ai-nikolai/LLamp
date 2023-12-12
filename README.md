@@ -11,7 +11,14 @@ This is a package that uses LLMs (closed and open-source) for planning.
 
 
 ## Generate New Textworld games:
-1. `tw-make custom --world-size 2 --nb-objects 10 --quest-length 5 --seed 1234 --output tw_games/w2_o10_l5_game.z8`
+1. `tw-make custom --world-size 2 --nb-objects 10 --quest-length 5 --seed 1234 --output games/tw_games/w2_o10_l5_game.z8`
+
+2. `tw-make tw-simple --rewards dense --goal detailed --seed 1234 --output games/tw_games/simple/r_dense__g_detailed__seed_1234.z8`
+
+Rewards: (dense, balanced, sparse)
+Goal: (detailed, brief, none)
+
+Reference: [https://textworld.readthedocs.io/en/stable/tw-make.html#types-of-game-to-create]
 
 ## Playgame:
 1. (In terminal with browser visualiser) `tw-play tw_games/first_game.z8 --viewer`
