@@ -35,7 +35,7 @@ if __name__=="__main__":
         # AGENT_TYPE = "orca_mistral_test"
         # AGENT_TYPE="minichat_test"
         # AGENT_TYPE="minichat"
-        pass
+        AGENT_TYPE="human"
 
 
     ##########
@@ -50,7 +50,9 @@ if __name__=="__main__":
             simple_params = sys.argv[3:]
     else:
         simple_params = ["dense","detailed",1234]
-        custom_params = [2,10,5,1234]
+        # custom_params = [2,10,5,1234]
+        custom_params = [1,2,2,1234]
+
     
 
     ####################
