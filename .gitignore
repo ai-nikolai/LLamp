@@ -1,5 +1,6 @@
 env_*
 export_openai_key.sh
+export_api_keys.sh
 game_logs*
 llamp.egg-info*
 upload_to_pypi.sh
