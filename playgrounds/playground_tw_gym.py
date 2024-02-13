@@ -25,7 +25,7 @@ if __name__=="__main__":
     MAX_MOVES = 50
     GAME_TYPE = "custom"
 
-    if sys.argv:
+    if len(sys.argv)>1:
         print("Called TW script with:")
         print(sys.argv)
         AGENT_TYPE=sys.argv[1]
