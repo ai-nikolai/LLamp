@@ -41,6 +41,11 @@ class BaseAgent():
             "content": content
             })
 
+    def set_base_prompt_and_reset(self,base_prompt):
+        """Sets a new base prompt and resets the agent."""
+        self.base_prompt = base_prompt
+        self.reset()
+
     
     def save(self):
         """Saves game interaction to file"""

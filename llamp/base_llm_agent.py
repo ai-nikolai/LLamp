@@ -31,7 +31,7 @@ open ...:            open a door or a container
 close ...:           close a door or a container
 drop ...:            drop an object on the floor
 take ...:            take an object that is on the floor
-put ... on ...:      place an object on a supporter
+put ... in/on ...:      place an object on a supporter
 take ... from ...:   take an object from a container or a supporter
 insert ... into ...: place an object into a container
 lock ... with ...:   lock a door or a container with a key
