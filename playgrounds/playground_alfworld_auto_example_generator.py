@@ -1,3 +1,6 @@
+import json
+import os
+
 from llamp.utils import cohere_model, openai_model
 
 from alfworld_prompts_utils import clean_simple_goal_plan_1, \
@@ -11,51 +14,113 @@ clean_state_goal_plan_v4_1, \
 clean_state_goal_plan_v4b_1
 
 
-cohere = cohere_model()
+from alfworld_prompts_utils_v4_clean import \
+clean_state_goal_plan_v4a_1, \
+clean_state_goal_plan_v4b_1, \
+clean_state_goal_plan_v4c_1, \
+clean_state_goal_plan_v4d_1, \
+clean_state_goal_plan_v4e_1, \
+clean_state_goal_plan_v4f_1, \
+clean_state_goal_plan_v4g_1, \
+clean_state_goal_plan_v4h_1, \
+clean_state_goal_plan_v4i_1
 
-result = cohere(prompt=f"""
-Please generate the same kind of annotation as this:
+from alfworld_prompts_utils_v4_clean_base import clean_v4_base
+
+from playground_alfworld_ablation_generator import generate_string_prompt
+
+cohere = cohere_model()
+openai = openai_model(model="gpt-4-turbo-preview")
+
+
+
+def generate_prompt(prompt_example, target_trace, prompt_trace):
+    """ Generate Prompt based on example prompt and desired trace """
+    prompt = f"""
+Your task is to change the entire input trace into the correct format.
+
+Here is an example of how the output should look like:
 <<<
-{clean_state_goal_plan_v4c_1}
+In:
+{prompt_trace}
+
+    
+Out:
+{prompt_example}
 >>>
 
-For the following trace:
+This is the input trace:
 <<<
-            'You are in the middle of a room. Looking quickly around you, '
-            'you see a cabinet 10, a cabinet 9, a cabinet 8, a cabinet 7, a '
-            'cabinet 6, a cabinet 5, a cabinet 4, a cabinet 3, a cabinet 2, '
-               'a cabinet 1, a coffeemachine 1, a countertop 3, a countertop '
-               '2, a countertop 1, a diningtable 1, a drawer 6, a drawer 5, a '
-               'drawer 4, a drawer 3, a drawer 2, a drawer 1, a fridge 1, a '
-               'garbagecan 1, a microwave 1, a sinkbasin 1, a stoveburner 4, a '
-               'stoveburner 3, a stoveburner 2, a stoveburner 1, and a toaster '
-               '1.\n'
-               'Your task is to: heat some egg and put it in diningtable.\n'
-               '> open fridge 1\n'
-               'You open the fridge 1. The fridge 1 is open. In it, you see a '
-               'lettuce 2, a mug 2, and a potato 3.\n'
-               '> go to countertop 1\n'
-               'On the countertop 1, you see a bread 1, a fork 1, and a '
-               'saltshaker 1.\n'
-               '> go to countertop 2\n'
-               'On the countertop 2, you see nothing.\n'
-               '> go to countertop 3\n'
-               'On the countertop 3, you see a bowl 1, a butterknife 1, a egg '
-               '2, a kettle 2, a plate 1, a sink 1, and a spatula 2.\n'
-               '> take egg 2 from countertop 3\n'
-               'You pick up the egg 2 from the countertop 3.\n'
-               '> go to microwave 1\n'
-               'The microwave 1 is closed.\n'
-               '> heat egg 2 with microwave 1\n'
-               'You heat the egg 2 using the microwave 1.\n'
-               '> go to diningtable 1\n'
-               'On the diningtable 1, you see a apple 2, a bread 3, a egg 1, a '
-               'kettle 1, a knife 1, a mug 1, a papertowelroll 1, a '
-               'peppershaker 2, a potato 1, a soapbottle 1, and a spatula 1.\n'
-               '> put egg 2 in/on diningtable 1\n'
-               'You put the egg 2 in/on the diningtable 1.\n',
+{target_trace}
 >>>
 """
-)
+    # print(prompt)
 
-print(result)
+    result = openai(prompt=prompt)
+    # result = cohere(prompt=prompt)
+
+    return result
+
+
+def get_variable_name(env_type, current_index, base_variable_name="state_goal_plan_v4", appendix="_1"):
+    """Generates consisten variable names."""
+    variable_name = f"{env_type}_{base_variable_name}{chr(97+current_index)}{appendix}"
+    return variable_name
+
+
+if __name__=="__main__":
+
+
+    list_of_prompts = [
+        clean_state_goal_plan_v4a_1, 
+        clean_state_goal_plan_v4b_1, 
+        clean_state_goal_plan_v4c_1, 
+        clean_state_goal_plan_v4d_1, 
+        clean_state_goal_plan_v4e_1, 
+        clean_state_goal_plan_v4f_1, 
+        clean_state_goal_plan_v4g_1, 
+        clean_state_goal_plan_v4h_1, 
+        clean_state_goal_plan_v4i_1
+    ]
+
+    types_of_envs = ["examine", "heat", "cool", "puttwo", "put"] #and clean
+    # save_folder = "playgrounds"
+    # base_variable_name = "state_goal_plan_v4"
+    # file_name = "alfworld_prompts_utils_v4_{env_type}.py"
+
+
+    react_prompt_file = "playgrounds/alfworld_react_prompts_original.json"
+    with open(react_prompt_file, "r") as file:
+        original_prompts = json.load(file)
+
+    env_type = types_of_envs[0]
+
+    prompt_trace = original_prompts["act_clean_1"]
+    target_trace = original_prompts[f"act_{env_type}_1"]
+
+
+
+    # example_prompt = clean_state_goal_plan_v4i_1
+    example_prompt = generate_string_prompt(clean_v4_base)
+    result = generate_prompt(example_prompt, target_trace, prompt_trace)
+
+    print(result)
+
+
+    # with open(file_path, "w") as file:
+    #     for index, prompt_example in enumerate(list_of_prompts):
+    #         # example_prompt = clean_state_goal_plan_v4i_1
+    #         example_prompt = prompt_example
+    #         variable_name = get_variable_name(env_type, index)
+
+    #         # result = prompt_example
+    #         print(f"Generating for env:{env_type}, index:{index}")
+    #         result = generate_prompt(example_prompt, target_trace, prompt_trace)
+    #         print(f"Finished Generating")
+    #         print(result)
+
+    #         print(f"Writing to file:{file_path} for variable:{variable_name}")
+    #         file.write("\n"+variable_name+"="+'"""'+result+'"""\n\n')
+    #         print("Finished Writing")
+
+

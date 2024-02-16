@@ -51,6 +51,7 @@ class CohereAgent(BaseLLMAgent):
             model="command",
             chat_history=chat_history,
             temperature=self.temperature
+            # stop_sequences=["}\n"]
         )
 
         answer = response.text

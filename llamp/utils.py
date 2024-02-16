@@ -55,7 +55,7 @@ def generate_custom_game(world_size=2, objects=10, length=5, seed=1234):
         ]), shell=True)
 
 
-def openai_model():
+def openai_model(model="gpt-3.5-turbo-0125"):
     """OpenAI Closure"""
     import openai
     client = openai.OpenAI(
@@ -65,15 +65,16 @@ def openai_model():
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
     def call_openai(prompt, system_prompt=None):
         """Call OpenAI API in a simple way. (System Prompt is skipped for now.)"""
-        openai_prompt = {
+        openai_prompt = [{
             "role": "user", 
             "content": prompt
-        }
+        }]
 
         chat_completion = client.chat.completions.create(
             # model="gpt-3.5-turbo",
-            model="gpt-3.5-turbo-0125",
+            # model="gpt-3.5-turbo-0125",
             # model="gpt-4-turbo-preview",
+            model=model,
             messages=openai_prompt,
             temperature=0.8
         )

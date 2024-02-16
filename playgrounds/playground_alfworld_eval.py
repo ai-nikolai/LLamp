@@ -10,6 +10,8 @@ import alfworld.agents.environment
 from llamp.cohere_agent import CohereAgent
 from llamp.openai_agent import OpenAIAgent
 
+from datetime import datetime
+
 # import importlib
 # importlib.reload(alfworld)
 # importlib.reload(alfworld.agents.environment)
@@ -30,15 +32,16 @@ clean_state_goal_plan_v3_1#, \
 # clean_state_goal_plan_v4g_1, \
 # clean_state_goal_plan_v4h_1
 
-from alfworld_prompts_utils_v4 import \
-clean_state_goal_plan_v4_1, \
+from alfworld_prompts_utils_v4_clean import \
+clean_state_goal_plan_v4a_1, \
 clean_state_goal_plan_v4b_1, \
 clean_state_goal_plan_v4c_1, \
 clean_state_goal_plan_v4d_1, \
 clean_state_goal_plan_v4e_1, \
 clean_state_goal_plan_v4f_1, \
 clean_state_goal_plan_v4g_1, \
-clean_state_goal_plan_v4h_1
+clean_state_goal_plan_v4h_1, \
+clean_state_goal_plan_v4i_1
 
 
 ENV_TYPES = {
@@ -110,11 +113,9 @@ def process_ob(ob, track_nothing_happens=False):
         return ob
 
 
-def generate_prompt_from_example(example):
+def generate_prompt_from_example(example, return_raw_prompt = False):
     """ Generates prompt """
-    prompt = [{
-                "role" : "system",
-                "content" : f"""
+    raw_prompt = f"""
 You will interact with the environment to solve the given task.
 
 This is the list of all valid actions that you can use:
@@ -135,17 +136,34 @@ For example:
 {example}
 >>>
 
+
 A few hints:
 <<<
-If "Nothing happens.", then try a valid action that you have not tried before.
-Some actions can be only executed in specific places, such as cleaning, heating, cooling...
-Learn from the example.
-Generate just one JSON output.
+1. When "Nothing happens." this means your action was not successful or not valid. This can have a variety of reasons, such as not wrong format of the output, or doing something in the wrong location, or using objects that are not available.
+If this happen, then try a valid action that you have not tried before.
+
+2. If you repeat yourself, try a different valid action. Re-evaluate your assumptions.
+
+3. Visit new places to find an object.
+
+4. Some actions can be only executed in specific places, such as cleaning, heating, cooling...
+
+5. Generate just one JSON output.
 >>>
+
 """
+
+# This is the current Interaction:
+
+    prompt = [{
+                "role" : "system",
+                "content" : raw_prompt
             }]
 
-    return prompt
+    if return_raw_prompt:
+        return raw_prompt
+    else:
+        return prompt
 
 
 def write_line_to_main_log_csv(name, data):
@@ -158,6 +176,12 @@ def write_line_to_main_log_csv(name, data):
             data_list = [x for _,x in data.items()]
             wr.writerow(data_list)
   
+def save_prompt_file(file_path, raw_prompt):
+    """ Saves a prompt file """
+    with open(file_path, "w") as file:
+        file.write(raw_prompt)
+
+
 
 def get_empty_dict_from_csv_header(header):
     """Generate empty dict from csv header"""
@@ -173,11 +197,11 @@ if __name__=="__main__":
     SAVE_FOLDER = "game_logs/alfworld_eval_10"
     CSV_HEADER = ["env_idx", "env_type", "agent_type", "model", "temperature", "success", "num_of_steps", "num_illegal_actions", "num_nothing_happens", "num_repetitions","error", "trace_file", "prompt_file"]
     MAIN_CSV_FILE_NAME = "alfworld_results"
-    CREATE_NEW_LOG_CSV=False    
+    CREATE_NEW_LOG_CSV=False
 
     # Basic Init
     start_env_idx=0
-    num_envs = 10
+    num_envs = 3
     agent_index = 1
     temperature = 0.8
 
@@ -246,8 +270,16 @@ if __name__=="__main__":
         print(f"Starting Env with Index: {env_idx+start_env_idx} of type: {env_type}")
 
         # Generate correct prompt for this environment (basically pick the right example).
-        prompt = generate_prompt_from_example(clean_state_goal_plan_v4g_1)
+        prompt_example = clean_state_goal_plan_v4i_1
+
+        prompt = generate_prompt_from_example(prompt_example)
         agent.set_base_prompt_and_reset(prompt)
+
+        # Save Raw Prompt
+        now = datetime.now()
+        prompt_save_path = os.path.join(SAVE_FOLDER, "prompt_"+now.strftime("%d_%m_%Y_%H_%M_%S")+".txt")
+        raw_prompt = generate_prompt_from_example(prompt_example, return_raw_prompt=True)
+        save_prompt_file(prompt_save_path, raw_prompt)
 
 
         print(observation)
@@ -271,14 +303,15 @@ if __name__=="__main__":
         num_illegal_actions = 0
         num_nothing_happens = 0
         num_repetitions = 0
+        prev_action = ""
+
         try:
             while game_running_flag:
-                prev_action = ""
                 is_illegal_action = False
                 is_nothing_happens = False
 
                 # action = input(">")
-                action = agent.act("Input:\n"+observation)
+                action = agent.act("Input:\n"+observation+"\nOutput:\n")
                 print("<<< ACTION >>>:"+action)
                 if action.startswith("think:"):
                     observation = "You are thinking. Please take an action."
@@ -293,6 +326,7 @@ if __name__=="__main__":
 
                 if action == prev_action:
                     num_repetitions += 1
+                    prev_action = action
 
                 observation, reward, done, info = env.step([action])
                 # print(observation)
@@ -323,10 +357,13 @@ if __name__=="__main__":
         finally:
             logging_dict["num_illegal_actions"] = num_illegal_actions
             logging_dict["num_nothing_happens"] = num_nothing_happens
+            logging_dict["num_repetitions"] = num_repetitions
+
             logging_dict["num_of_steps"] = counter
             logging_dict["success"] = success
             logging_dict["error"] = error
             logging_dict["trace_file"] = agent.file_name
+            logging_dict["prompt_file"] = prompt_save_path
             write_line_to_main_log_csv(MAIN_CSV_FILEPATH, logging_dict)
             agent.save()
 

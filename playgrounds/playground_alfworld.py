@@ -39,8 +39,8 @@ clean_state_goal_plan_v3_1#, \
 # clean_state_goal_plan_v4g_1, \
 # clean_state_goal_plan_v4h_1
 
-from alfworld_prompts_utils_v4 import \
-clean_state_goal_plan_v4_1, \
+from alfworld_prompts_utils_v4_clean import \
+clean_state_goal_plan_v4a_1, \
 clean_state_goal_plan_v4b_1, \
 clean_state_goal_plan_v4c_1, \
 clean_state_goal_plan_v4d_1, \
