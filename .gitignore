@@ -12,3 +12,4 @@ offload*
 *.mp3
 *.flac
 *prompts*
+.DS_Store
