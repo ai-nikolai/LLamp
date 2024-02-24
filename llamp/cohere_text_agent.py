@@ -11,8 +11,8 @@ from tenacity import (
     wait_random_exponential, # type: ignore
 )
 
-class CohereAgent(BaseLLMAgent):
-    def __init__(self, agent_name="CohereAgent",save_path="game_logs", temperature = 0.8, model="command"):
+class CohereTextAgent(BaseLLMAgent):
+    def __init__(self, agent_name="CohereTextAgent",save_path="game_logs", temperature = 0.8, model="command", stop_sequences=None):
         
         super().__init__(agent_name, save_path)
         self.base_prompt = [{
@@ -25,38 +25,26 @@ class CohereAgent(BaseLLMAgent):
 
         self.temperature = temperature
         self.model = model
-    
-    def get_current_prompt_cohere(self):
-        """Returns the current prompt and last message for Cohere's API"""
-        out_list = []
-        for messages in self.current_prompt:
-            temp_dict = {}
-            temp_dict["user_name"] = "Chatbot" if messages["role"] == "assistant" else "User"
-            temp_dict["text"] = messages["content"]
-            out_list.append(temp_dict)
-
-        return out_list
+        self.stop_sequences = stop_sequences
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6),reraise=True)
     def call_model(self):
         """Call OpenAI API"""
 
-        current_prompt = self.get_current_prompt_cohere()
+        prompt = self.generate_text_prompt()
 
-        message = current_prompt[-1]["text"]
-        if len(current_prompt)>1:
-            chat_history = current_prompt[:-1]
-
-        response = self.co.chat(
+        response = self.co.generate(
             message,
             # model="command",
             model=self.model,
-            chat_history=chat_history,
-            temperature=self.temperature
-            # stop_sequences=["}\n"]
+            prompt = prompt,
+            temperature=self.temperature,
+            end_sequences=self.stop_sequences #to have same behaviour as in Openai
+            # stop_sequences=["}\n"] #included in text end_sequences if excluded
         )
 
         answer = response.text
+
         return answer
 
 

@@ -50,11 +50,19 @@ unlock ... with ...: unlock a door or a container with a key
 		raise NotImplementedError("call model needs to be implemented")
 
 
-
-	
-
+	def generate_text_prompt(self):
+		"""Generates a text prompt for the 'old school' LLMs."""
+		prompt = ""
+		for section in self.current_prompt:
+			prompt +=  section["content"]
+		# prompt+="\n"
+		return prompt
 
 
 
 if __name__=="__main__":
+	agent = BaseLLMAgent()
 	print("Nothing to run here.")
+	agent.add_to_history("hi","user")
+	agent.add_to_history("do this","assistant")
+	print(agent.generate_text_prompt())

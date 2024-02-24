@@ -9,7 +9,8 @@ class BaseAgent():
         self.base_prompt = []
         self.current_prompt = []
         self.agent_name = agent_name
-        self.file_name = self.get_save_path(save_path)
+        self.save_path_base = save_path
+        self.file_name = self.get_save_path()
 
     def call_model(self):
         """Not Implemented in base class."""
@@ -18,28 +19,39 @@ class BaseAgent():
 
     def act(self, current_observation):
         """ Acting"""
-        self.add_to_prompt(current_observation, "user")
+        self.add_to_history(current_observation, "user")
 
         action = self.call_model()
 
-        self.add_to_prompt(action, "assistant")
+        self.add_to_history(action, "assistant")
 
         return action
 
     def reset(self):
         """Resets the system (so far only the current_prompt)"""
         self.current_prompt = self.base_prompt
+        self.file_name = self.get_save_path()
 
     def add_first_observation(self, first_obs):
         """ First Observation """
-        self.add_to_prompt(first_obs, "user")
+        self.add_to_history(first_obs, "user")
 
-    def add_to_prompt(self, content, role):
-        """ Adds to the prompt."""
+    def add_to_history(self, content, role):
+        """ 
+        Adds to the prompt.
+        IF ERROR: This function used to be called  `add_to_prompt`
+        """
         self.current_prompt.append({
             "role": role,
             "content": content
             })
+
+    def pop_from_history(self):
+        """Removes last element from history."""
+        try:
+            self.current_prompt.pop()
+        except IndexError as e:
+            pass
 
     def set_base_prompt_and_reset(self,base_prompt):
         """Sets a new base prompt and resets the agent."""
@@ -58,15 +70,18 @@ class BaseAgent():
         file_name = self.agent_name+"_"+base_name+"_"+now.strftime("%d_%m_%Y_%H_%M_%S")+self.LOG_FILE_ENDING
         return file_name
 
-    def get_save_path(self,save_path):
+    def get_save_path(self, save_path=""):
         """ Get Save path """
-        self.create_save_path(save_path)
-        file_name = os.path.join(save_path,self.get_file_name())
+        if save_path:
+            self.save_path_base = save_path
+        self.create_save_path(self.save_path_base)
+        file_name = os.path.join(self.save_path_base,self.get_file_name())
         return file_name
 
     def update_save_path(self,save_path):
         """ Update Save Path """
-        self.file_name = self.get_save_path(save_path)
+        self.save_path_base = save_path
+        self.file_name = self.get_save_path(self.save_path_base)
 
     @staticmethod
     def create_save_path(save_path):

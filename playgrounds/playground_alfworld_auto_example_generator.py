@@ -37,7 +37,7 @@ openai = openai_model(model="gpt-4-turbo-preview")
 def generate_prompt(prompt_example, target_trace, prompt_trace):
     """ Generate Prompt based on example prompt and desired trace """
     prompt = f"""
-Your task is to change the entire input trace into the correct format.
+Your task is to change the whole input trace into the correct format.
 
 Here is an example of how the output should look like:
 <<<
@@ -49,7 +49,7 @@ Out:
 {prompt_example}
 >>>
 
-This is the input trace:
+This is the input trace, transform it all:
 <<<
 {target_trace}
 >>>
@@ -83,7 +83,7 @@ if __name__=="__main__":
         clean_state_goal_plan_v4i_1
     ]
 
-    types_of_envs = ["examine", "heat", "cool", "puttwo", "put"] #and clean
+    types_of_envs = ["clean","examine", "heat", "cool", "puttwo", "put"]
     # save_folder = "playgrounds"
     # base_variable_name = "state_goal_plan_v4"
     # file_name = "alfworld_prompts_utils_v4_{env_type}.py"
@@ -93,7 +93,7 @@ if __name__=="__main__":
     with open(react_prompt_file, "r") as file:
         original_prompts = json.load(file)
 
-    env_type = types_of_envs[0]
+    env_type = types_of_envs[5]
 
     prompt_trace = original_prompts["act_clean_1"]
     target_trace = original_prompts[f"act_{env_type}_1"]
@@ -101,10 +101,12 @@ if __name__=="__main__":
 
 
     # example_prompt = clean_state_goal_plan_v4i_1
-    example_prompt = generate_string_prompt(clean_v4_base)
-    result = generate_prompt(example_prompt, target_trace, prompt_trace)
+    # example_prompt = generate_string_prompt(clean_v4_base)
+    # result = generate_prompt(example_prompt, target_trace, prompt_trace)
 
-    print(result)
+    
+    print(target_trace)  
+    # print(result)
 
 
     # with open(file_path, "w") as file:
@@ -122,5 +124,10 @@ if __name__=="__main__":
     #         print(f"Writing to file:{file_path} for variable:{variable_name}")
     #         file.write("\n"+variable_name+"="+'"""'+result+'"""\n\n')
     #         print("Finished Writing")
+
+
+# Replace:
+# 1. `\n\n>{` with `""",\n"""{`
+# 2. `}\n\n` with `}""",\n"""`
 
 
