@@ -138,9 +138,14 @@ def process_ob(ob, track_nothing_happens=False):
         return ob
 
 
-HINTS="""
+OPENING_MARK="<<<"
+OPENING_MARK=""
+CLOSING_MARK=">>>"
+CLOSING_MARK=""
+
+HINTS=f"""
 A few hints:
-<<<
+{OPENING_MARK}
 1. When "Nothing happens." this means your action was not successful or not valid. If this happen, then try a valid action that you have not tried before.
 
 2. If you repeat yourself, try a different valid action. 
@@ -154,24 +159,14 @@ A few hints:
 6. Initially you have not visited any places and you are starting at the 'starting_location'.
 
 7. Generate one JSON output only.
->>>
+{CLOSING_MARK}
 """
 
 HINTS=""
-def generate_prompt_from_example(examples, return_raw_prompt = False, number_of_examples=1):
-    """ Generates prompt """
-    if number_of_examples >1:
-        s_string="s"
-    else:
-        s_string=""
-    number_of_examples_string = str(number_of_examples)
 
-
-    raw_prompt = f"""
-You will interact with the environment to solve the given task.
-
+INSTRUCTIONS=f"""
 This is the list of all valid actions that you can use:
-<<<
+{OPENING_MARK}
 - go to <dir> [example: go to table 1]
 - open <obj> [example: open door 1]
 - close <obj> [example: close door 1]
@@ -180,13 +175,34 @@ This is the list of all valid actions that you can use:
 - cool <obj> with <obj> [example: cool apple 1 with fridge 1]
 - heat <obj> with <obj> [example: heat apple 1 with fire 1]
 - use <obj> [example: use desklamp 1]
->>>
+{CLOSING_MARK}
+"""
+
+INSTRUCTIONS=""
 
 
-Here is {number_of_examples_string} example{s_string}:
-<<<
+BASE_PROMPT1 = "Interact with a household to solve a task. Here are two examples."
+BASE_PROMPT2 = "You will interact with the environment to solve the given task."
+
+def generate_prompt_from_example(examples, return_raw_prompt = False, number_of_examples=1):
+    """ Generates prompt """
+    if number_of_examples >1:
+        s_string="s"
+        is_are = "are"
+    else:
+        s_string=""
+        is_are = "is"
+    number_of_examples_string = str(number_of_examples)
+
+
+    raw_prompt = f"""
+{BASE_PROMPT1}
+{INSTRUCTIONS}
+
+Here {is_are} {number_of_examples_string} example{s_string}:
+{OPENING_MARK}
 {examples}
->>>
+{CLOSING_MARK}
 
 {HINTS}
 
@@ -247,9 +263,9 @@ if __name__=="__main__":
     # Global Variables 
     # Config File as input (@Marek Idea)
 
-    REACT_PROMPT = True #untick for our prompts
+    # REACT_PROMPT = True #untick for our prompts
     BASE_FOLDER = "game_logs"
-    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_4"
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_5"
     SAVE_FOLDER = os.path.join(BASE_FOLDER,CURRENT_TRIAL_FOLDER)
     CSV_HEADER = [
         "env_idx", 
@@ -280,7 +296,7 @@ if __name__=="__main__":
     start_env_idx=0
     num_envs = 10
 
-    agent_index = 4
+    agent_index = 3
     temperature = 0.0
 
     if agent_index == 1:
@@ -296,6 +312,7 @@ if __name__=="__main__":
     elif agent_index==3:
         agent_type = "CohereText"
         model = "command"
+        model = "command-nightly"
         agent = CohereTextAgent(temperature=temperature, model=model)
     elif agent_index==4:
         agent_type = "OpenAIText"
@@ -366,29 +383,30 @@ if __name__=="__main__":
             "current_objective",
             # "action"
         ]
-        # keys_to_remove = [
-        #     "prompt",
-        #     # "goal", 
-        #     # "plan", 
-        #     "places_visited", 
-        #     "current_inventory", 
-        #     "current_location", 
-        #     "current_objective",
-        #     # "action"
-        # ]
+        keys_to_remove = [
+            "prompt",
+            # "goal", 
+            # "plan", 
+            "places_visited", 
+            "current_inventory", 
+            "current_location", 
+            "current_objective",
+            # "action"
+        ]
 
         keys_to_remove_string = "+".join(keys_to_remove)
         # prompt_keys_for_reference = ["prompt", "goal", "plan", "places_visited", "current_inventory", "current_location", "current_objective", "action"]
-        
-        base_prompt = remove_keys(ENV_TO_EXAMPLE_MAPPING[env_type], keys=keys_to_remove)
-        prompt_example = generate_string_prompt(base_prompt)
+    
 
-        #REACT PROMPT
+        #REACT PROMPT or OUR PROMPT
         if REACT_PROMPT:
-            num_examples = 2
-            prompt_example = return_react_examples(env_type, num=num_examples)  
+            num_examples = 1
+            prompt_example = return_react_examples(env_type, num=num_examples)
+            keys_to_remove_string = f"react_{num_examples}"
         else:
             num_examples = 1
+            base_prompt = remove_keys(ENV_TO_EXAMPLE_MAPPING[env_type], keys=keys_to_remove)
+            prompt_example = generate_string_prompt(base_prompt)
 
         # prompt_example = clean_state_goal_plan_v4i_1
 
@@ -399,7 +417,6 @@ if __name__=="__main__":
         now = datetime.now()
         prompt_save_path = os.path.join(SAVE_FOLDER, "prompt_"+now.strftime("%d_%m_%Y_%H_%M_%S")+".txt")
         
-
 
         raw_prompt = generate_prompt_from_example(prompt_example, return_raw_prompt=True, number_of_examples=num_examples)
         save_prompt_file(prompt_save_path, raw_prompt)
@@ -472,10 +489,12 @@ if __name__=="__main__":
 
                 if action.startswith("think:"):
                     observation = "OK.\n"
+                    print("<> OBSERVATION <>:"+observation)
                     continue
 
                 if action.startswith('think("'):
                     observation = "You are thinking.\n"
+                    print("<> OBSERVATION <>:"+observation)
                     continue
 
                 action_count = action.count('"action"')
@@ -513,6 +532,7 @@ if __name__=="__main__":
                 print("<> OBSERVATION <>:"+observation)
                 print(info["won"][0])
                 print(done[0])
+                print(reward[0])
 
                 if done[0]:
                     done = True
@@ -532,12 +552,15 @@ if __name__=="__main__":
                     break
         except cohere.error.CohereAPIError as e:
             print("COHERE API ERROR")
+            error = str(e)
+            print(e)
             error = e.message
             print(e.message)
 
         except Exception as e:
             print("ANOTHER EXCEPTION")
             error = str(e)
+            print(error)
             print(e)
             print(e.message)
         finally:

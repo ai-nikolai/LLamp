@@ -47,39 +47,87 @@ IMPORTANT_STATISTICS = [
     "keys_removed"
 ]
 
+
+IMPORTANT_STATISTICS = [
+    "model",
+    "temperature", 
+    "success", 
+    "done", #additional
+    "total_reward", #additional
+    "num_of_steps", 
+    # "num_illegal_actions", 
+    "num_nothing_happens", 
+    "num_repetitions",
+    # "num_json_dsnt_load",
+    # "num_multi_json",
+    # "num_no_json",
+    # "num_json_and_text",
+    "error", 
+    "keys_removed"
+]
+
+
+def modify_text_prompt(key_removed):
+    """changes to short version"""
+    keys = key_removed.count("+")
+    if keys>1:
+        return "long"
+    else:
+        return "short"
+
 def extract_correct_stats_from_string_row(tr, im):
     # tr[im["model"]]
     # tr[im["temperature"]]
-    tr[im["success"]] = 1 if tr[im["success"]] == "True" else 0
-    tr[im["done"]] = 1 if tr[im["done"]] == "True" else 0
-    tr[im["total_reward"]] = float(tr[im["num_of_steps"]])
-    tr[im["num_of_steps"]] = int(tr[im["num_of_steps"]])
-    tr[im["num_illegal_actions"]] = int(tr[im["num_illegal_actions"]])
-    tr[im["num_nothing_happens"]] = int(tr[im["num_nothing_happens"]])
-    tr[im["num_repetitions"]] = int(tr[im["num_repetitions"]])
-    tr[im["num_json_dsnt_load"]] = int(tr[im["num_json_dsnt_load"]])
-    tr[im["num_multi_json"]] = int(tr[im["num_multi_json"]])
-    tr[im["num_no_json"]] = int(tr[im["num_no_json"]])
-    tr[im["num_json_and_text"]] = int(tr[im["num_json_and_text"]])
-    tr[im["error"]] = 1 if tr[im["error"]] else 0
-    # tr[im["keys_removed"]]
+    if "success" in IMPORTANT_STATISTICS:
+        tr[im["success"]] = 1 if tr[im["success"]] == "True" else 0
+    if "done" in IMPORTANT_STATISTICS:
+        tr[im["done"]] = 1 if tr[im["done"]] == "True" else 0
+    if "total_reward" in IMPORTANT_STATISTICS:    
+        tr[im["total_reward"]] = float(tr[im["total_reward"]])
+    if "num_of_steps" in IMPORTANT_STATISTICS: 
+        tr[im["num_of_steps"]] = int(tr[im["num_of_steps"]])
+    if "num_illegal_actions" in IMPORTANT_STATISTICS: 
+        tr[im["num_illegal_actions"]] = int(tr[im["num_illegal_actions"]])
+    if "num_nothing_happens" in IMPORTANT_STATISTICS: 
+        tr[im["num_nothing_happens"]] = int(tr[im["num_nothing_happens"]])
+    if "num_repetitions" in IMPORTANT_STATISTICS: 
+        tr[im["num_repetitions"]] = int(tr[im["num_repetitions"]])
+    if "num_json_dsnt_load" in IMPORTANT_STATISTICS: 
+        tr[im["num_json_dsnt_load"]] = int(tr[im["num_json_dsnt_load"]])
+    if "num_multi_json" in IMPORTANT_STATISTICS: 
+        tr[im["num_multi_json"]] = int(tr[im["num_multi_json"]])
+    if "num_no_json" in IMPORTANT_STATISTICS: 
+        tr[im["num_no_json"]] = int(tr[im["num_no_json"]])
+    if "num_json_and_text" in IMPORTANT_STATISTICS: 
+        tr[im["num_json_and_text"]] = int(tr[im["num_json_and_text"]])
+    if "error" in IMPORTANT_STATISTICS: 
+        tr[im["error"]] = 1 if tr[im["error"]] else 0
+    if "keys_removed" in IMPORTANT_STATISTICS: 
+        tr[im["keys_removed"]] = modify_text_prompt(tr[im["keys_removed"]])
+    
     return tr
 
 def accumulate_two_rows(tr, pr, im):
     # tr[im["model"]]
     # tr[im["temperature"]]
-    tr[im["success"]] += pr[im["success"]]
-    tr[im["done"]] += pr[im["done"]]
-    tr[im["total_reward"]] += pr[im["total_reward"]]
-    tr[im["num_of_steps"]] += pr[im["num_of_steps"]] 
-    tr[im["num_illegal_actions"]] += pr[im["num_illegal_actions"]]
-    tr[im["num_nothing_happens"]] += pr[im["num_nothing_happens"]]
-    tr[im["num_repetitions"]] += pr[im["num_repetitions"]]
-    tr[im["num_json_dsnt_load"]] += pr[im["num_json_dsnt_load"]]
-    tr[im["num_multi_json"]] += pr[im["num_multi_json"]]
-    tr[im["num_no_json"]] += pr[im["num_no_json"]]
-    tr[im["num_json_and_text"]] += pr[im["num_json_and_text"]]
-    tr[im["error"]] += pr[im["error"]]
+
+    # tr[im["success"]] += pr[im["success"]]
+    # tr[im["done"]] += pr[im["done"]]
+    # tr[im["total_reward"]] += pr[im["total_reward"]]
+    # tr[im["num_of_steps"]] += pr[im["num_of_steps"]] 
+    # tr[im["num_illegal_actions"]] += pr[im["num_illegal_actions"]]
+    # tr[im["num_nothing_happens"]] += pr[im["num_nothing_happens"]]
+    # tr[im["num_repetitions"]] += pr[im["num_repetitions"]]
+    # tr[im["num_json_dsnt_load"]] += pr[im["num_json_dsnt_load"]]
+    # tr[im["num_multi_json"]] += pr[im["num_multi_json"]]
+    # tr[im["num_no_json"]] += pr[im["num_no_json"]]
+    # tr[im["num_json_and_text"]] += pr[im["num_json_and_text"]]
+    # tr[im["error"]] += pr[im["error"]]
+
+    for key in IMPORTANT_STATISTICS:
+        if not key in ["keys_removed","model", "temperature"]:
+            tr[im[key]] += pr[im[key]]
+
     # tr[im["keys_removed"]]
     return tr
 
@@ -97,11 +145,12 @@ def get_index_of_important_statistics(header, important_statistics=IMPORTANT_STA
     return out_mapping, out_mapping_2
 
 
+
 if __name__=="__main__":
 
     BASE_FOLDER= "game_logs"
     CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_1"
-    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_4"
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_5"
 
     # CURRENT_TRIAL_FOLDER = "alfworld_eval_trial_30_3"
     CSV_FILE_NAME = "alfworld_results.csv"
@@ -145,15 +194,22 @@ if __name__=="__main__":
             print(temp_results)
             temp_results = accumulate_two_rows(prev_results,temp_results,index_mapping_results)
             out_results[-1] = temp_results
+    
 
-
-    OUTFILE = "test2.csv"
+    DELIMITER = "&"
+    OUTFILE = "test3.csv"
     with open(OUTFILE, "w") as out_file:
-        writer = csv.writer(out_file, delimiter='&')
+        writer = csv.writer(out_file, delimiter=DELIMITER)
         for out_row in out_results:
             writer.writerow(out_row)
 
     print(len(out_row))
+    
+    OUTFILE2="test_table.txt"
+    from tabulate import tabulate
+    table_pretty = tabulate(out_results[1:], headers=IMPORTANT_STATISTICS)
+    with open(OUTFILE2, "w") as out_file:
+        out_file.write(table_pretty)
 
     # data = pd.read_csv(file_path)
     # data.drop()

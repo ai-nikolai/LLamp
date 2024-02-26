@@ -12,7 +12,7 @@ from tenacity import (
 )
 
 class CohereTextAgent(BaseLLMAgent):
-    def __init__(self, agent_name="CohereTextAgent",save_path="game_logs", temperature = 0.0, model="command", stop_sequences=None):
+    def __init__(self, agent_name="CohereTextChatAgent",save_path="game_logs", temperature = 0.0, model="command", stop_sequences=None):
         
         super().__init__(agent_name, save_path)
         self.base_prompt = [{
@@ -30,29 +30,18 @@ class CohereTextAgent(BaseLLMAgent):
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6),reraise=True)
     def call_model(self):
         """Call OpenAI API"""
+        message = self.generate_text_prompt()
 
-        prompt = self.generate_text_prompt()
-
-        response = self.co.generate(
+        response = self.co.chat(
+            message,
             model=self.model,
-            prompt = prompt,
-            temperature=self.temperature,
-            end_sequences=self.stop_sequences #to have same behaviour as in Openai
-            # stop_sequences=["}\n"] #included in text end_sequences if excluded
+            temperature=self.temperature
+            # stop_sequences=["}\n"]
         )
 
-
-
-        # print("="*20)
-        # print(response)
-        # print(type(response))
-        # input(">")
-        # print(response.generations[0].text)
-        # input(">>")
-
-        answer = response.generations[0].text
-
+        answer = response.text
         return answer
+
 
 
 if __name__=="__main__":
