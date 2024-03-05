@@ -13,3 +13,4 @@ offload*
 *.flac
 *prompts*
 .DS_Store
+results/test*

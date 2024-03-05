@@ -66,14 +66,15 @@ IMPORTANT_STATISTICS = [
     "keys_removed"
 ]
 
-
-def modify_text_prompt(key_removed):
+def modify_text_prompt(keys_removed):
     """changes to short version"""
-    keys = key_removed.count("+")
-    if keys>1:
-        return "long"
-    else:
+    keys = keys_removed.count("+")
+    if keys==0:
+        return keys_removed
+    elif keys>1:
         return "short"
+    else:
+        return "long"
 
 def extract_correct_stats_from_string_row(tr, im):
     # tr[im["model"]]
@@ -82,7 +83,7 @@ def extract_correct_stats_from_string_row(tr, im):
         tr[im["success"]] = 1 if tr[im["success"]] == "True" else 0
     if "done" in IMPORTANT_STATISTICS:
         tr[im["done"]] = 1 if tr[im["done"]] == "True" else 0
-    if "total_reward" in IMPORTANT_STATISTICS:    
+    if "total_reward" in IMPORTANT_STATISTICS:  
         tr[im["total_reward"]] = float(tr[im["total_reward"]])
     if "num_of_steps" in IMPORTANT_STATISTICS: 
         tr[im["num_of_steps"]] = int(tr[im["num_of_steps"]])
@@ -149,8 +150,21 @@ def get_index_of_important_statistics(header, important_statistics=IMPORTANT_STA
 if __name__=="__main__":
 
     BASE_FOLDER= "game_logs"
-    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_1"
-    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_5"
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_1" #First big run short/long prompts with chat model using GPT4,3.5 and cohere)
+    # CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_5" #Run using React prompts using Text model and Cohere and davinci-002
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_8" #Run using our prompts with text model using Cohere (for now)
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_9" #Run using our prompts with text model using Cohere (for now)
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_new_1" #Run using our prompts with text model using Cohere (for now)
+
+
+    #Outfile related things:
+    OUTFOLDER = "results"
+    OUTFILE_NAME =  "test_main_new.csv"
+    OUTFILE2_NAME = "test_table_main_new.txt"
+    APPEND = False
+    APPEND = True
+
+
 
     # CURRENT_TRIAL_FOLDER = "alfworld_eval_trial_30_3"
     CSV_FILE_NAME = "alfworld_results.csv"
@@ -182,6 +196,10 @@ if __name__=="__main__":
 
 
         temp_results = [row[val] for _, val in index_mapping_row.items()]
+        # print(idx)
+        # print(row)
+        # print(temp_results)
+        # print(index_mapping_results)
         temp_results = extract_correct_stats_from_string_row(temp_results, index_mapping_results)
 
         if not ((current_model == this_rows_model) and (current_prompt==this_rows_prompt)):
@@ -196,19 +214,33 @@ if __name__=="__main__":
             out_results[-1] = temp_results
     
 
+    ###########################################################
+    #
+    #WRITING OUT FILEs
+    #
+    ###########################################################
+    if APPEND:
+        out_file_mode = "a"
+    else:
+        out_file_mode = "w"
+
+    #Writing results to a csv file
     DELIMITER = "&"
-    OUTFILE = "test3.csv"
-    with open(OUTFILE, "w") as out_file:
+    OUTFILE = os.path.join(OUTFOLDER,OUTFILE_NAME)
+    with open(OUTFILE, out_file_mode) as out_file:
         writer = csv.writer(out_file, delimiter=DELIMITER)
         for out_row in out_results:
             writer.writerow(out_row)
-
     print(len(out_row))
     
-    OUTFILE2="test_table.txt"
+
+    #Writing a pretty printed table as text file 
     from tabulate import tabulate
+    OUTFILE2 = os.path.join(OUTFOLDER,OUTFILE2_NAME)
     table_pretty = tabulate(out_results[1:], headers=IMPORTANT_STATISTICS)
-    with open(OUTFILE2, "w") as out_file:
+    if APPEND:
+        table_pretty = "\n"+"\n".join(table_pretty.split("\n")[2:])
+    with open(OUTFILE2, out_file_mode) as out_file:
         out_file.write(table_pretty)
 
     # data = pd.read_csv(file_path)

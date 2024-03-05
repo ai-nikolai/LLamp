@@ -1,6 +1,9 @@
 import json
+import os
 
-react_prompt_file = "playgrounds/alfworld_react_prompts_original.json"
+
+react_prompt_file_name = "alfworld_react_prompts_original_v3.json"
+react_prompt_file = os.path.join("playgrounds",react_prompt_file_name)
 with open(react_prompt_file, "r") as file:
     original_prompts = json.load(file)
 

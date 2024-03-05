@@ -7,10 +7,15 @@ import cohere
 import alfworld
 import alfworld.agents.environment
 
+from llamp.anthropic_agent import AnthropicAgent
+from llamp.anthropic_text_agent import AnthropicTextAgent
+
 from llamp.cohere_agent import CohereAgent
-from llamp.openai_agent import OpenAIAgent
 from llamp.cohere_text_agent import CohereTextAgent
+
+from llamp.openai_agent import OpenAIAgent
 from llamp.openai_text_agent import OpenAITextAgent
+
 
 from datetime import datetime
 
@@ -265,7 +270,7 @@ if __name__=="__main__":
 
     # REACT_PROMPT = True #untick for our prompts
     BASE_FOLDER = "game_logs"
-    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_5"
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_new_1"
     SAVE_FOLDER = os.path.join(BASE_FOLDER,CURRENT_TRIAL_FOLDER)
     CSV_HEADER = [
         "env_idx", 
@@ -296,10 +301,15 @@ if __name__=="__main__":
     start_env_idx=0
     num_envs = 10
 
-    agent_index = 3
+    agent_index = 5
     temperature = 0.0
 
-    if agent_index == 1:
+    if agent_index == 0:
+        agent_type = "Anthropic"
+        # model = "claude-1.2"
+        model = "claude-2.1"
+        agent = AnthropicAgent(temperature=temperature, model=model) 
+    elif agent_index == 1:
         agent_type = "Cohere"
         # model = "command"
         model = "command-nightly"
@@ -309,14 +319,21 @@ if __name__=="__main__":
         model = "gpt-3.5-turbo-0125"
         # model = "gpt-4-turbo-preview"
         agent = OpenAIAgent(temperature=temperature, model=model)
-    elif agent_index==3:
+    
+    elif agent_index ==3:
+        agent_type = "AnthropicText"
+        # model = "claude-1.2"
+        model = "claude-2.1"
+        agent = AnthropicTextAgent(temperature=temperature, model=model) 
+    elif agent_index==4:
         agent_type = "CohereText"
         model = "command"
         model = "command-nightly"
         agent = CohereTextAgent(temperature=temperature, model=model)
-    elif agent_index==4:
+    elif agent_index==5:
         agent_type = "OpenAIText"
         model = "davinci-002"
+        model = "gpt-3.5-turbo-instruct"
         agent = OpenAITextAgent(temperature=temperature, model=model)     
 
 
@@ -383,16 +400,16 @@ if __name__=="__main__":
             "current_objective",
             # "action"
         ]
-        keys_to_remove = [
-            "prompt",
-            # "goal", 
-            # "plan", 
-            "places_visited", 
-            "current_inventory", 
-            "current_location", 
-            "current_objective",
-            # "action"
-        ]
+        # keys_to_remove = [
+        #     "prompt",
+        #     # "goal", 
+        #     # "plan", 
+        #     "places_visited", 
+        #     "current_inventory", 
+        #     "current_location", 
+        #     "current_objective",
+        #     # "action"
+        # ]
 
         keys_to_remove_string = "+".join(keys_to_remove)
         # prompt_keys_for_reference = ["prompt", "goal", "plan", "places_visited", "current_inventory", "current_location", "current_objective", "action"]
@@ -400,9 +417,9 @@ if __name__=="__main__":
 
         #REACT PROMPT or OUR PROMPT
         if REACT_PROMPT:
-            num_examples = 1
+            num_examples = 2
             prompt_example = return_react_examples(env_type, num=num_examples)
-            keys_to_remove_string = f"react_{num_examples}"
+            keys_to_remove_string = f"react-{num_examples}"
         else:
             num_examples = 1
             base_prompt = remove_keys(ENV_TO_EXAMPLE_MAPPING[env_type], keys=keys_to_remove)
@@ -461,7 +478,12 @@ if __name__=="__main__":
         CAPITAL = [chr(x+65) for x in range(26)]
         LOWER = [chr(x+97) for x in range(26)]
 
-        agent.stop_sequences = ["\n"]
+        if REACT_PROMPT:
+            agent.stop_sequences = ["\n"]
+            OUR_PROMPT_ADD_BRACKET_CONDITION=False
+        else:
+            agent.stop_sequences = ["}\n"]
+            OUR_PROMPT_ADD_BRACKET_CONDITION=True
         try:
             while game_running_flag:
                 is_illegal_action = False
@@ -470,6 +492,11 @@ if __name__=="__main__":
                 # action = input(">")
                 action = agent.act(f"{INPUT_TOKEN}"+observation+f"{OUTPUT_TOKEN}")
                 
+                #Modify Actions
+                if OUR_PROMPT_ADD_BRACKET_CONDITION and (not action.endswith("}")):
+                    agent.pop_from_history()
+                    action+="}"
+                    agent.add_to_history(action,"assistant")
                 if not action.endswith("\n"):
                     agent.pop_from_history()
                     action+="\n"
