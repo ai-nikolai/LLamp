@@ -24,11 +24,11 @@ CSV_HEADER = [
         "num_no_json",
         "num_json_and_text",
         "error", 
-        "keys_removed", 
-        "trace_file", 
-        "prompt_file",
         "early_stop",
-        "additional_prompt_annotation"
+        "keys_removed", 
+        "additional_prompt_annotation",
+        "trace_file", 
+        "prompt_file"
 ]
 
 
@@ -170,7 +170,7 @@ if __name__=="__main__":
     file_signature = CURRENT_TRIAL_FOLDER.split(TRIAL_BASE_NAME)[1]
 
 
-    CURRENT_TRIAL_NAME = "v2_test_1"
+    CURRENT_TRIAL_NAME = "v2_eval_20"
     file_signature = CURRENT_TRIAL_NAME
 
     if CURRENT_TRIAL_NAME:

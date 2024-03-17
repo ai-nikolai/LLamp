@@ -379,6 +379,42 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 
 
 
+def get_settings_string(react_prompt, agentbench_prompt, agent_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove):
+    """ Creates a string to print to the user the current settings. """
+    not_ours = react_prompt or agentbench_prompt
+    if not_ours:
+        if react_prompt:
+            which_prompt = "ReAct"
+        elif agentbench_prompt:
+            which_prompt = "Agentbench"
+
+    else:
+        which_prompt = "Ours"
+
+    display_text = ""
+    display_text += f"You are going to run Alfworld Environment with the following settings:\n"
+    display_text += f"   -Algorithm Family: {which_prompt}\n"
+    display_text += f"   -AgentType: {agent_type}\n"
+    display_text += f"   -Model: {model}\n"
+    display_text += f"   -Temperature: {temperature}\n"
+    display_text += f"   -Starting env: {starting_env}\n"
+    display_text += f"   -Num of envs: {num_envs}\n"
+    display_text += f"   -Current Trial Name: {current_trial_name}\n"
+    if not not_ours:
+        display_text += f"   -Keys that will be removed: {keys_to_remove}\n"
+    
+    display_text += "Do you want to continue? Press 'y' to continue."
+
+    return display_text
+
+
+
+
+
+
+
+
+
 
 
 
@@ -389,7 +425,9 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 
 if __name__=="__main__":
 
-
+    # More things to track:
+    # 1. Tokens generated / consumed (i.e. estimated price)
+    # 2. Time taken 
 
     
     ####################################################
@@ -397,18 +435,16 @@ if __name__=="__main__":
     ####################################################
     BASE_FOLDER = "game_logs"
     BASE_EVAL_NAME = "alfworld_eval"
-
-    #CHANGE THIS ONE
-    CURRENT_TRIAL_NAME = "v2_test_1"
-
     MAIN_CSV_FILE_NAME = "alfworld_results"
 
 
+    #CHANGE THIS ONE
+    CURRENT_TRIAL_NAME = "v2_eval_20"
 
     ###############################
     # Basic Init
     start_env_idx=0
-    num_envs = 1
+    num_envs = 20
 
 
     agent_type = "OpenAITextChat"
@@ -450,16 +486,35 @@ if __name__=="__main__":
         "current_objective",
         # "action"
     ]
-    keys_to_remove = [
-        "prompt",
-        # "goal", 
-        # "plan", 
-        "places_visited", 
-        "current_inventory", 
-        "current_location", 
-        "current_objective",
-        # "action"
-    ]
+    # keys_to_remove = [
+    #     "prompt",
+    #     # "goal", 
+    #     # "plan", 
+    #     "places_visited", 
+    #     "current_inventory", 
+    #     "current_location", 
+    #     "current_objective",
+    #     # "action"
+    # ]
+
+    ##############################
+    # Checking settings with the user. User needs to type y.
+    keys_to_remove_string = "+".join(keys_to_remove)
+    settings_string = get_settings_string(
+            react_prompt=REACT_PROMPT, 
+            agentbench_prompt=AGENTBENCH_PROMPT, 
+            agent_type=agent_type, 
+            model=model, 
+            temperature=temperature, 
+            num_envs=num_envs, 
+            starting_env=start_env_idx, 
+            current_trial_name=CURRENT_TRIAL_NAME, 
+            keys_to_remove=keys_to_remove_string)
+    print(settings_string)
+    user_input = input(">")
+    if not (user_input=="y"):
+        print("Exiting Programme, please change the settings in: playgrounds/playground_alfworld_eval.py")
+        exit(1)
 
 
     #TODO for the future
@@ -491,11 +546,11 @@ if __name__=="__main__":
         "num_no_json",
         "num_json_and_text",
         "error", 
-        "keys_removed", 
-        "trace_file", 
-        "prompt_file",
         "early_stop",
-        "additional_prompt_annotation"
+        "keys_removed", 
+        "additional_prompt_annotation",
+        "trace_file", 
+        "prompt_file"
     ]
 
 
@@ -814,6 +869,7 @@ if __name__=="__main__":
             print(error)
             print(e)
             print(e.message)
+
         finally:
             logging_dict["num_illegal_actions"] = num_illegal_actions
             logging_dict["num_nothing_happens"] = num_nothing_happens
