@@ -1,4 +1,3 @@
-import openai
 import time
 import os
 import cohere
@@ -12,7 +11,7 @@ from tenacity import (
 )
 
 class CohereAgent(BaseLLMAgent):
-    def __init__(self, agent_name="CohereAgent",save_path="game_logs", temperature = 0.8, model="command"):
+    def __init__(self, agent_name="CohereAgent",save_path="game_logs", temperature = 0.0, model="command", stop_sequences=None):
         
         super().__init__(agent_name, save_path)
         self.base_prompt = [{
@@ -25,6 +24,8 @@ class CohereAgent(BaseLLMAgent):
 
         self.temperature = temperature
         self.model = model
+        self.stop_sequences=stop_sequences
+
     
     def get_current_prompt_cohere(self):
         """Returns the current prompt and last message for Cohere's API"""
@@ -37,7 +38,7 @@ class CohereAgent(BaseLLMAgent):
 
         return out_list
 
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6),reraise=True)
+    # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6),reraise=True)
     def call_model(self):
         """Call OpenAI API"""
 

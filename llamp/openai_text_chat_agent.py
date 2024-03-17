@@ -10,8 +10,8 @@ from tenacity import (
 
 from .base_llm_agent import BaseLLMAgent
 
-class OpenAITextAgent(BaseLLMAgent):
-    def __init__(self, agent_name="OpenAITextAgent",save_path="game_logs", temperature=0.0, model="davinci-002", stop_sequences=None):
+class OpenAITextChatAgent(BaseLLMAgent):
+    def __init__(self, agent_name="OpenAITextChatAgent",save_path="game_logs", temperature=0.0, model="davinci-002", stop_sequences=None):
         
         super().__init__(agent_name, save_path)     
         self.client = openai.OpenAI(
@@ -25,21 +25,23 @@ class OpenAITextAgent(BaseLLMAgent):
         self.stop_sequences = stop_sequences
 
 
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
+    # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
     def call_model(self):
         """Call OpenAI API"""
 
         prompt = self.generate_text_prompt()
 
-        full_prompt = {
+        full_prompt = [{
                 "role": "user", 
                 "content": prompt
-        }
+        }]
 
         chat_completion = self.client.chat.completions.create(
             model=self.model,
-            messages=self.full_prompt,
-            temperature=self.temperature
+            messages=full_prompt,
+            temperature=self.temperature,
+            stop = self.stop_sequences
+
         )
         chat_message = chat_completion.choices[0].message.content
 

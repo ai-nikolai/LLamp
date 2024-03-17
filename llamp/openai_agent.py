@@ -11,7 +11,7 @@ from tenacity import (
 from .base_llm_agent import BaseLLMAgent
 
 class OpenAIAgent(BaseLLMAgent):
-	def __init__(self, agent_name="OpenAIAgent",save_path="game_logs", temperature=0.8, model="gpt-3.5-turbo-0125"):
+	def __init__(self, agent_name="OpenAIAgent",save_path="game_logs", temperature=0.0, model="gpt-3.5-turbo-0125", stop_sequences=None):
 		
 		super().__init__(agent_name, save_path)		
 		self.client = openai.OpenAI(
@@ -23,8 +23,10 @@ class OpenAIAgent(BaseLLMAgent):
 		self.temperature = temperature
 		self.model = model
 
+		self.stop_sequences=stop_sequences
 
-	@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
+
+	# @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
 	def call_model(self):
 		"""Call OpenAI API"""
 		chat_completion = self.client.chat.completions.create(
@@ -33,7 +35,9 @@ class OpenAIAgent(BaseLLMAgent):
 		    # model="gpt-4-turbo-preview",
 		    model=self.model,
 		    messages=self.current_prompt,
-		    temperature=self.temperature
+		    temperature=self.temperature,
+		    stop = self.stop_sequences
+
 		)
 		chat_message = chat_completion.choices[0].message.content
 

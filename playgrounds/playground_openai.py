@@ -16,8 +16,9 @@ if __name__=="__main__":
 	    messages=[
 	    	{
 		    	"role": "system", 
-		   		"content": ""}
-	    ]
+		   		"content": "Generate 2 paragraphs from here: Hi, there"}
+	    ],
+	    stop = ["\n"]
 	)
 
 	# print(chat_completion)

@@ -12,47 +12,24 @@ from llamp.anthropic_text_agent import AnthropicTextAgent
 
 from llamp.cohere_agent import CohereAgent
 from llamp.cohere_text_agent import CohereTextAgent
+from llamp.cohere_text_chat_agent import CohereTextChatAgent
+
 
 from llamp.openai_agent import OpenAIAgent
 from llamp.openai_text_agent import OpenAITextAgent
+from llamp.openai_text_chat_agent import OpenAITextChatAgent
 
 
 from datetime import datetime
 
 import json
 
-# import importlib
-# importlib.reload(alfworld)
-# importlib.reload(alfworld.agents.environment)
 
-# from alfworld_prompts_utils import clean_simple_goal_plan_1, \
-# cool_simple_goal_plan_1, \
-# examine_simple_goal_plan_1, \
-# heat_simple_goal_plan_1, \
-# clean_state_goal_plan_1, \
-# clean_state_goal_plan_v2_1, \
-# clean_state_goal_plan_v3_1#, \
-# # clean_state_goal_plan_v4_1, \
-# # clean_state_goal_plan_v4b_1, \
-# # clean_state_goal_plan_v4c_1, \
-# # clean_state_goal_plan_v4d_1, \
-# # clean_state_goal_plan_v4e_1, \
-# # clean_state_goal_plan_v4f_1, \
-# # clean_state_goal_plan_v4g_1, \
-# # clean_state_goal_plan_v4h_1
-
-# from alfworld_prompts_utils_v4_clean import \
-# clean_state_goal_plan_v4a_1, \
-# clean_state_goal_plan_v4b_1, \
-# clean_state_goal_plan_v4c_1, \
-# clean_state_goal_plan_v4d_1, \
-# clean_state_goal_plan_v4e_1, \
-# clean_state_goal_plan_v4f_1, \
-# clean_state_goal_plan_v4g_1, \
-# clean_state_goal_plan_v4h_1, \
-# clean_state_goal_plan_v4i_1
 
 from playground_alfworld_ablation_generator import generate_string_prompt, remove_keys
+
+from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts
+
 
 from alfworld_prompts_utils_v4_clean_base import clean_v4_base
 from alfworld_prompts_utils_v4_cool_base import cool_v4_base
@@ -60,6 +37,12 @@ from alfworld_prompts_utils_v4_examine_base import examine_v4_base
 from alfworld_prompts_utils_v4_heat_base import heat_v4_base
 from alfworld_prompts_utils_v4_put_base import put_v4_base
 from alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base
+
+
+
+#################################################################
+#GAME LOOP & ENV Related
+#################################################################
 
 ENV_TYPES = {
     'pick_and_place': 'put',
@@ -78,8 +61,6 @@ ENV_TO_EXAMPLE_MAPPING = {
     "put"   : put_v4_base,
     "puttwo"    : puttwo_v4_base
 }
-
-from playground_alfworld_react_prompt_utils import return_react_examples
 
 def get_env_type(env_name):
     """ Extracts which type of env it is"""
@@ -114,6 +95,12 @@ def process_action(action, track_is_illegal=False):
         action = actions[1].split('"')[0]
         print(f"Extracted Action:{action}")
 
+    #TODO: this is for AGENTBENCH, need to refactor.
+    elif "ACTION:" in action:
+        actions = action.split('ACTION:')
+        action = actions[1]
+        print(f"Extracted Action:{action}")
+
     else:
         illegal_action = True
 
@@ -142,6 +129,14 @@ def process_ob(ob, track_nothing_happens=False):
     else:
         return ob
 
+
+
+
+
+
+#################################################################
+#PROMPT RELATED
+#################################################################
 
 OPENING_MARK="<<<"
 OPENING_MARK=""
@@ -189,7 +184,7 @@ INSTRUCTIONS=""
 BASE_PROMPT1 = "Interact with a household to solve a task. Here are two examples."
 BASE_PROMPT2 = "You will interact with the environment to solve the given task."
 
-def generate_prompt_from_example(examples, return_raw_prompt = False, number_of_examples=1):
+def generate_prompt_from_example(examples, return_raw_prompt = False, number_of_examples=1, base_prompt = BASE_PROMPT1, instructions = INSTRUCTIONS, hints = HINTS):
     """ Generates prompt """
     if number_of_examples >1:
         s_string="s"
@@ -199,21 +194,22 @@ def generate_prompt_from_example(examples, return_raw_prompt = False, number_of_
         is_are = "is"
     number_of_examples_string = str(number_of_examples)
 
-
+    #########################################
+    #
+    #This is the part for the raw prompt.
+    #
+    #########################################
     raw_prompt = f"""
-{BASE_PROMPT1}
-{INSTRUCTIONS}
+{base_prompt}
+{instructions}
 
 Here {is_are} {number_of_examples_string} example{s_string}:
 {OPENING_MARK}
 {examples}
 {CLOSING_MARK}
 
-{HINTS}
-
+{hints}
 """
-# This is the current Interaction:
-
     prompt = [{
                 "role" : "system",
                 "content" : raw_prompt
@@ -237,6 +233,13 @@ Here {is_are} {number_of_examples_string} example{s_string}:
 # """
 
 
+
+
+
+
+#################################################################
+#Logging Related
+#################################################################
 def write_line_to_main_log_csv(name, data):
     """Writes one line of output into the main CSV"""
     with open(name, 'a', newline='') as myfile:
@@ -263,14 +266,212 @@ def get_empty_dict_from_csv_header(header):
 
 
 
-REACT_PROMPT = False
-if __name__=="__main__":
-    # Global Variables 
-    # Config File as input (@Marek Idea)
 
-    # REACT_PROMPT = True #untick for our prompts
+
+
+
+#################################################################
+#AGENT Related
+#################################################################
+AGENT_MODEL_MAPPING = {
+    "Anthropic" : ["claude-2.1"],
+    "Cohere" : ["command","command-nightly"],
+    "OpenAI" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"],
+    "AnthropicText" : ["claude-2.1"],
+    "CohereText" : ["command","command-nightly"],
+    "OpenAIText" : ["davinci-002", "gpt-3.5-turbo-instruct"],
+    "CohereTextChat" : ["command","command-nightly"],
+    "OpenAITextChat" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"]
+}
+
+def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
+    """ Returns Agent, Model"""
+    #Standard CHAT Models
+    if agent_type == "Anthropic":
+        model = "claude-2.1"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = AnthropicAgent(temperature=temperature, model=model) 
+
+    elif agent_type == "Cohere":
+        # model = "command"
+        model = "command-nightly"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = CohereAgent(temperature=temperature, model=model)
+
+    elif agent_type=="OpenAI":
+        model = "gpt-3.5-turbo-0125"
+        # model = "gpt-4-turbo-preview"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = OpenAIAgent(temperature=temperature, model=model)
+ 
+
+
+    #TEXT BASED MODELs
+    elif agent_type =="AnthropicText":
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        # model = "claude-1.2"
+        model = "claude-2.1"
+        agent = AnthropicTextAgent(temperature=temperature, model=model) 
+
+    elif agent_type=="CohereText":
+        # model = "command"
+        model = "command-nightly"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = CohereTextAgent(temperature=temperature, model=model)
+
+    elif agent_type=="OpenAIText":
+        model = "davinci-002"
+        model = "gpt-3.5-turbo-instruct"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = OpenAITextAgent(temperature=temperature, model=model)     
+
+
+
+    #CHAT MODELS used as TEXT MODELs
+    elif agent_type=="CohereTextChat":
+        # model = "command"
+        model = "command-nightly"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = CohereTextChatAgent(temperature=temperature, model=model)
+
+
+    elif agent_type=="OpenAITextChat":
+        model = "gpt-3.5-turbo-0125"
+        # model = "gpt-4-turbo-preview"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = OpenAITextChatAgent(temperature=temperature, model=model) 
+
+
+    return agent, model
+
+
+
+
+
+
+
+#################################################################
+#MAIN LOOP
+#################################################################
+
+
+if __name__=="__main__":
+
+
+
+    
+    ####################################################
+    # BASIC CONFIGURATION
+    ####################################################
     BASE_FOLDER = "game_logs"
-    CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_new_1"
+    BASE_EVAL_NAME = "alfworld_eval"
+
+    #CHANGE THIS ONE
+    CURRENT_TRIAL_NAME = "v2_test_1"
+
+    MAIN_CSV_FILE_NAME = "alfworld_results"
+
+
+
+    ###############################
+    # Basic Init
+    start_env_idx=0
+    num_envs = 1
+
+
+    agent_type = "OpenAITextChat"
+    model = "gpt-3.5-turbo-0125"
+    temperature = 0.0
+
+    # AGENT_MODEL_MAPPING = {
+    #     "Anthropic" : ["claude-2.1"],
+    #     "Cohere" : ["command","command-nightly"],
+    #     "OpenAI" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"],
+    #     "AnthropicText" : ["claude-2.1"],
+    #     "CohereText" : ["command","command-nightly"],
+    #     "OpenAIText" : ["davinci-002", "gpt-3.5-turbo-instruct"],
+    #     "CohereTextChat" : ["command","command-nightly"],
+    #     "OpenAITextChat" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"]
+    # }
+
+
+    ###############################
+    # Which METHOD to run (REACT, AGENTBENCH, OURS)
+    REACT_PROMPT = False
+    AGENTBENCH_PROMPT = False
+
+    #untick for our prompts
+    # REACT_PROMPT = True 
+    # AGENTBENCH_PROMPT = True
+
+    NOT_OUR_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT
+
+    ##############################
+    # This applies to our prompts
+    keys_to_remove = [
+        "prompt",
+        # "goal", 
+        # "plan", 
+        # "places_visited", 
+        # "current_inventory", 
+        # "current_location", 
+        "current_objective",
+        # "action"
+    ]
+    keys_to_remove = [
+        "prompt",
+        # "goal", 
+        # "plan", 
+        "places_visited", 
+        "current_inventory", 
+        "current_location", 
+        "current_objective",
+        # "action"
+    ]
+
+
+    #TODO for the future
+    additional_prompt_annotation = ""
+
+
+    ####################################################
+    # OTHER IN-BUILT CONFIG
+    ####################################################
+    CREATE_NEW_LOG_CSV=False
+
+    CURRENT_TRIAL_FOLDER = BASE_EVAL_NAME+"_"+CURRENT_TRIAL_NAME
     SAVE_FOLDER = os.path.join(BASE_FOLDER,CURRENT_TRIAL_FOLDER)
     CSV_HEADER = [
         "env_idx", 
@@ -292,54 +493,19 @@ if __name__=="__main__":
         "error", 
         "keys_removed", 
         "trace_file", 
-        "prompt_file"
+        "prompt_file",
+        "early_stop",
+        "additional_prompt_annotation"
     ]
-    MAIN_CSV_FILE_NAME = "alfworld_results"
-    CREATE_NEW_LOG_CSV=False
-
-    # Basic Init
-    start_env_idx=0
-    num_envs = 10
-
-    agent_index = 5
-    temperature = 0.0
-
-    if agent_index == 0:
-        agent_type = "Anthropic"
-        # model = "claude-1.2"
-        model = "claude-2.1"
-        agent = AnthropicAgent(temperature=temperature, model=model) 
-    elif agent_index == 1:
-        agent_type = "Cohere"
-        # model = "command"
-        model = "command-nightly"
-        agent = CohereAgent(temperature=temperature, model=model)
-    elif agent_index==2:
-        agent_type = "OpenAI"
-        model = "gpt-3.5-turbo-0125"
-        # model = "gpt-4-turbo-preview"
-        agent = OpenAIAgent(temperature=temperature, model=model)
-    
-    elif agent_index ==3:
-        agent_type = "AnthropicText"
-        # model = "claude-1.2"
-        model = "claude-2.1"
-        agent = AnthropicTextAgent(temperature=temperature, model=model) 
-    elif agent_index==4:
-        agent_type = "CohereText"
-        model = "command"
-        model = "command-nightly"
-        agent = CohereTextAgent(temperature=temperature, model=model)
-    elif agent_index==5:
-        agent_type = "OpenAIText"
-        model = "davinci-002"
-        model = "gpt-3.5-turbo-instruct"
-        agent = OpenAITextAgent(temperature=temperature, model=model)     
 
 
+
+    #######################################################
+    # LOGGING(CSV) Related
+    #######################################################
     #CSV FILE Related Things
     MAIN_CSV_FILEPATH = os.path.join(SAVE_FOLDER,MAIN_CSV_FILE_NAME+".csv")
-    
+
     # Writing the Header 
     if not os.path.exists(SAVE_FOLDER):
         os.mkdir(SAVE_FOLDER)
@@ -355,8 +521,20 @@ if __name__=="__main__":
             write_line_to_main_log_csv(MAIN_CSV_FILEPATH, CSV_HEADER)
 
 
+
+
+    #######################################################
+    # AGENT Related
+    #######################################################
+    agent, model = get_agent_and_model(agent_type=agent_type, temperature=temperature, proposed_model=model)
     agent.update_save_path(SAVE_FOLDER)
 
+
+
+
+    #######################################################
+    # ENV Related
+    #######################################################
     # Env Init
     with open('playgrounds/base_config.yaml') as reader:
         config = yaml.safe_load(reader)
@@ -373,11 +551,19 @@ if __name__=="__main__":
         # env_type = get_env_type(name)
         # print(name)
         # print(env_type)
-    
+
+
+
+    #######################################################
+    # RUNNING The Trial
+    #######################################################  
     # Running Trial
     for env_idx in range(num_envs):
-        logging_dict = get_empty_dict_from_csv_header(CSV_HEADER)
+       
 
+        #######################################################
+        # ENV Init
+        ####################################################### 
         # Get new environment
         observation, info = env.reset()
 
@@ -389,60 +575,69 @@ if __name__=="__main__":
         #     continue
         print(f"Starting Env with Index: {env_idx+start_env_idx} of type: {env_type}")
 
-        # Generate correct prompt for this environment (basically pick the right example).  
-        keys_to_remove = [
-            "prompt",
-            # "goal", 
-            # "plan", 
-            # "places_visited", 
-            # "current_inventory", 
-            # "current_location", 
-            "current_objective",
-            # "action"
-        ]
-        # keys_to_remove = [
-        #     "prompt",
-        #     # "goal", 
-        #     # "plan", 
-        #     "places_visited", 
-        #     "current_inventory", 
-        #     "current_location", 
-        #     "current_objective",
-        #     # "action"
-        # ]
+        print(observation)
+        observation += "\n"
+        # print(info)
+        # print(name)
 
-        keys_to_remove_string = "+".join(keys_to_remove)
-        # prompt_keys_for_reference = ["prompt", "goal", "plan", "places_visited", "current_inventory", "current_location", "current_objective", "action"]
-    
+
+
+
+        #######################################################
+        # PROMPT Related
+        #######################################################     
+        # Generate correct prompt for this environment (basically pick the right example).  
+        new_base_prompt = ""
 
         #REACT PROMPT or OUR PROMPT
         if REACT_PROMPT:
             num_examples = 2
             prompt_example = return_react_examples(env_type, num=num_examples)
             keys_to_remove_string = f"react-{num_examples}"
-        else:
+
+        elif AGENTBENCH_PROMPT:
+            num_examples = 1
+            prompt_example, new_base_prompt = return_agentbench_prompts(env_type, return_base=True)
+            keys_to_remove_string = "agentbench-1"
+        
+        else: #OURS
             num_examples = 1
             base_prompt = remove_keys(ENV_TO_EXAMPLE_MAPPING[env_type], keys=keys_to_remove)
             prompt_example = generate_string_prompt(base_prompt)
+            keys_to_remove_string = "+".join(keys_to_remove)
 
-        # prompt_example = clean_state_goal_plan_v4i_1
 
-        prompt = generate_prompt_from_example(prompt_example, number_of_examples=num_examples)
+        prompt = generate_prompt_from_example(prompt_example, number_of_examples=num_examples, base_prompt=new_base_prompt)
         agent.set_base_prompt_and_reset(prompt)
 
+        # ###
         # Save Raw Prompt
         now = datetime.now()
         prompt_save_path = os.path.join(SAVE_FOLDER, "prompt_"+now.strftime("%d_%m_%Y_%H_%M_%S")+".txt")
         
 
-        raw_prompt = generate_prompt_from_example(prompt_example, return_raw_prompt=True, number_of_examples=num_examples)
+        raw_prompt = generate_prompt_from_example(prompt_example, return_raw_prompt=True, number_of_examples=num_examples, base_prompt=new_base_prompt)
         save_prompt_file(prompt_save_path, raw_prompt)
 
 
-        print(observation)
-        observation += "\n"
-        # print(info)
-        # print(name)
+
+
+        # ####################################
+        # SETTING the STOP Condition for AGENT
+        if NOT_OUR_PROMPTS:
+            agent.stop_sequences = ["\n"]
+            OUR_PROMPT_ADD_BRACKET_CONDITION=False
+        else:
+            agent.stop_sequences = ["}\n"]
+            OUR_PROMPT_ADD_BRACKET_CONDITION=True
+
+
+
+
+        #######################################################
+        # Logging Init & Initial values
+        ####################################################### 
+        logging_dict = get_empty_dict_from_csv_header(CSV_HEADER)
 
         logging_dict["env_idx"]  = env_idx+start_env_idx
         logging_dict["env_type"] = env_type
@@ -452,11 +647,27 @@ if __name__=="__main__":
 
 
 
+
+        #######################################################
+        # GAME VARIABLES AND SETTINGS
+        #######################################################   
+        # FIXED VARIABLES
+        LIMIT = 60
+        INPUT_TOKEN = ""
+        OUTPUT_TOKEN = ""
+
+        CAPITAL = [chr(x+65) for x in range(26)]
+        LOWER = [chr(x+97) for x in range(26)]
+
+        LIMIT_CURRENT_REPETITIONS = 5 #after 5 repetitions stop current run.
+
+
+
         # To be reset at each run.
         game_running_flag = True
         counter = 0
-        LIMIT = 60
         error = ""
+        early_stop = ""
         success = False
         done = False
         total_reward = 0
@@ -471,19 +682,14 @@ if __name__=="__main__":
         num_json_and_text = 0
 
         prev_action = ""
+        num_current_repetitions = 0
 
-        INPUT_TOKEN = ""
-        OUTPUT_TOKEN = ""
 
-        CAPITAL = [chr(x+65) for x in range(26)]
-        LOWER = [chr(x+97) for x in range(26)]
 
-        if REACT_PROMPT:
-            agent.stop_sequences = ["\n"]
-            OUR_PROMPT_ADD_BRACKET_CONDITION=False
-        else:
-            agent.stop_sequences = ["}\n"]
-            OUR_PROMPT_ADD_BRACKET_CONDITION=True
+
+        #######################################################
+        # Main Game Loop
+        ####################################################### 
         try:
             while game_running_flag:
                 is_illegal_action = False
@@ -491,7 +697,9 @@ if __name__=="__main__":
 
                 # action = input(">")
                 action = agent.act(f"{INPUT_TOKEN}"+observation+f"{OUTPUT_TOKEN}")
-                
+                # print(action)
+                # input(">")
+
                 #Modify Actions
                 if OUR_PROMPT_ADD_BRACKET_CONDITION and (not action.endswith("}")):
                     agent.pop_from_history()
@@ -513,7 +721,8 @@ if __name__=="__main__":
 
                 if action.startswith(">"):
                     action = action.replace(">","")
-
+                
+                # TODO: This is ReAct
                 if action.startswith("think:"):
                     observation = "OK.\n"
                     print("<> OBSERVATION <>:"+observation)
@@ -542,15 +751,25 @@ if __name__=="__main__":
 
 
                 action, is_illegal_action = process_action(action, track_is_illegal=True)
+                # TODO: This is Agentbench
+                if "THOUGHT:" in action:
+                    observation = "\n"
+                    continue
+
                 if is_illegal_action:
                     num_illegal_actions += 1
 
                 if action == prev_action:
                     num_repetitions += 1
-                    prev_action = action
+                    num_current_repetitions +=1
+                else:
+                    num_current_repetitions =0
+
+                prev_action = action
 
                 observation, reward, done, info = env.step([action])
                 total_reward += reward[0]
+
 
                 observation, is_nothing_happens = process_ob(observation[0], track_nothing_happens=True)
                 if is_nothing_happens:
@@ -575,8 +794,13 @@ if __name__=="__main__":
 
                 counter += 1
                 if counter == LIMIT:
-                    error = "ENV_ERROR: Reached Step Limit"
+                    early_stop = "ENV_ERROR: Reached Step Limit"
                     break
+
+                if num_current_repetitions == LIMIT_CURRENT_REPETITIONS:
+                    early_stop = "ENV_ERROR: Too many ({LIMIT_CURRENT_REPETITIONS}) consecutive repetitions."
+                    break
+
         except cohere.error.CohereAPIError as e:
             print("COHERE API ERROR")
             error = str(e)
@@ -604,9 +828,11 @@ if __name__=="__main__":
             logging_dict["done"] = done
             logging_dict["total_reward"] = total_reward
             logging_dict["error"] = error
+            logging_dict["early_stop"] = early_stop
             logging_dict["keys_removed"] = keys_to_remove_string
             logging_dict["trace_file"] = agent.file_name
             logging_dict["prompt_file"] = prompt_save_path
+            logging_dict["additional_prompt_annotation"] = additional_prompt_annotation
             write_line_to_main_log_csv(MAIN_CSV_FILEPATH, logging_dict)
             agent.save()
 

@@ -5,6 +5,7 @@ import csv
 import copy
 
 
+
 CSV_HEADER = [
         "env_idx", 
         "env_type", 
@@ -12,8 +13,8 @@ CSV_HEADER = [
         "model", 
         "temperature", 
         "success",
-        "done", #additional
-        "total_reward", #additional
+        "done",
+        "total_reward",
         "num_of_steps", 
         "num_illegal_actions", 
         "num_nothing_happens", 
@@ -25,8 +26,10 @@ CSV_HEADER = [
         "error", 
         "keys_removed", 
         "trace_file", 
-        "prompt_file"
-    ]
+        "prompt_file",
+        "early_stop",
+        "additional_prompt_annotation"
+]
 
 
 IMPORTANT_STATISTICS = [
@@ -63,7 +66,8 @@ IMPORTANT_STATISTICS = [
     # "num_no_json",
     # "num_json_and_text",
     "error", 
-    "keys_removed"
+    "keys_removed",
+    "early_stop"
 ]
 
 def modify_text_prompt(keys_removed):
@@ -105,7 +109,8 @@ def extract_correct_stats_from_string_row(tr, im):
         tr[im["error"]] = 1 if tr[im["error"]] else 0
     if "keys_removed" in IMPORTANT_STATISTICS: 
         tr[im["keys_removed"]] = modify_text_prompt(tr[im["keys_removed"]])
-    
+    if "early_stop" in IMPORTANT_STATISTICS: 
+        tr[im["early_stop"]] = 1 if tr[im["early_stop"]] else 0
     return tr
 
 def accumulate_two_rows(tr, pr, im):
@@ -126,7 +131,7 @@ def accumulate_two_rows(tr, pr, im):
     # tr[im["error"]] += pr[im["error"]]
 
     for key in IMPORTANT_STATISTICS:
-        if not key in ["keys_removed","model", "temperature"]:
+        if not key in ["keys_removed","model","temperature"]:
             tr[im[key]] += pr[im[key]]
 
     # tr[im["keys_removed"]]
@@ -155,14 +160,29 @@ if __name__=="__main__":
     CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_8" #Run using our prompts with text model using Cohere (for now)
     CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_react_9" #Run using our prompts with text model using Cohere (for now)
     CURRENT_TRIAL_FOLDER = "alfworld_eval_proper_10_new_1" #Run using our prompts with text model using Cohere (for now)
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_clean_v1_test" #Run using our prompts with text model using Cohere (for now)
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_clean_v1_test_react" #Run using our prompts with text model using Cohere (for now)
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_clean_v1_test_agentbench_1" #Run using our prompts with text model using Cohere (for now)
+    CURRENT_TRIAL_FOLDER = "alfworld_eval_clean_v1_test_ours"
+
+    # file_signature = "main_clean_react"
+    TRIAL_BASE_NAME = "alfworld_eval_"
+    file_signature = CURRENT_TRIAL_FOLDER.split(TRIAL_BASE_NAME)[1]
+
+
+    CURRENT_TRIAL_NAME = "v2_test_1"
+    file_signature = CURRENT_TRIAL_NAME
+
+    if CURRENT_TRIAL_NAME:
+        CURRENT_TRIAL_FOLDER = TRIAL_BASE_NAME+CURRENT_TRIAL_NAME
 
 
     #Outfile related things:
     OUTFOLDER = "results"
-    OUTFILE_NAME =  "test_main_new.csv"
-    OUTFILE2_NAME = "test_table_main_new.txt"
+    OUTFILE_NAME =  f"test_{file_signature}.csv"
+    OUTFILE2_NAME = f"test_table_{file_signature}.txt"
     APPEND = False
-    APPEND = True
+    # APPEND = True
 
 
 
