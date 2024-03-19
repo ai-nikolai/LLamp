@@ -14,3 +14,4 @@ offload*
 *prompts*
 .DS_Store
 results/test*
+*.ipynb_checkpoints*
