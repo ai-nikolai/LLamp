@@ -53,7 +53,9 @@ IMPORTANT_STATISTICS = [
 
 IMPORTANT_STATISTICS = [
     "model",
-    "temperature", 
+    "temperature",
+    # "env_type",  
+    # "env_idx", 
     "success", 
     "done", #additional
     "total_reward", #additional
@@ -131,7 +133,7 @@ def accumulate_two_rows(tr, pr, im):
     # tr[im["error"]] += pr[im["error"]]
 
     for key in IMPORTANT_STATISTICS:
-        if not key in ["keys_removed","model","temperature"]:
+        if not key in ["keys_removed","model","temperature", "env_type"]:
             tr[im[key]] += pr[im[key]]
 
     # tr[im["keys_removed"]]
@@ -213,7 +215,6 @@ if __name__=="__main__":
         
         this_rows_model = row[index_mapping_row["model"]]
         this_rows_prompt = row[index_mapping_row["keys_removed"]]
-
 
         temp_results = [row[val] for _, val in index_mapping_row.items()]
         # print(idx)

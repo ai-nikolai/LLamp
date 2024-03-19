@@ -459,8 +459,8 @@ if __name__=="__main__":
 
     ###############################
     # Basic Init
-    start_env_idx=0
-    num_envs = 20
+    start_env_idx=2 #0
+    num_envs = 18 #20
 
 
     agent_type = "OpenAITextChat"
@@ -485,8 +485,8 @@ if __name__=="__main__":
     AGENTBENCH_PROMPT = False
 
     #untick for our prompts
-    # REACT_PROMPT = True 
-    AGENTBENCH_PROMPT = True
+    REACT_PROMPT = True 
+    # AGENTBENCH_PROMPT = True
 
     NOT_OUR_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT
 

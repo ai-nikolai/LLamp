@@ -68,3 +68,13 @@ Available commands:
   unlock ... with ...: unlock a door or a container with a key
 ```
 
+## Running jupyter notebooks in your own environment:
+1. [https://medium.com/@WamiqRaza/how-to-create-virtual-environment-jupyter-kernel-python-6836b50f4bf4]
+```bash
+pip install ipython
+pip install ipykernel
+
+ipython kernel install --user --name=myenv
+
+python -m ipykernel install --user --name=myenv
+```
