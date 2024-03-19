@@ -26,10 +26,12 @@ clean_state_goal_plan_v4h_1, \
 clean_state_goal_plan_v4i_1
 
 from alfworld_prompts_utils_v4_clean_base import clean_v4_base
+from alfworld_prompts_utils_v4_examine_base import examine_v4_base
+
 
 from playground_alfworld_ablation_generator import generate_string_prompt
 
-cohere = cohere_model()
+# cohere = cohere_model()
 openai = openai_model(model="gpt-4-turbo-preview")
 
 
@@ -89,24 +91,26 @@ if __name__=="__main__":
     # file_name = "alfworld_prompts_utils_v4_{env_type}.py"
 
 
-    react_prompt_file = "playgrounds/alfworld_react_prompts_original.json"
+    react_prompt_file = "playgrounds/alfworld_react_prompts_original_v3.json"
     with open(react_prompt_file, "r") as file:
         original_prompts = json.load(file)
 
     env_type = types_of_envs[5]
+    env_type = "clean"
 
-    prompt_trace = original_prompts["act_clean_1"]
+    prompt_trace = original_prompts["act_examine_1"]
     target_trace = original_prompts[f"act_{env_type}_1"]
 
 
 
     # example_prompt = clean_state_goal_plan_v4i_1
-    # example_prompt = generate_string_prompt(clean_v4_base)
+    # example_prompt = generate_string_prompt(examine_v4_base)
     # result = generate_prompt(example_prompt, target_trace, prompt_trace)
 
-    
+    print(example_prompt)
+    print(prompt_trace)
     print(target_trace)  
-    # print(result)
+    print(result)
 
 
     # with open(file_path, "w") as file:

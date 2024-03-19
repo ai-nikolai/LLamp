@@ -170,7 +170,7 @@ if __name__=="__main__":
     file_signature = CURRENT_TRIAL_FOLDER.split(TRIAL_BASE_NAME)[1]
 
 
-    CURRENT_TRIAL_NAME = "v2_eval_20"
+    CURRENT_TRIAL_NAME = "v2_eval_20_3"
     file_signature = CURRENT_TRIAL_NAME
 
     if CURRENT_TRIAL_NAME:

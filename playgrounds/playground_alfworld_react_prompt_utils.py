@@ -9,10 +9,15 @@ with open(react_prompt_file, "r") as file:
 
 
 
-agentbench_prompt_file_name = "agentbench_prompts.json"
+agentbench_prompt_file_name = "agentbench_prompts_v1_plan_first.json"
 agentbench_prompt_file = os.path.join("playgrounds",agentbench_prompt_file_name)
 with open(agentbench_prompt_file, "r") as file:
-    original_agentbench_prompts = json.load(file)
+    original_agentbench_prompts_v1 = json.load(file)
+
+agentbench_prompt_file_name = "agentbench_prompts_v2_react.json"
+agentbench_prompt_file = os.path.join("playgrounds",agentbench_prompt_file_name)
+with open(agentbench_prompt_file, "r") as file:
+    original_agentbench_prompts_v2 = json.load(file)
 
 
 def return_react_examples(env_type, num=2):
@@ -30,10 +35,16 @@ def return_react_examples(env_type, num=2):
     return target_trace
 
 
-def return_agentbench_prompts(env_type, return_base=True):
+def return_agentbench_prompts(env_type, return_base=True, version=2):
     """ Returns Agentbench Prompt"""
+    if version == 1:
+        original_agentbench_prompts = original_agentbench_prompts_v1
+    elif version == 2:
+        original_agentbench_prompts = original_agentbench_prompts_v2
+    else:
+        raise Exception("Wrong version number for Agentbench prompt")
+    
     prompt_example = "".join(original_agentbench_prompts[env_type])
-
     if return_base:
         base_prompt = original_agentbench_prompts["base_prompt"]
         return prompt_example, base_prompt
@@ -42,5 +53,5 @@ def return_agentbench_prompts(env_type, return_base=True):
 
 if __name__=="__main__":
     env_type = "clean"
-    prompt_trace = return_react_example(env_type)
+    prompt_trace = return_react_examples(env_type,2)
     print(prompt_trace)

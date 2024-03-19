@@ -181,10 +181,10 @@ This is the list of all valid actions that you can use:
 INSTRUCTIONS=""
 
 
-BASE_PROMPT1 = "Interact with a household to solve a task. Here are two examples."
+BASE_PROMPT1 = "Interact with a household to solve a task."
 BASE_PROMPT2 = "You will interact with the environment to solve the given task."
 
-def generate_prompt_from_example(examples, return_raw_prompt = False, number_of_examples=1, base_prompt = BASE_PROMPT1, instructions = INSTRUCTIONS, hints = HINTS):
+def generate_prompt_from_example(examples, return_raw_prompt = False, number_of_examples=1, base_prompt = "", instructions = "", hints = ""):
     """ Generates prompt """
     if number_of_examples >1:
         s_string="s"
@@ -193,6 +193,18 @@ def generate_prompt_from_example(examples, return_raw_prompt = False, number_of_
         s_string=""
         is_are = "is"
     number_of_examples_string = str(number_of_examples)
+
+    #in case no alternative base_prompt is provided.
+    if not base_prompt:
+        base_prompt = BASE_PROMPT1
+
+    #in case no alternative instructions is provided.
+    if not instructions:
+        instructions = INSTRUCTIONS
+
+    #in case no alternative hints is provided.
+    if not hints:
+        hints = HINTS
 
     #########################################
     #
@@ -379,7 +391,7 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 
 
 
-def get_settings_string(react_prompt, agentbench_prompt, agent_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove):
+def get_settings_string(react_prompt, agentbench_prompt, agent_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove, not_ours_param):
     """ Creates a string to print to the user the current settings. """
     not_ours = react_prompt or agentbench_prompt
     if not_ours:
@@ -402,7 +414,11 @@ def get_settings_string(react_prompt, agentbench_prompt, agent_type, model, temp
     display_text += f"   -Current Trial Name: {current_trial_name}\n"
     if not not_ours:
         display_text += f"   -Keys that will be removed: {keys_to_remove}\n"
-    
+    if react_prompt:
+        display_text += f"   -Number of React Examples: {not_ours_param}\n"  
+    if agentbench_prompt:
+        display_text += f"   -Prompt Version AgentBench: {not_ours_param}\n"  
+
     display_text += "Do you want to continue? Press 'y' to continue."
 
     return display_text
@@ -439,7 +455,7 @@ if __name__=="__main__":
 
 
     #CHANGE THIS ONE
-    CURRENT_TRIAL_NAME = "v2_eval_20"
+    CURRENT_TRIAL_NAME = "v2_eval_20_3"
 
     ###############################
     # Basic Init
@@ -470,10 +486,13 @@ if __name__=="__main__":
 
     #untick for our prompts
     # REACT_PROMPT = True 
-    # AGENTBENCH_PROMPT = True
+    AGENTBENCH_PROMPT = True
 
     NOT_OUR_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT
 
+    num_examples_react_or_prompt_version_agentbench = 2
+    NOT_OURS_PARAM = num_examples_react_or_prompt_version_agentbench
+    
     ##############################
     # This applies to our prompts
     keys_to_remove = [
@@ -509,7 +528,8 @@ if __name__=="__main__":
             num_envs=num_envs, 
             starting_env=start_env_idx, 
             current_trial_name=CURRENT_TRIAL_NAME, 
-            keys_to_remove=keys_to_remove_string)
+            keys_to_remove=keys_to_remove_string,
+            not_ours_param = NOT_OURS_PARAM)
     print(settings_string)
     user_input = input(">")
     if not (user_input=="y"):
@@ -646,14 +666,14 @@ if __name__=="__main__":
 
         #REACT PROMPT or OUR PROMPT
         if REACT_PROMPT:
-            num_examples = 2
+            num_examples = NOT_OURS_PARAM
             prompt_example = return_react_examples(env_type, num=num_examples)
             keys_to_remove_string = f"react-{num_examples}"
 
         elif AGENTBENCH_PROMPT:
             num_examples = 1
-            prompt_example, new_base_prompt = return_agentbench_prompts(env_type, return_base=True)
-            keys_to_remove_string = "agentbench-1"
+            prompt_example, new_base_prompt = return_agentbench_prompts(env_type, return_base=True, version=NOT_OURS_PARAM)
+            keys_to_remove_string = f"agentbench-v{NOT_OURS_PARAM}"
         
         else: #OURS
             num_examples = 1
