@@ -488,7 +488,7 @@ if __name__=="__main__":
     # Which METHOD to run (REACT, AGENTBENCH, OURS)
     REACT_PROMPT = False
     AGENTBENCH_PROMPT = False
-    REACT_JSON_PROMPT = False
+    JSON_REACT_PROMPT = False
 
     #untick for our prompts
     # REACT_PROMPT = True 
