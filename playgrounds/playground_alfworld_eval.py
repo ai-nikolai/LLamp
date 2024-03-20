@@ -28,7 +28,7 @@ import json
 
 from playground_alfworld_ablation_generator import generate_string_prompt, remove_keys
 
-from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts
+from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts, return_json_react_examples
 
 
 from alfworld_prompts_utils_v4_clean_base import clean_v4_base
@@ -391,14 +391,16 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 
 
 
-def get_settings_string(react_prompt, agentbench_prompt, agent_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove, not_ours_param):
+def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agent_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove, not_ours_param):
     """ Creates a string to print to the user the current settings. """
-    not_ours = react_prompt or agentbench_prompt
+    not_ours = react_prompt or agentbench_prompt or json_react_prompt
     if not_ours:
         if react_prompt:
             which_prompt = "ReAct"
         elif agentbench_prompt:
             which_prompt = "Agentbench"
+        elif json_react_prompt:
+            which_prompt = "JsonReAct"
 
     else:
         which_prompt = "Ours"
@@ -412,13 +414,16 @@ def get_settings_string(react_prompt, agentbench_prompt, agent_type, model, temp
     display_text += f"   -Starting env: {starting_env}\n"
     display_text += f"   -Num of envs: {num_envs}\n"
     display_text += f"   -Current Trial Name: {current_trial_name}\n"
+    
     if not not_ours:
         display_text += f"   -Keys that will be removed: {keys_to_remove}\n"
     if react_prompt:
         display_text += f"   -Number of React Examples: {not_ours_param}\n"  
     if agentbench_prompt:
         display_text += f"   -Prompt Version AgentBench: {not_ours_param}\n"  
-
+    if json_react_prompt:
+        display_text += f"   -Number JsonReAct Examples: {not_ours_param}\n" 
+    
     display_text += "Do you want to continue? Press 'y' to continue."
 
     return display_text
@@ -455,12 +460,12 @@ if __name__=="__main__":
 
 
     #CHANGE THIS ONE
-    CURRENT_TRIAL_NAME = "v2_eval_20_3"
+    CURRENT_TRIAL_NAME = "v2_eval_20-40"
 
     ###############################
     # Basic Init
-    start_env_idx=0
-    num_envs = 20
+    start_env_idx=20
+    num_envs = 40
 
 
     agent_type = "OpenAITextChat"
@@ -483,12 +488,15 @@ if __name__=="__main__":
     # Which METHOD to run (REACT, AGENTBENCH, OURS)
     REACT_PROMPT = False
     AGENTBENCH_PROMPT = False
+    REACT_JSON_PROMPT = False
 
     #untick for our prompts
     # REACT_PROMPT = True 
     # AGENTBENCH_PROMPT = True
+    # JSON_REACT_PROMPT = True
 
-    NOT_OUR_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT
+    
+    NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT
 
     num_examples_react_or_prompt_version_agentbench = 2
     NOT_OURS_PARAM = num_examples_react_or_prompt_version_agentbench
@@ -521,7 +529,8 @@ if __name__=="__main__":
     keys_to_remove_string = "+".join(keys_to_remove)
     settings_string = get_settings_string(
             react_prompt=REACT_PROMPT, 
-            agentbench_prompt=AGENTBENCH_PROMPT, 
+            agentbench_prompt=AGENTBENCH_PROMPT,
+            json_react_prompt = JSON_REACT_PROMPT,
             agent_type=agent_type, 
             model=model, 
             temperature=temperature, 
@@ -675,6 +684,11 @@ if __name__=="__main__":
             prompt_example, new_base_prompt = return_agentbench_prompts(env_type, return_base=True, version=NOT_OURS_PARAM)
             keys_to_remove_string = f"agentbench-v{NOT_OURS_PARAM}"
         
+        elif JSON_REACT_PROMPT:
+            num_examples = NOT_OURS_PARAM
+            prompt_example = return_json_react_examples(env_type, num=num_examples)
+            keys_to_remove_string = f"jsonreact-{num_examples}"
+
         else: #OURS
             num_examples = 1
             base_prompt = remove_keys(ENV_TO_EXAMPLE_MAPPING[env_type], keys=keys_to_remove)
@@ -699,7 +713,7 @@ if __name__=="__main__":
 
         # ####################################
         # SETTING the STOP Condition for AGENT
-        if NOT_OUR_PROMPTS:
+        if NOT_JSON_PROMPTS:
             agent.stop_sequences = ["\n"]
             OUR_PROMPT_ADD_BRACKET_CONDITION=False
         else:
@@ -744,7 +758,7 @@ if __name__=="__main__":
         error = ""
         early_stop = ""
         success = False
-        done = False
+        logging_done = False
         total_reward = 0
 
         num_illegal_actions = 0
@@ -798,7 +812,7 @@ if __name__=="__main__":
                     action = action.replace(">","")
                 
                 # TODO: This is ReAct
-                if action.startswith("think:"):
+                if action.startswith("think:") or '"think": "' in action:
                     observation = "OK.\n"
                     print("<> OBSERVATION <>:"+observation)
                     continue
@@ -855,18 +869,19 @@ if __name__=="__main__":
                 print(done[0])
                 print(reward[0])
 
-                if done[0]:
-                    done = True
-                    if info["won"][0]: #done[0] is actually false
-                        success = True  
+                if done[0] or info["won"][0]:
+                    if info["won"][0]:
+                        success=True
+                    else:
+                        success=False
+
+                    if done[0]:
+                        logging_done=True 
+                    else:
+                        logging_done=False
+
                     break
                     
-                if info["won"][0]: #done[0] is actually false
-                    success = True
-                    if done[0]:
-                        done=True
-                    break
-
                 counter += 1
                 if counter == LIMIT:
                     early_stop = "ENV_ERROR: Reached Step Limit"
@@ -901,7 +916,7 @@ if __name__=="__main__":
             logging_dict["num_json_and_text"] = num_json_and_text
             logging_dict["num_of_steps"] = counter
             logging_dict["success"] = success
-            logging_dict["done"] = done
+            logging_dict["done"] = logging_done
             logging_dict["total_reward"] = total_reward
             logging_dict["error"] = error
             logging_dict["early_stop"] = early_stop

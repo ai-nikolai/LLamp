@@ -35,6 +35,54 @@ def return_react_examples(env_type, num=2):
     return target_trace
 
 
+def return_json_react_examples(env_type, num=1):
+    """
+    Given the env type return a react example.
+
+    TODO: Refactor
+
+    """
+    target_trace = ""
+
+    string_trace = original_react_prompts[f"react_{env_type}_1"]
+
+    commands = string_trace.split(">")
+
+    for idx,command in enumerate(commands[1:]):
+        if "think:" in command:
+            tmp = command.split("\n")[0].split("think:")[1].strip()
+            part1 = '{\n"think": "'+tmp+'"\n}' 
+        else:
+            tmp = command.split("\n")[0].strip()
+            part1 = '{\n"action": "'+tmp+'"\n}' 
+
+        part2 = command.split("\n")[1]+"\n"
+        commands[idx+1] = part1+"\n"+part2+"\n"
+
+    target_trace = ">".join(commands)
+
+    if num==2:
+        string_trace = original_react_prompts[f"react_{env_type}_2"]
+
+        commands = string_trace.split(">")
+
+        for idx,command in enumerate(commands[1:]):
+            if "think:" in command:
+                tmp = command.split("\n")[0].split("think:")[1].strip()
+                part1 = '{\n"think": "'+tmp+'"\n}' 
+            else:
+                tmp = command.split("\n")[0].strip()
+                part1 = '{\n"action": "'+tmp+'"\n}' 
+
+            part2 = command.split("\n")[1]+"\n"
+            commands[idx+1] = part1+"\n"+part2+"\n"
+
+        target_trace += "\n\n"+">".join(commands)
+
+
+    return target_trace
+
+
 def return_agentbench_prompts(env_type, return_base=True, version=2):
     """ Returns Agentbench Prompt"""
     if version == 1:
@@ -53,5 +101,5 @@ def return_agentbench_prompts(env_type, return_base=True, version=2):
 
 if __name__=="__main__":
     env_type = "clean"
-    prompt_trace = return_react_examples(env_type,2)
+    prompt_trace = return_json_react_examples(env_type)
     print(prompt_trace)
