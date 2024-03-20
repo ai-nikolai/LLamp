@@ -513,16 +513,16 @@ if __name__=="__main__":
         "current_objective",
         # "action"
     ]
-    keys_to_remove = [
-        "prompt",
-        # "goal", 
-        # "plan", 
-        "places_visited", 
-        "current_inventory", 
-        "current_location", 
-        "current_objective",
-        # "action"
-    ]
+    # keys_to_remove = [
+    #     "prompt",
+    #     # "goal", 
+    #     # "plan", 
+    #     "places_visited", 
+    #     "current_inventory", 
+    #     "current_location", 
+    #     "current_objective",
+    #     # "action"
+    # ]
 
     ##############################
     # Checking settings with the user. User needs to type y.
