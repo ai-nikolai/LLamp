@@ -173,6 +173,10 @@ if __name__=="__main__":
 
 
     CURRENT_TRIAL_NAME = "v2_eval_20_3"
+    CURRENT_TRIAL_NAME = "v2_eval_20-40"
+    CURRENT_TRIAL_NAME = "v2_eval_60-40"
+    CURRENT_TRIAL_NAME = "v2_eval_100-35"
+
     file_signature = CURRENT_TRIAL_NAME
 
     if CURRENT_TRIAL_NAME:

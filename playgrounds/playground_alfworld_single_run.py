@@ -4,6 +4,7 @@ import yaml
 
 from llamp.cohere_agent import CohereAgent
 from llamp.openai_agent import OpenAIAgent
+from llamp.human_agent import HumanAgent
 
 def process_ob(ob):
     if ob.startswith('You arrive at loc '):
@@ -88,15 +89,17 @@ Generate a JSON output.
 
 
 
-env_index = 3
-agent_index = 1
+env_index = 99
+agent_index = 3
 
 if agent_index == 1:
     agent = CohereAgent()
 elif agent_index==2:
     agent = OpenAIAgent()
+elif agent_index==3:
+    agent = HumanAgent()
 
-agent.update_save_path("game_logs/alfworld_eval_1")
+agent.update_save_path("game_logs/alfworld_eval_human_1")
 agent.set_base_prompt_and_reset(PROMPT)
 
 
@@ -120,7 +123,7 @@ if __name__=="__main__":
 
     game_running_flag = True
     counter = 0
-    LIMIT = 20
+    LIMIT = 60
     try:
         while game_running_flag:
             # action = input(">")

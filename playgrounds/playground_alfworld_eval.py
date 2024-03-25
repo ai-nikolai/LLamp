@@ -412,6 +412,7 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
     display_text += f"   -Model: {model}\n"
     display_text += f"   -Temperature: {temperature}\n"
     display_text += f"   -Starting env: {starting_env}\n"
+    display_text += f"   -Ending env: {starting_env+num_envs-1}\n"
     display_text += f"   -Num of envs: {num_envs}\n"
     display_text += f"   -Current Trial Name: {current_trial_name}\n"
     
@@ -460,12 +461,12 @@ if __name__=="__main__":
 
 
     #CHANGE THIS ONE
-    CURRENT_TRIAL_NAME = "v2_eval_20-40"
+    CURRENT_TRIAL_NAME = "v2_eval_100-35"
 
     ###############################
     # Basic Init
-    start_env_idx=20
-    num_envs = 40
+    start_env_idx=100
+    num_envs = 35
 
 
     agent_type = "OpenAITextChat"
@@ -491,7 +492,7 @@ if __name__=="__main__":
     JSON_REACT_PROMPT = False
 
     #untick for our prompts
-    # REACT_PROMPT = True 
+    REACT_PROMPT = True 
     # AGENTBENCH_PROMPT = True
     # JSON_REACT_PROMPT = True
 
@@ -634,7 +635,9 @@ if __name__=="__main__":
         # name = '/'.join(info['extra.gamefile'][0].split('/')[-3:-1])
         # env_type = get_env_type(name)
         # print(name)
-        # print(env_type)
+        # print(f"Idx: {i} Env:{env_type}")
+
+    # input(">")
 
 
 
