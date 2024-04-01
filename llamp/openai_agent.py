@@ -27,7 +27,7 @@ class OpenAIAgent(BaseLLMAgent):
 
 
 	# @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
-	def call_model(self):
+	def call_model(self, temperature=None):
 		"""Call OpenAI API"""
 		chat_completion = self.client.chat.completions.create(
 		    # model="gpt-3.5-turbo",

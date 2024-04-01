@@ -85,7 +85,7 @@ if __name__=="__main__":
         clean_state_goal_plan_v4i_1
     ]
 
-    types_of_envs = ["clean","examine", "heat", "cool", "puttwo", "put"]
+    types_of_envs = ["clean","cool","examine", "heat", "put", "puttwo"]
     # save_folder = "playgrounds"
     # base_variable_name = "state_goal_plan_v4"
     # file_name = "alfworld_prompts_utils_v4_{env_type}.py"
@@ -95,17 +95,18 @@ if __name__=="__main__":
     with open(react_prompt_file, "r") as file:
         original_prompts = json.load(file)
 
-    env_type = types_of_envs[5]
-    env_type = "clean"
+    env_type = types_of_envs[4]
+    # env_type = "cool"
+
 
     prompt_trace = original_prompts["act_examine_1"]
-    target_trace = original_prompts[f"act_{env_type}_1"]
+    target_trace = original_prompts[f"act_{env_type}_2"]
 
 
 
     # example_prompt = clean_state_goal_plan_v4i_1
-    # example_prompt = generate_string_prompt(examine_v4_base)
-    # result = generate_prompt(example_prompt, target_trace, prompt_trace)
+    example_prompt = generate_string_prompt(examine_v4_base)
+    result = generate_prompt(example_prompt, target_trace, prompt_trace)
 
     print(example_prompt)
     print(prompt_trace)
@@ -134,4 +135,7 @@ if __name__=="__main__":
 # 1. `\n\n>{` with `""",\n"""{`
 # 2. `}\n\n` with `}""",\n"""`
 
-
+# Replace (v2):
+# 1. `\n\n{` with `""",\n"""{`
+# 2. `}\n\n` with `}""",\n"""`
+ 

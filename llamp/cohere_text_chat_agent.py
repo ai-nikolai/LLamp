@@ -27,19 +27,27 @@ class CohereTextChatAgent(BaseLLMAgent):
         self.stop_sequences = stop_sequences
 
     # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6),reraise=True)
-    def call_model(self):
+    def call_model(self, temperature=None):
         """Call OpenAI API"""
         message = self.generate_text_prompt()
 
         response = self.co.chat(
-            message,
+            message = message,
             model=self.model,
-            temperature=self.temperature
-            # stop_sequences=["}\n"]
+            temperature=self.temperature,
+            prompt_truncation = "AUTO_PRESERVE_ORDER",
+            stop_sequences=self.stop_sequences
         )
 
         answer = response.text
         return answer
+
+
+    # def post_process_model_output(self, model_output):
+    #     """Manual shortening (as Cohere API doesn't allow for it yet)"""
+    #     truncated_model_output = model_output.split(self.stop_sequences[0])[0]
+    #     # Simple truncation for now.
+    #     return truncated_model_output
 
 
 

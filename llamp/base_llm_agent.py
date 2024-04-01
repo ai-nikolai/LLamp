@@ -44,11 +44,26 @@ unlock ... with ...: unlock a door or a container with a key
 		self.agent_name = agent_name
 		self.file_name = self.get_save_path(save_path)
 
+	def act(self, current_observation, temperature=None):
+		""" Acting"""
+		self.add_to_history(current_observation, "user")
 
-	def call_model(self):
+		action = self.call_model(temperature)
+
+		action = self.post_process_model_output(action)
+
+		self.add_to_history(action, "assistant")
+
+		return action
+
+	def call_model(self, temperature=None):
 		"""Not Implemented in base class."""
 		raise NotImplementedError("call model needs to be implemented")
 
+	def post_process_model_output(self,model_output):
+		"""Some post processing"""
+		return model_output
+   
 
 	def generate_text_prompt(self):
 		"""Generates a text prompt for the 'old school' LLMs."""

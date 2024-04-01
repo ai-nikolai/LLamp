@@ -26,7 +26,7 @@ class OpenAITextAgent(BaseLLMAgent):
 
 
     # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
-    def call_model(self):
+    def call_model(self, temperature=None):
         """Call OpenAI API"""
 
         prompt = self.generate_text_prompt()

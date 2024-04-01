@@ -31,12 +31,12 @@ from playground_alfworld_ablation_generator import generate_string_prompt, remov
 from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts, return_json_react_examples
 
 
-from alfworld_prompts_utils_v4_clean_base import clean_v4_base
-from alfworld_prompts_utils_v4_cool_base import cool_v4_base
-from alfworld_prompts_utils_v4_examine_base import examine_v4_base
-from alfworld_prompts_utils_v4_heat_base import heat_v4_base
-from alfworld_prompts_utils_v4_put_base import put_v4_base
-from alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base
+from alfworld_prompts_utils_v4_clean_base import clean_v4_base, clean_v4_base_2
+from alfworld_prompts_utils_v4_cool_base import cool_v4_base, cool_v4_base_2
+from alfworld_prompts_utils_v4_examine_base import examine_v4_base, examine_v4_base_2
+from alfworld_prompts_utils_v4_heat_base import heat_v4_base, heat_v4_base_2
+from alfworld_prompts_utils_v4_put_base import put_v4_base, put_v4_base_2
+from alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base, puttwo_v4_base_2
 
 
 
@@ -60,6 +60,15 @@ ENV_TO_EXAMPLE_MAPPING = {
     "heat"  : heat_v4_base,
     "put"   : put_v4_base,
     "puttwo"    : puttwo_v4_base
+}
+
+ENV_TO_EXAMPLE_MAPPING_2 = {
+    "clean" : clean_v4_base_2,
+    "cool"  : cool_v4_base_2,
+    "examine"   : examine_v4_base_2,
+    "heat"  : heat_v4_base_2,
+    "put"   : put_v4_base_2,
+    "puttwo"    : puttwo_v4_base_2
 }
 
 def get_env_type(env_name):
@@ -390,8 +399,10 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 
 
 
-
-def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agent_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove, not_ours_param):
+#################################################################
+#Display Settings
+#################################################################
+def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agent_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove, not_ours_param, swap_order, keys_to_remove_string):
     """ Creates a string to print to the user the current settings. """
     not_ours = react_prompt or agentbench_prompt or json_react_prompt
     if not_ours:
@@ -418,6 +429,7 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
     
     if not not_ours:
         display_text += f"   -Keys that will be removed: {keys_to_remove}\n"
+        display_text += f"   -Number of our Prompts: {not_ours_param}\n"  
     if react_prompt:
         display_text += f"   -Number of React Examples: {not_ours_param}\n"  
     if agentbench_prompt:
@@ -425,6 +437,13 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
     if json_react_prompt:
         display_text += f"   -Number JsonReAct Examples: {not_ours_param}\n" 
     
+    # Swap Order
+    display_text += f"   -Swap Order of Prompts: {swap_order}\n" 
+
+    #Name of prompt
+    display_text += f"   -The prompt will be called: {keys_to_remove_string}\n" 
+
+
     display_text += "Do you want to continue? Press 'y' to continue."
 
     return display_text
@@ -433,6 +452,63 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
 
 
 
+#################################################################
+#Env Prompt Logic
+#################################################################
+def get_prompt_example(react_prompt, agentbench_prompt, jsonreact_prompt, swap_order, not_ours_param, env_type, log_full_prompt=False, generate_example=True):
+    """ Get name of prompt and example prompts"""
+    # Generate correct prompt for this environment (basically pick the right example).  
+    new_base_prompt = ""
+    swap_string = "-swaped" if swap_order else ""
+
+    #REACT PROMPT or OUR PROMPT
+    if react_prompt:
+        num_examples = not_ours_param
+        if generate_example:
+            prompt_example = return_react_examples(env_type, num=num_examples, swap=swap_order)
+        keys_to_remove_string = f"react-{num_examples}"+swap_string
+
+    elif agentbench_prompt:
+        num_examples = 1
+        if generate_example:
+            prompt_example, new_base_prompt = return_agentbench_prompts(env_type, return_base=True, version=not_ours_param)
+        keys_to_remove_string = f"agentbench-v{not_ours_param}"
+        
+    elif jsonreact_prompt:            
+        num_examples = not_ours_param
+        if generate_example:
+            prompt_example = return_json_react_examples(env_type, num=num_examples)
+        keys_to_remove_string = f"jsonreact-{num_examples}"
+
+    else: #OURS
+        num_examples = not_ours_param
+        
+        if generate_example:
+            if swap_order:
+                first_prompt_map = ENV_TO_EXAMPLE_MAPPING_2
+                second_prompt_map = ENV_TO_EXAMPLE_MAPPING
+            else: #the normal case.
+                first_prompt_map = ENV_TO_EXAMPLE_MAPPING
+                second_prompt_map = ENV_TO_EXAMPLE_MAPPING_2
+            base_prompt = remove_keys(first_prompt_map[env_type], keys=keys_to_remove)
+            prompt_example = generate_string_prompt(base_prompt)
+            
+            if num_examples==2:
+                base_prompt = remove_keys(second_prompt_map[env_type], keys=keys_to_remove)
+                prompt_example2 = generate_string_prompt(base_prompt)
+                prompt_example += "\n\n"+prompt_example2
+
+        if log_full_prompt:
+            keys_to_remove_string = "+".join(keys_to_remove)
+ 
+        else:
+            long_string = "short" if len(keys_to_remove) > 2 else "long"
+            keys_to_remove_string = long_string+f"-{num_examples}"+swap_string
+
+    if generate_example:
+        return keys_to_remove_string, prompt_example, new_base_prompt, num_examples
+    else:
+        return keys_to_remove_string
 
 
 
@@ -440,10 +516,14 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
 
 
 
+
+
+
+#################################################################
 #################################################################
 #MAIN LOOP
 #################################################################
-
+#################################################################
 
 if __name__=="__main__":
 
@@ -461,13 +541,17 @@ if __name__=="__main__":
 
 
     #CHANGE THIS ONE
-    CURRENT_TRIAL_NAME = "v2_eval_100-35"
+    CURRENT_TRIAL_NAME = "v2_eval_0-135"
+    # CURRENT_TRIAL_NAME = "v2_eval_test_2"
+
 
     ###############################
     # Basic Init
-    start_env_idx=100
-    num_envs = 35
+    start_env_idx=0
+    num_envs = 135
 
+    # start_env_idx=0
+    # num_envs = 1
 
     agent_type = "OpenAITextChat"
     model = "gpt-3.5-turbo-0125"
@@ -491,17 +575,25 @@ if __name__=="__main__":
     AGENTBENCH_PROMPT = False
     JSON_REACT_PROMPT = False
 
+    SWAP_ORDER = False
+    LOG_FULL_PROMPT = False
+
+
     #untick for our prompts
-    REACT_PROMPT = True 
+    # REACT_PROMPT = True 
     # AGENTBENCH_PROMPT = True
     # JSON_REACT_PROMPT = True
 
     
     NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT
 
-    num_examples_react_or_prompt_version_agentbench = 2
-    NOT_OURS_PARAM = num_examples_react_or_prompt_version_agentbench
+    # num_examples_react_or_prompt_version_agentbench = 2
+    # NOT_OURS_PARAM = num_examples_react_or_prompt_version_agentbench
     
+    NOT_OURS_PARAM = 1 #Now this is ours and not ours (naming is legacy)
+    SWAP_ORDER = True
+    # LOG_FULL_PROMPT = True
+
     ##############################
     # This applies to our prompts
     keys_to_remove = [
@@ -514,32 +606,45 @@ if __name__=="__main__":
         "current_objective",
         # "action"
     ]
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     # "plan", 
-    #     "places_visited", 
-    #     "current_inventory", 
-    #     "current_location", 
-    #     "current_objective",
-    #     # "action"
-    # ]
+    keys_to_remove = [
+        "prompt",
+        # "goal", 
+        # "plan", 
+        "places_visited", 
+        "current_inventory", 
+        "current_location", 
+        "current_objective",
+        # "action"
+    ]
+
+    keys_to_remove_string2 = get_prompt_example(
+        react_prompt=REACT_PROMPT,
+        agentbench_prompt=AGENTBENCH_PROMPT, 
+        jsonreact_prompt=JSON_REACT_PROMPT, 
+        swap_order=SWAP_ORDER, 
+        not_ours_param=NOT_OURS_PARAM,
+        env_type="",
+        log_full_prompt = LOG_FULL_PROMPT,
+        generate_example=False)
 
     ##############################
     # Checking settings with the user. User needs to type y.
     keys_to_remove_string = "+".join(keys_to_remove)
     settings_string = get_settings_string(
-            react_prompt=REACT_PROMPT, 
-            agentbench_prompt=AGENTBENCH_PROMPT,
+            react_prompt = REACT_PROMPT, 
+            agentbench_prompt = AGENTBENCH_PROMPT,
             json_react_prompt = JSON_REACT_PROMPT,
-            agent_type=agent_type, 
-            model=model, 
-            temperature=temperature, 
-            num_envs=num_envs, 
-            starting_env=start_env_idx, 
-            current_trial_name=CURRENT_TRIAL_NAME, 
+            agent_type = agent_type, 
+            model = model, 
+            temperature = temperature, 
+            num_envs = num_envs, 
+            starting_env = start_env_idx, 
+            current_trial_name = CURRENT_TRIAL_NAME, 
             keys_to_remove=keys_to_remove_string,
-            not_ours_param = NOT_OURS_PARAM)
+            not_ours_param = NOT_OURS_PARAM,
+            swap_order = SWAP_ORDER,
+            keys_to_remove_string = keys_to_remove_string2
+        )
     print(settings_string)
     user_input = input(">")
     if not (user_input=="y"):
@@ -673,31 +778,15 @@ if __name__=="__main__":
         #######################################################
         # PROMPT Related
         #######################################################     
-        # Generate correct prompt for this environment (basically pick the right example).  
-        new_base_prompt = ""
-
-        #REACT PROMPT or OUR PROMPT
-        if REACT_PROMPT:
-            num_examples = NOT_OURS_PARAM
-            prompt_example = return_react_examples(env_type, num=num_examples)
-            keys_to_remove_string = f"react-{num_examples}"
-
-        elif AGENTBENCH_PROMPT:
-            num_examples = 1
-            prompt_example, new_base_prompt = return_agentbench_prompts(env_type, return_base=True, version=NOT_OURS_PARAM)
-            keys_to_remove_string = f"agentbench-v{NOT_OURS_PARAM}"
-        
-        elif JSON_REACT_PROMPT:
-            num_examples = NOT_OURS_PARAM
-            prompt_example = return_json_react_examples(env_type, num=num_examples)
-            keys_to_remove_string = f"jsonreact-{num_examples}"
-
-        else: #OURS
-            num_examples = 1
-            base_prompt = remove_keys(ENV_TO_EXAMPLE_MAPPING[env_type], keys=keys_to_remove)
-            prompt_example = generate_string_prompt(base_prompt)
-            keys_to_remove_string = "+".join(keys_to_remove)
-
+        keys_to_remove_string, prompt_example, new_base_prompt, num_examples = get_prompt_example(
+            react_prompt=REACT_PROMPT,
+            agentbench_prompt=AGENTBENCH_PROMPT, 
+            jsonreact_prompt=JSON_REACT_PROMPT, 
+            swap_order=SWAP_ORDER, 
+            not_ours_param=NOT_OURS_PARAM,
+            env_type=env_type,
+            log_full_prompt = LOG_FULL_PROMPT,
+            generate_example=True)
 
         prompt = generate_prompt_from_example(prompt_example, number_of_examples=num_examples, base_prompt=new_base_prompt)
         agent.set_base_prompt_and_reset(prompt)
@@ -894,19 +983,18 @@ if __name__=="__main__":
                     early_stop = "ENV_ERROR: Too many ({LIMIT_CURRENT_REPETITIONS}) consecutive repetitions."
                     break
 
-        except cohere.error.CohereAPIError as e:
+
+        except cohere.core.ApiError as e:
             print("COHERE API ERROR")
-            error = str(e)
             print(e)
-            error = e.message
-            print(e.message)
+            print(e.body)
+            error = str(e)
 
         except Exception as e:
             print("ANOTHER EXCEPTION")
             error = str(e)
             print(error)
             print(e)
-            print(e.message)
 
         finally:
             logging_dict["num_illegal_actions"] = num_illegal_actions

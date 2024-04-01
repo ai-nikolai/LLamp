@@ -39,7 +39,7 @@ class CohereAgent(BaseLLMAgent):
         return out_list
 
     # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6),reraise=True)
-    def call_model(self):
+    def call_model(self, temperature=None):
         """Call OpenAI API"""
 
         current_prompt = self.get_current_prompt_cohere()
@@ -49,12 +49,11 @@ class CohereAgent(BaseLLMAgent):
             chat_history = current_prompt[:-1]
 
         response = self.co.chat(
-            message,
-            # model="command",
+            message = message,
             model=self.model,
             chat_history=chat_history,
-            temperature=self.temperature
-            # stop_sequences=["}\n"]
+            temperature=self.temperature,
+            stop_sequences=self.stop_sequences
         )
 
         answer = response.text
