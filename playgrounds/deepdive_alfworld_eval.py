@@ -218,7 +218,6 @@ def augment_logging_dict(logging_dict, data_row, index, empty_data=False):
 
 
 # 
- 
 def return_empty_partial_logging_dict():
     logging_dict = {
         "total_nothing" : 0,
@@ -239,6 +238,9 @@ def return_empty_partial_logging_dict():
 def analyse_data(data, verbose=False, return_empty=False):
     """ Creates an analysis """    
     logging_dict = return_empty_partial_logging_dict()
+    interesting_valid_examples = []
+    interesting_not_valid_examples = []
+    hallucinated_examples = []
     
     nothing_happens_actions = find_all_actions_with_nothing_happens(data)
     logging_dict["total_nothing"] = len(nothing_happens_actions)
@@ -253,6 +255,7 @@ def analyse_data(data, verbose=False, return_empty=False):
                 logging_dict["take_valid_nothing"] += 1
             else:
                 logging_dict["valid_nothing_example"] = actual_action
+                interesting_valid_examples.append(actual_action)
             if verbose:
                 print(f"Valid Grammar, nothing happens:{actual_action}")
 
@@ -262,9 +265,11 @@ def analyse_data(data, verbose=False, return_empty=False):
             
             if len(actual_action.split(" "))>9:
                 logging_dict["hallucinated_not_valid_nothing"] += 1
+                hallucinated_examples.append(actual_action)
             else:
                 logging_dict["fake_not_h_not_valid_nothing"] += 1
                 logging_dict["fake_command_example"] = actual_action
+                interesting_not_valid_examples.append(actual_action)
 
 
             if actual_action.startswith("put"):
