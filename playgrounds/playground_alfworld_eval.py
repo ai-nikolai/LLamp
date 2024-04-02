@@ -541,7 +541,7 @@ if __name__=="__main__":
 
 
     #CHANGE THIS ONE
-    CURRENT_TRIAL_NAME = "v2_eval_0-135"
+    CURRENT_TRIAL_NAME = "v2_eval_0-135-run2"
     # CURRENT_TRIAL_NAME = "v2_eval_test_2"
 
 

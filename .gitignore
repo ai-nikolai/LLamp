@@ -14,6 +14,8 @@ offload*
 *prompts*
 .DS_Store
 results/test*
+all_results.csv
+deepdive_results.csv
 .ipynb_checkpoints*
 eval_results*
 pandas_output*
