@@ -19,3 +19,4 @@ deepdive_results.csv
 .ipynb_checkpoints*
 eval_results*
 pandas_output*
+examples.csv

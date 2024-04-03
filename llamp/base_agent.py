@@ -53,6 +53,12 @@ class BaseAgent():
         except IndexError as e:
             pass
 
+    def load_from_saved_data(previous_current_prompt):
+        """Loads the saved prompt"""
+        self.reset()
+        self.current_prompt = previous_current_prompt
+
+
     def set_base_prompt_and_reset(self,base_prompt):
         """Sets a new base prompt and resets the agent."""
         self.base_prompt = base_prompt

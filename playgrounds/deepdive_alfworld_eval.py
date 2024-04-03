@@ -225,6 +225,7 @@ def return_empty_partial_logging_dict():
         "total_not_valid_nothing" : 0,
         "put_not_valid_nothing" : 0,
         "hallucinated_not_valid_nothing":0,
+        "hallucinated_example": "NO_EXAMPLE",
         "fake_not_h_not_valid_nothing":0,
         "fake_command_example": "NO EXAMPLE",
 
@@ -239,7 +240,7 @@ def analyse_data(data, verbose=False, return_empty=False):
     """ Creates an analysis """    
     logging_dict = return_empty_partial_logging_dict()
     interesting_valid_examples = []
-    interesting_not_valid_examples = []
+    interesting_fake_not_valid_examples = []
     hallucinated_examples = []
     
     nothing_happens_actions = find_all_actions_with_nothing_happens(data)
@@ -265,11 +266,12 @@ def analyse_data(data, verbose=False, return_empty=False):
             
             if len(actual_action.split(" "))>9:
                 logging_dict["hallucinated_not_valid_nothing"] += 1
+                logging_dict["hallucinated_example"] = actual_action
                 hallucinated_examples.append(actual_action)
             else:
                 logging_dict["fake_not_h_not_valid_nothing"] += 1
                 logging_dict["fake_command_example"] = actual_action
-                interesting_not_valid_examples.append(actual_action)
+                interesting_fake_not_valid_examples.append(actual_action)
 
 
             if actual_action.startswith("put"):
@@ -278,7 +280,7 @@ def analyse_data(data, verbose=False, return_empty=False):
             if verbose:
                 print(f"NOT Valid Grammar, nothing happens:{actual_action}")
   
-    return logging_dict
+    return logging_dict, interesting_valid_examples, interesting_fake_not_valid_examples, hallucinated_examples
 
 
 def check_all_grammar(data, verbose=False):
@@ -337,16 +339,16 @@ if __name__=="__main__":
         new_header = [key for key, val in empty_logging_dict.items()]
         write_line_to_main_log_csv(MAIN_CSV_FILEPATH, new_header, mode="w")
 
+        write_line_to_main_log_csv("playgrounds/examples.csv",["Valid","Fake","Hallucinated","signature"],mode="w")
 
     for idx, experiment_data in enumerate(data[1:]):
         config_string = str(idx)+"+"+experiment_data[data_index["env_idx"]]+"+"+experiment_data[data_index["env_type"]]+"+"+experiment_data[data_index["keys_removed"]]
         trace_file_path = experiment_data[data_index["trace_file"]]
-        logging_dict = analysis_per_trace_file(trace_file_path,config_string)
+        logging_dict, valid_nothing_ex, fake_ex, hallucinated_ex= analysis_per_trace_file(trace_file_path,config_string)
         augment_logging_dict(logging_dict, experiment_data, data_index)
-
-
         write_line_to_main_log_csv(MAIN_CSV_FILEPATH, logging_dict)
-
+        tmp = {"valid":valid_nothing_ex,"fake":fake_ex,"hallucinated":hallucinated_ex,"signature":config_string}
+        write_line_to_main_log_csv("playgrounds/examples.csv",tmp)
     # check_grammar_for_data_row(data[1425])
      
 

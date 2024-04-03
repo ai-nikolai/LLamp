@@ -1,6 +1,8 @@
 import yaml
 import csv
 import os
+import json
+
 
 import cohere
 
@@ -22,7 +24,6 @@ from llamp.openai_text_chat_agent import OpenAITextChatAgent
 
 from datetime import datetime
 
-import json
 
 
 
