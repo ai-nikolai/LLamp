@@ -4,6 +4,16 @@ import os
 import yaml
 
 
+def augment_logging_dict(logging_dict, data_row, index, empty_data=False):
+    """ Add a list of data to logging_dict according to index"""
+    for key,idx in index.items():
+        if empty_data:
+            logging_dict[key] = 0
+        else:
+            logging_dict[key] = data_row[idx]
+
+    return logging_dict
+
 def write_line_to_main_log_csv(name, data, mode="a"):
     """Writes one line of output into the main CSV"""
     with open(name, mode, newline='') as myfile:
