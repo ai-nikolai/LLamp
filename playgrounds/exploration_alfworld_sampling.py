@@ -118,16 +118,23 @@ def process_ob(ob, track_nothing_happens=False):
 
 def print_actions(interaction_data,current_index):
     """  """
-    print_verbose(f"At Index:{current_index}")
-    print_verbose(f'Current Action:{interaction_data[current_index]["content"]}')
-    if len(interaction_data)>current_index+1:
-        print_verbose(f'Next Env Response:{interaction_data[current_index+1]["content"]}')
-
+    try:
+        print_verbose(f"At Index:{current_index}")
+        print_verbose(f'Current Action:{interaction_data[current_index]["content"]}')
+        if len(interaction_data)>current_index+1:
+            print_verbose(f'Next Env Response:{interaction_data[current_index+1]["content"]}')
+    except:
+        pass
 
 def extract_content(interaction_data, index):
     """ Extracts the 'content' from the interaction data """
-    action_observation = interaction_data[index]["content"]
-    return action_observation
+    early_stop=False
+    try:
+        action_observation = interaction_data[index]["content"]
+        return action_observation, early_stop
+    except:
+        early_stop = True
+        return None, early_stop
 
 
 def transform_put_action(action):
@@ -252,7 +259,7 @@ def main_loop_put(data, data_index, logging_dict, experiment_index=1, current_en
 
     observation += "\n"
     # print_verbose(obs2)
-    obs2 = extract_content(interaction_history, 1)
+    obs2, _ = extract_content(interaction_history, 1)
     assert obs2==observation, "Observations don't match."
 
     if current_env_is_success:
@@ -272,7 +279,9 @@ def main_loop_put(data, data_index, logging_dict, experiment_index=1, current_en
     while True:
 
 
-        action = extract_content(interaction_history, current_history_index)
+        action, early_stop = extract_content(interaction_history, current_history_index)
+        if early_stop:
+            break
         print_actions(interaction_history,current_history_index)
 
         action = clean_action(action)
@@ -339,7 +348,7 @@ if __name__=="__main__":
         # agent.load_from_saved_data(interaction_history)
 
 
-
+    # data = {'react-1': 16, 'react-1_modified': 64, 'react-2': 43, 'react-2_modified': 81, 'long': 43, 'long_modified': 56, 'short': 44, 'short_modified': 61, 'short-2': 49, 'short-2_modified': 58, 'long-2': 49, 'long-2_modified': 53, 'short-2-swaped': 64, 'short-2-swaped_modified': 68, 'long-2-swaped': 55, 'long-2-swaped_modified': 57, 'react-2-swaped': 55, 'react-2-swaped_modified': 88, 'short-1-swaped': 33, 'short-1-swaped_modified': 41, 'react-1-swaped': 14, 'react-1-swaped_modified': 61, 'long-1-swaped': 30, 'long-1-swaped_modified': 34}
 
 
 
