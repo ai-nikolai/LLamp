@@ -146,13 +146,13 @@ def transform_put_action(action):
         answer = re.match(put_regex_1,action)
         if answer:
             print_verbose("Discovered Put Action with ON only")
-            action = action.replace("on","in/on")
+            action = action.replace(" on "," in/on ")
 
         else:
             answer = re.match(put_regex_2,action)
             if answer:
                 print_verbose("Discovered Put Action with IN only")
-                action = action.replace("in","in/on")
+                action = action.replace(" in "," in/on ")
     print_verbose(f"Final Action:{action}")
     return action
 
@@ -323,7 +323,11 @@ if __name__=="__main__":
     #######################################################
     # Previous Runs Related
     #######################################################
-    data = load_csv_file("playgrounds/all_results.csv")
+    # IN_DATA_FILE = "playgrounds/all_results.csv"
+    IN_DATA_FILE = "playgrounds/v2_1_scores.csv"
+
+
+    data = load_csv_file(IN_DATA_FILE)
     data_index = get_csv_header_index(data[0])
 
     logging_dict = {}

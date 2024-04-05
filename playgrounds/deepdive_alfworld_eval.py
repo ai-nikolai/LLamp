@@ -328,8 +328,12 @@ if __name__=="__main__":
 "env_idx","env_type","agent_type","model","temperature","success","done","total_reward","num_of_steps","num_illegal_actions","num_nothing_happens","num_repetitions","num_json_dsnt_load","num_multi_json","num_no_json","num_json_and_text","error","early_stop","keys_removed","additional_prompt_annotation","trace_file","prompt_file"
 "0","cool","OpenAITextChat","gpt-3.5-turbo-0125","0.0","False","True","0","49","50","12","0","50","0","50","0","","","react-1","","game_logs/alfworld_eval_v2_eval_20_3/OpenAITextChatAgent_logs_18_03_2024_15_57_25.json","game_logs/alfworld_eval_v2_eval_20_3/prompt_18_03_2024_15_57_25.txt"
     """
-    MAIN_CSV_FILEPATH = "playgrounds/deepdive_results.csv"
-    data = load_csv_file("playgrounds/all_results.csv")
+
+
+
+    MAIN_CSV_FILEPATH = "playgrounds/deepdive_results_v2_1.csv"
+    IN_CSV_FILE = "playgrounds/v2_1_scores.csv"
+    data = load_csv_file(IN_CSV_FILE)
     data_index = get_csv_header_index(data[0])
 
     CREATE_NEW_CSV = True

@@ -2,6 +2,7 @@ import yaml
 import csv
 import os
 import json
+import re
 
 
 import cohere
@@ -139,6 +140,22 @@ def process_ob(ob, track_nothing_happens=False):
     else:
         return ob
 
+
+def transform_put_action(action):
+    """ Put action grammar correction. """
+    put_regex_1 = """put(?:\s\w+)(?:\s\w+)?(?:\s\d+)\son(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
+    put_regex_2 = """put(?:\s\w+)(?:\s\w+)?(?:\s\d+)\sin(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
+
+    if action.startswith("put"):
+        answer = re.match(put_regex_1,action)
+        if answer:
+            action = action.replace(" on "," in/on ")
+
+        else:
+            answer = re.match(put_regex_2,action)
+            if answer:
+                action = action.replace(" in "," in/on ")
+    return action
 
 
 
@@ -542,8 +559,8 @@ if __name__=="__main__":
 
 
     #CHANGE THIS ONE
-    CURRENT_TRIAL_NAME = "v2_eval_0-135-run2"
-    # CURRENT_TRIAL_NAME = "v2_eval_test_2"
+    CURRENT_TRIAL_NAME = "v2_1_eval_0-135"
+    # CURRENT_TRIAL_NAME = "v2_1_eval_test"
 
 
     ###############################
@@ -581,7 +598,7 @@ if __name__=="__main__":
 
 
     #untick for our prompts
-    # REACT_PROMPT = True 
+    REACT_PROMPT = True 
     # AGENTBENCH_PROMPT = True
     # JSON_REACT_PROMPT = True
 
@@ -591,7 +608,7 @@ if __name__=="__main__":
     # num_examples_react_or_prompt_version_agentbench = 2
     # NOT_OURS_PARAM = num_examples_react_or_prompt_version_agentbench
     
-    NOT_OURS_PARAM = 1 #Now this is ours and not ours (naming is legacy)
+    NOT_OURS_PARAM = 2 #Now this is ours and not ours (naming is legacy)
     SWAP_ORDER = True
     # LOG_FULL_PROMPT = True
 
@@ -946,6 +963,9 @@ if __name__=="__main__":
                     num_current_repetitions +=1
                 else:
                     num_current_repetitions =0
+
+                # TODO: maybe start tracking those changes.
+                action = transform_put_action(action)
 
                 prev_action = action
 
