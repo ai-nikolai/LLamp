@@ -1,21 +1,22 @@
 import json
 import os
 
+BASE_FOLDER = "prompts"
 
 react_prompt_file_name = "alfworld_react_prompts_original_v3.json"
-react_prompt_file = os.path.join("playgrounds",react_prompt_file_name)
+react_prompt_file = os.path.join("playgrounds",BASE_FOLDER, react_prompt_file_name)
 with open(react_prompt_file, "r") as file:
     original_react_prompts = json.load(file)
 
 
 
 agentbench_prompt_file_name = "agentbench_prompts_v1_plan_first.json"
-agentbench_prompt_file = os.path.join("playgrounds",agentbench_prompt_file_name)
+agentbench_prompt_file = os.path.join("playgrounds",BASE_FOLDER,agentbench_prompt_file_name)
 with open(agentbench_prompt_file, "r") as file:
     original_agentbench_prompts_v1 = json.load(file)
 
 agentbench_prompt_file_name = "agentbench_prompts_v2_react.json"
-agentbench_prompt_file = os.path.join("playgrounds",agentbench_prompt_file_name)
+agentbench_prompt_file = os.path.join("playgrounds",BASE_FOLDER,agentbench_prompt_file_name)
 with open(agentbench_prompt_file, "r") as file:
     original_agentbench_prompts_v2 = json.load(file)
 

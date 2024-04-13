@@ -323,25 +323,15 @@ def check_grammar_for_data_row(data_row):
     trace_data = load_log_file(trace_file_path)
     problem = check_all_grammar(trace_data, verbose=True)
 
-if __name__=="__main__":
-    """
-"env_idx","env_type","agent_type","model","temperature","success","done","total_reward","num_of_steps","num_illegal_actions","num_nothing_happens","num_repetitions","num_json_dsnt_load","num_multi_json","num_no_json","num_json_and_text","error","early_stop","keys_removed","additional_prompt_annotation","trace_file","prompt_file"
-"0","cool","OpenAITextChat","gpt-3.5-turbo-0125","0.0","False","True","0","49","50","12","0","50","0","50","0","","","react-1","","game_logs/alfworld_eval_v2_eval_20_3/OpenAITextChatAgent_logs_18_03_2024_15_57_25.json","game_logs/alfworld_eval_v2_eval_20_3/prompt_18_03_2024_15_57_25.txt"
-    """
 
-
-
-    MAIN_CSV_FILEPATH = "playgrounds/deepdive_results_v2_1.csv"
-    IN_CSV_FILE = "playgrounds/v2_1_scores.csv"
-    data = load_csv_file(IN_CSV_FILE)
-    data_index = get_csv_header_index(data[0])
-
+def run_statistical_analysis(data, data_index, out_csv_file_path):
+    """Runs statistical analysis"""
     CREATE_NEW_CSV = True
     if CREATE_NEW_CSV:
         empty_logging_dict = return_empty_partial_logging_dict()
         augment_logging_dict(empty_logging_dict,[],data_index,True)
         new_header = [key for key, val in empty_logging_dict.items()]
-        write_line_to_main_log_csv(MAIN_CSV_FILEPATH, new_header, mode="w")
+        write_line_to_main_log_csv(out_csv_file_path, new_header, mode="w")
 
         write_line_to_main_log_csv("playgrounds/examples.csv",["Valid","Fake","Hallucinated","signature"],mode="w")
 
@@ -350,11 +340,26 @@ if __name__=="__main__":
         trace_file_path = experiment_data[data_index["trace_file"]]
         logging_dict, valid_nothing_ex, fake_ex, hallucinated_ex= analysis_per_trace_file(trace_file_path,config_string)
         augment_logging_dict(logging_dict, experiment_data, data_index)
-        write_line_to_main_log_csv(MAIN_CSV_FILEPATH, logging_dict)
+        write_line_to_main_log_csv(out_csv_file_path, logging_dict)
         tmp = {"valid":valid_nothing_ex,"fake":fake_ex,"hallucinated":hallucinated_ex,"signature":config_string}
-        write_line_to_main_log_csv("playgrounds/examples.csv",tmp)
+        write_line_to_main_log_csv("playgrounds/examples.csv",tmp)   
+
+if __name__=="__main__":
+    """
+"env_idx","env_type","agent_type","model","temperature","success","done","total_reward","num_of_steps","num_illegal_actions","num_nothing_happens","num_repetitions","num_json_dsnt_load","num_multi_json","num_no_json","num_json_and_text","error","early_stop","keys_removed","additional_prompt_annotation","trace_file","prompt_file"
+"0","cool","OpenAITextChat","gpt-3.5-turbo-0125","0.0","False","True","0","49","50","12","0","50","0","50","0","","","react-1","","game_logs/alfworld_eval_v2_eval_20_3/OpenAITextChatAgent_logs_18_03_2024_15_57_25.json","game_logs/alfworld_eval_v2_eval_20_3/prompt_18_03_2024_15_57_25.txt"
+    """
+
+
+
+    OUT_CSV_FILEPATH = "playgrounds/deepdive_results_v2_1.csv"
+    IN_CSV_FILE = "playgrounds/v2_1_scores.csv"
+    data = load_csv_file(IN_CSV_FILE)
+    data_index = get_csv_header_index(data[0])
+    # run_statistical_analysis(data, data_index, OUT_CSV_FILEPATH)
+   
     # check_grammar_for_data_row(data[1425])
      
-
-
+    # list_of_interesting_envs = [4, 9, 23, 31, 46, 52, 58, 74, 75, 80, 84, 107, 109, 111, 112, 113, 120]
+    # list_of_interesting_envs = [12,17,19,33,35,36,50,51,52,56,59,60,62,63,64,66,67,70,73,76,82,84,88,105]
 # EOF

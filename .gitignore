@@ -20,3 +20,5 @@ deepdive_results.csv
 eval_results*
 pandas_output*
 examples.csv
+playgrounds/*.csv
+playgrounds/*.txt

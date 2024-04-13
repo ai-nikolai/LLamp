@@ -3,7 +3,7 @@ import os
 
 from llamp.utils import cohere_model, openai_model
 
-from alfworld_prompts_utils import clean_simple_goal_plan_1, \
+from prompts.alfworld_prompts_utils import clean_simple_goal_plan_1, \
 cool_simple_goal_plan_1, \
 examine_simple_goal_plan_1, \
 heat_simple_goal_plan_1, \
@@ -14,7 +14,7 @@ clean_state_goal_plan_v4_1, \
 clean_state_goal_plan_v4b_1
 
 
-from alfworld_prompts_utils_v4_clean import \
+from prompts.alfworld_prompts_utils_v4_clean import \
 clean_state_goal_plan_v4a_1, \
 clean_state_goal_plan_v4b_1, \
 clean_state_goal_plan_v4c_1, \
@@ -25,8 +25,8 @@ clean_state_goal_plan_v4g_1, \
 clean_state_goal_plan_v4h_1, \
 clean_state_goal_plan_v4i_1
 
-from alfworld_prompts_utils_v4_clean_base import clean_v4_base
-from alfworld_prompts_utils_v4_examine_base import examine_v4_base
+from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base
+from prompts.alfworld_prompts_utils_v4_examine_base import examine_v4_base
 
 
 from playground_alfworld_ablation_generator import generate_string_prompt

@@ -2,12 +2,12 @@ import os
 import json
 
 
-from alfworld_prompts_utils_v4_clean_base import clean_v4_base
-from alfworld_prompts_utils_v4_cool_base import cool_v4_base
-from alfworld_prompts_utils_v4_examine_base import examine_v4_base
-from alfworld_prompts_utils_v4_heat_base import heat_v4_base
-from alfworld_prompts_utils_v4_put_base import put_v4_base
-from alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base
+from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base
+from prompts.alfworld_prompts_utils_v4_cool_base import cool_v4_base
+from prompts.alfworld_prompts_utils_v4_examine_base import examine_v4_base
+from prompts.alfworld_prompts_utils_v4_heat_base import heat_v4_base
+from prompts.alfworld_prompts_utils_v4_put_base import put_v4_base
+from prompts.alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base
 
 
 def generate_string_prompt(base_prompt, system_prefix="", agent_prefix=">"):
