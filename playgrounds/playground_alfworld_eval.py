@@ -560,7 +560,7 @@ if __name__=="__main__":
 
     #CHANGE THIS ONE
     CURRENT_TRIAL_NAME = "v2_2_eval_0-135"
-    CURRENT_TRIAL_NAME = "v2_2_eval_test"
+    # CURRENT_TRIAL_NAME = "v2_2_eval_test"
 
 
     ###############################
@@ -568,8 +568,8 @@ if __name__=="__main__":
     start_env_idx=0
     num_envs = 135
 
-    start_env_idx=0
-    num_envs = 1
+    # start_env_idx=0
+    # num_envs = 1
 
     agent_type = "OpenAITextChat"
     model = "gpt-3.5-turbo-0125"
