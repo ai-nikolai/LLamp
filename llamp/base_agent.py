@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import json
+from copy import deepcopy
 
 class BaseAgent():
     LOG_FILE_ENDING = ".json"
@@ -8,6 +9,7 @@ class BaseAgent():
     def __init__(self, agent_name="base",save_path="game_logs"):
         self.base_prompt = []
         self.current_prompt = []
+        self.full_history = []
         self.agent_name = agent_name
         self.save_path_base = save_path
         self.file_name = self.get_save_path()
@@ -29,34 +31,87 @@ class BaseAgent():
 
     def reset(self):
         """Resets the system (so far only the current_prompt)"""
-        self.current_prompt = self.base_prompt
+        self.current_prompt = deepcopy(self.base_prompt)
+        self.full_history = deepcopy(self.current_prompt)
         self.file_name = self.get_save_path()
+
+
+    def _extend_memory(self, memory):
+        """Extends memory. Change for specific classes to record more data"""
+        return memory
 
     def add_first_observation(self, first_obs):
         """ First Observation """
         self.add_to_history(first_obs, "user")
 
-    def add_to_history(self, content, role):
+    def add_to_history(self, content, role, additional_data={}):
         """ 
         Adds to the prompt.
         IF ERROR: This function used to be called  `add_to_prompt`
         """
-        self.current_prompt.append({
+        tmp = {
             "role": role,
             "content": content
-            })
+            }
 
-    def pop_from_history(self):
+        self.current_prompt.append(tmp)
+
+        tmp.update(additional_data)
+        
+        # To log additional data by default
+        tmp = self._extend_memory(tmp)
+        self.full_history.append(tmp)
+
+
+    def pop_from_history(self, return_full=True):
         """Removes last element from history."""
         try:
-            self.current_prompt.pop()
+            if return_full:
+                self.current_prompt.pop()
+                return self.full_history.pop()
+            else:
+                self.full_history.pop()
+                return self.current_prompt.pop() 
         except IndexError as e:
             pass
 
-    def load_from_saved_data(previous_current_prompt):
-        """Loads the saved prompt"""
+
+    def _extraxt_prompt_from_history(self, history, keys_to_keep_in_prompt=["role","content"]):
+        """Extracts prompt from history."""
+        prompt = []
+        for segment in history:
+            tmp = {}
+            for key in keys_to_keep_in_prompt:
+                tmp[key] = segment.get(key)
+
+            prompt.append(tmp)
+        return prompt
+
+    def load_from_saved_data(self, previous_history, keys_to_keep_in_prompt=["role","content"]):
+        """
+        Loads the saved prompt
+        Input Options:
+        - Previous History as list
+        - Previous Histroy as FileName
+        - Previous History as FilePointer
+        """
         self.reset()
-        self.current_prompt = previous_current_prompt
+        
+        import io
+        if type(previous_history)==list:
+            self.full_history = previous_history
+
+        elif type(previous_history)==str:
+            import json
+            with open(previous_history) as file:
+                previous_history = json.load(file)
+            self.full_history = previous_history
+
+        elif type(previous_history)==io.TextIOWrapper:
+            previous_history = json.load(previous_history)
+            self.full_history = previous_history
+
+        self.current_prompt = self._extraxt_prompt_from_history(self.full_history, keys_to_keep_in_prompt)
 
 
     def set_base_prompt_and_reset(self,base_prompt):
@@ -68,7 +123,7 @@ class BaseAgent():
     def save(self):
         """Saves game interaction to file"""
         with open(self.file_name,"w") as file:
-            json.dump(self.current_prompt,file,indent=4)
+            json.dump(self.full_history,file,indent=4)
 
     def get_file_name(self, base_name="logs"):
         """creates a file name based on datetime"""

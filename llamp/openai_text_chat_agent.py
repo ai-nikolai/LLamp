@@ -8,19 +8,18 @@ from tenacity import (
     wait_random_exponential, # type: ignore
 )
 
-from .base_llm_agent import BaseLLMAgent
+from llamp.base_llm_agent import BaseLLMAgent
 
 class OpenAITextChatAgent(BaseLLMAgent):
-    def __init__(self, agent_name="OpenAITextChatAgent",save_path="game_logs", temperature=0.0, model="davinci-002", stop_sequences=None):
+    def __init__(self, agent_name="OpenAITextChatAgent",save_path="game_logs", temperature=0.0, model="gpt-3.5-turbo-0125", stop_sequences=None):
         
-        super().__init__(agent_name, save_path)     
+        super().__init__(agent_name, save_path, temperature=temperature)        
         self.client = openai.OpenAI(
         # Defaults to os.environ.get("OPENAI_API_KEY")
         # api_key=OPENAI_KEY,
         )
         self.openai_attempts = 0
 
-        self.temperature = temperature
         self.model = model
         self.stop_sequences = stop_sequences
 
@@ -50,26 +49,18 @@ class OpenAITextChatAgent(BaseLLMAgent):
 
 if __name__=="__main__":
     print("Nothing to run here.")
-    # def call_model(self, attempt_limit = 100):
-    #   """Call OpenAI API"""
-    #   try:
-    #       print("Trying to call GPT")
-    #       chat_completion = self.client.chat.completions.create(
-    #           # model="gpt-3.5-turbo",
-    #           model="gpt-3.5-turbo-0125",
-    #           # model="gpt-4-turbo-preview",
-    #           messages=self.current_prompt,
-    #           temperature=0.8
-    #       )
-    #       chat_message = chat_completion.choices[0].message.content
-    #       self.openai_attempts = 0
-    #   except openai.RateLimitError:
-    #       print(f"Need to wait ... attempt:{self.openai_attempts}")
-    #       time.sleep(20)
-    #       self.openai_attempts+=1
-    #       if self.openai_attempts < attempt_limit:
-    #           return self.call_model()
-    #       else:
-    #           raise Exception("Exceeded Attempt Limit")
+    agent = OpenAITextChatAgent(save_path="./")
+    prompt = []
+    agent.save()
 
-    #   return chat_message
+    agent.set_base_prompt_and_reset(prompt)
+
+
+    observation = "Hi"
+    action = agent.act(observation)
+
+    print(action)
+
+    agent.save()
+
+    # EOF

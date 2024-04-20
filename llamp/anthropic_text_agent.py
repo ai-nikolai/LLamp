@@ -17,7 +17,7 @@ from .base_llm_agent import BaseLLMAgent
 class AnthropicTextAgent(BaseLLMAgent):
     def __init__(self, agent_name="AntropicTextAgent",save_path="game_logs", temperature=0.0, model="claude-2.1", stop_sequences=None):
         
-        super().__init__(agent_name, save_path)     
+        super().__init__(agent_name, save_path, temperature=temperature)        
         self.client = anthropic.Anthropic(
             # defaults to os.environ.get("ANTHROPIC_API_KEY")
             # api_key="my_api_key",

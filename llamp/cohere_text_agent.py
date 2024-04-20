@@ -13,7 +13,7 @@ from tenacity import (
 class CohereTextAgent(BaseLLMAgent):
     def __init__(self, agent_name="CohereTextAgent",save_path="game_logs", temperature = 0.0, model="command", stop_sequences=None):
         
-        super().__init__(agent_name, save_path)
+        super().__init__(agent_name, save_path, temperature=temperature)        
         self.base_prompt = [{
             "role" : "system",
             "content" : "You will interact with the environment to solve the given task. Think step by step "

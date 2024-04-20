@@ -13,14 +13,13 @@ from .base_llm_agent import BaseLLMAgent
 class OpenAIAgent(BaseLLMAgent):
 	def __init__(self, agent_name="OpenAIAgent",save_path="game_logs", temperature=0.0, model="gpt-3.5-turbo-0125", stop_sequences=None):
 		
-		super().__init__(agent_name, save_path)		
+		super().__init__(agent_name, save_path, temperature=temperature)		
 		self.client = openai.OpenAI(
 	    # Defaults to os.environ.get("OPENAI_API_KEY")
 	    # api_key=OPENAI_KEY,
 		)
 		self.openai_attempts = 0
 
-		self.temperature = temperature
 		self.model = model
 
 		self.stop_sequences=stop_sequences
