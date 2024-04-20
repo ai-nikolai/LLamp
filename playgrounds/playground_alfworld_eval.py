@@ -10,6 +10,8 @@ import cohere
 import alfworld
 import alfworld.agents.environment
 
+from llamp.human_agent import HumanAgent
+
 from llamp.anthropic_agent import AnthropicAgent
 from llamp.anthropic_text_agent import AnthropicTextAgent
 
@@ -21,6 +23,7 @@ from llamp.cohere_text_chat_agent import CohereTextChatAgent
 from llamp.openai_agent import OpenAIAgent
 from llamp.openai_text_agent import OpenAITextAgent
 from llamp.openai_text_chat_agent import OpenAITextChatAgent
+from llamp.openai_text_chat_sampling_agent import OpenAITextChatSamplingAgent
 
 
 from datetime import datetime
@@ -320,7 +323,8 @@ AGENT_MODEL_MAPPING = {
     "CohereText" : ["command","command-nightly"],
     "OpenAIText" : ["davinci-002", "gpt-3.5-turbo-instruct"],
     "CohereTextChat" : ["command","command-nightly"],
-    "OpenAITextChat" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"]
+    "OpenAITextChat" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"],
+    "OpenAITextChatSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"]
 }
 
 def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
@@ -413,6 +417,21 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
         agent = OpenAITextChatAgent(temperature=temperature, model=model) 
 
 
+    elif agent_type=="OpenAITextChatSampling":
+        model = "gpt-3.5-turbo-0125"
+        # model = "gpt-4-turbo-preview"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = OpenAITextChatSamplingAgent(temperature=temperature, model=model, temperature_jump=0.2) 
+
+
+    elif agent_type=="HumanAgent":
+        model = "Human"
+        agent = HumanAgent()
+
     return agent, model
 
 
@@ -473,7 +492,7 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
 #################################################################
 #Env Prompt Logic
 #################################################################
-def get_prompt_example(react_prompt, agentbench_prompt, jsonreact_prompt, swap_order, not_ours_param, env_type, log_full_prompt=False, generate_example=True):
+def get_prompt_example(react_prompt, agentbench_prompt, jsonreact_prompt, swap_order, not_ours_param, env_type, log_full_prompt=False, generate_example=True, keys_to_remove=[]):
     """ Get name of prompt and example prompts"""
     # Generate correct prompt for this environment (basically pick the right example).  
     new_base_prompt = ""
@@ -517,7 +536,7 @@ def get_prompt_example(react_prompt, agentbench_prompt, jsonreact_prompt, swap_o
                 prompt_example += "\n\n"+prompt_example2
 
         if log_full_prompt:
-            keys_to_remove_string = "+".join(keys_to_remove)
+            keys_to_remove_string = "+".join(keys_to_remove)+swap_string
  
         else:
             long_string = "short" if len(keys_to_remove) > 2 else "long"
@@ -557,21 +576,30 @@ if __name__=="__main__":
     BASE_EVAL_NAME = "alfworld_eval"
     MAIN_CSV_FILE_NAME = "alfworld_results"
 
+    TEST_ENV = False
+    TEST_ENV = True
+
 
     #CHANGE THIS ONE
-    CURRENT_TRIAL_NAME = "v2_2_eval_0-135"
-    # CURRENT_TRIAL_NAME = "v2_2_eval_test"
+    if not TEST_ENV:
+        CURRENT_TRIAL_NAME = "v2_4_eval_0-135"
+    else:
+        CURRENT_TRIAL_NAME = "v2_4_eval_test"
 
 
     ###############################
     # Basic Init
-    start_env_idx=0
-    num_envs = 135
+    if not TEST_ENV:
+        start_env_idx=0
+        num_envs = 135
 
-    # start_env_idx=0
-    # num_envs = 1
+    else:
+        start_env_idx=4
+        num_envs = 1
 
     agent_type = "OpenAITextChat"
+    agent_type = "OpenAITextChatSampling"
+    # agent_type = "HumanAgent"
     model = "gpt-3.5-turbo-0125"
     temperature = 0.0
 
@@ -602,15 +630,15 @@ if __name__=="__main__":
     # AGENTBENCH_PROMPT = True
     # JSON_REACT_PROMPT = True
 
-    
-    NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT
+    HUMAN_AGENT = agent_type == "HumanAgent"
+    NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT or HUMAN_AGENT
 
     # num_examples_react_or_prompt_version_agentbench = 2
     # NOT_OURS_PARAM = num_examples_react_or_prompt_version_agentbench
     
     NOT_OURS_PARAM = 2 #Now this is ours and not ours (naming is legacy)
-    SWAP_ORDER = True
-    # LOG_FULL_PROMPT = True
+    # SWAP_ORDER = True
+    LOG_FULL_PROMPT = True
 
     ##############################
     # This applies to our prompts
@@ -622,6 +650,19 @@ if __name__=="__main__":
         # "current_inventory", 
         # "current_location", 
         # "current_objective",
+        # "thought",
+        # "action"
+    ]
+
+    keys_to_remove = [
+        "prompt",
+        "goal", 
+        "plan", 
+        "places_visited", 
+        "current_inventory", 
+        "current_location", 
+        "current_objective",
+        # "thought",
         # "action"
     ]
     # keys_to_remove = [
@@ -642,6 +683,7 @@ if __name__=="__main__":
     #     "current_inventory", 
     #     "current_location", 
     #     "current_objective",
+    #     "thought",
     #     # "action"
     # ]
 
@@ -653,7 +695,8 @@ if __name__=="__main__":
         not_ours_param=NOT_OURS_PARAM,
         env_type="",
         log_full_prompt = LOG_FULL_PROMPT,
-        generate_example=False)
+        generate_example=False,
+        keys_to_remove=keys_to_remove)
 
     ##############################
     # Checking settings with the user. User needs to type y.
@@ -757,6 +800,7 @@ if __name__=="__main__":
     with open('playgrounds/base_config.yaml') as reader:
         config = yaml.safe_load(reader)
     split = "eval_out_of_distribution"
+    # split = "eval_in_distribution"
 
     env = getattr(alfworld.agents.environment, config["env"]["type"])(config, train_eval=split)
     env = env.init_env(batch_size=1)
@@ -814,7 +858,8 @@ if __name__=="__main__":
             not_ours_param=NOT_OURS_PARAM,
             env_type=env_type,
             log_full_prompt = LOG_FULL_PROMPT,
-            generate_example=True)
+            generate_example=True, 
+            keys_to_remove=keys_to_remove)
 
         prompt = generate_prompt_from_example(prompt_example, number_of_examples=num_examples, base_prompt=new_base_prompt)
         agent.set_base_prompt_and_reset(prompt)
@@ -894,6 +939,8 @@ if __name__=="__main__":
         num_current_repetitions = 0
 
 
+        # for resampling
+        CURRENT_NOTHING_HAPPENS = False
 
 
         #######################################################
@@ -903,6 +950,10 @@ if __name__=="__main__":
             while game_running_flag:
                 is_illegal_action = False
                 is_nothing_happens = False
+
+
+                # #####################
+                # Action related
 
                 # action = input(">")
                 action = agent.act(f"{INPUT_TOKEN}"+observation+f"{OUTPUT_TOKEN}")
@@ -980,6 +1031,11 @@ if __name__=="__main__":
 
                 prev_action = action
 
+
+
+
+                # #####################
+                # Observation Related
                 observation, reward, done, info = env.step([action])
                 total_reward += reward[0]
 
@@ -987,6 +1043,11 @@ if __name__=="__main__":
                 observation, is_nothing_happens = process_ob(observation[0], track_nothing_happens=True)
                 if is_nothing_happens:
                     num_nothing_happens += 1
+                    CURRENT_NOTHING_HAPPENS = True
+                else:
+                    CURRENT_NOTHING_HAPPENS = False
+
+
                 
                 print("<> OBSERVATION <>:"+observation)
                 print(info["won"][0])

@@ -47,11 +47,15 @@ def remove_keys(base_prompt, keys=[]):
     out_list = []
     for idx, component in enumerate(base_prompt):
         if idx % 2 == 1:
-            data = json.loads(component)
-            if keys:
-                for key in keys:
-                    data.pop(key, None)
-            component = json.dumps(data,indent=2)
+            try:
+                data = json.loads(component)
+                if keys:
+                    for key in keys:
+                        data.pop(key, None)
+                component = json.dumps(data,indent=2)
+            except Exception as e:
+                print(idx)
+                raise e
         
         out_list.append(component)
     return out_list
@@ -67,23 +71,32 @@ if __name__=="__main__":
     # base_prompt = heat_v4_base
     # base_prompt = put_v4_base
     # base_prompt = puttwo_v4_base
+    error_flag = False
     env_types = ["clean","cool","examine","heat","put","puttwo"]
     for env_type in env_types:
         base_prompt = ENV_TO_EXAMPLE_MAPPING[env_type]
         try:
-            base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective"])
+            base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","non-existant-key"])
             result = generate_string_prompt(base_prompt)
         except Exception as e:
             print(env_type)
             print("1 - Error")
+            print(e)
+            error_flag=True
+
             
         base_prompt = ENV_TO_EXAMPLE_MAPPING_2[env_type]        
         try:
-            base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective"])
+            base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","non-existant-key"])
             result = generate_string_prompt(base_prompt)
         except Exception as e:
             print(env_type)
             print("2 - Error")
+            print(e)
+            error_flag=True
+
+    if not error_flag:
+        print("No Errors encountered with prompts")
 
     # print(result)
 

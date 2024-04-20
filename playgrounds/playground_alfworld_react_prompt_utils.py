@@ -42,7 +42,7 @@ def return_react_examples(env_type, num=2, swap=False):
     return target_trace
 
 
-def return_json_react_examples(env_type, num=1):
+def return_json_react_examples(env_type, num=1,swap=False):
     """
     Given the env type return a react example.
 
@@ -51,7 +51,14 @@ def return_json_react_examples(env_type, num=1):
     """
     target_trace = ""
 
-    string_trace = original_react_prompts[f"react_{env_type}_1"]
+    if swap:
+        idx1 = 2
+        idx2 = 1
+    else:
+        idx1 = 1
+        idx2 = 2
+
+    string_trace = original_react_prompts[f"react_{env_type}_{idx1}"]
 
     commands = string_trace.split(">")
 
@@ -69,7 +76,7 @@ def return_json_react_examples(env_type, num=1):
     target_trace = ">".join(commands)
 
     if num==2:
-        string_trace = original_react_prompts[f"react_{env_type}_2"]
+        string_trace = original_react_prompts[f"react_{env_type}_{idx2}"]
 
         commands = string_trace.split(">")
 
@@ -107,6 +114,6 @@ def return_agentbench_prompts(env_type, return_base=True, version=2):
         return prompt_example
 
 if __name__=="__main__":
-    env_type = "clean"
-    prompt_trace = return_json_react_examples(env_type)
+    env_type = "puttwo"
+    prompt_trace = return_json_react_examples(env_type,num=2)
     print(prompt_trace)

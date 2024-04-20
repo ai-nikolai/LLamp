@@ -16,12 +16,17 @@ if __name__=="__main__":
 	    messages=[
 	    	{
 		    	"role": "system", 
-		   		"content": "Generate 2 paragraphs from here: Hi, there"}
+		   		"content": "Generate 2 paragraphs from here: Hi, there",
+		   		# "unrelated_key" :"Will you throw an error?" #YES
+		   	}
 	    ],
 	    stop = ["\n"]
 	)
 
 	# print(chat_completion)
 	# print(chat_completion.choices[0].message)
-	print(chat_completion.choices[0].message.content)
-	print(chat_completion.choices[0].message.role)
+	try:
+		print(chat_completion.choices[0].message.content)
+		print(chat_completion.choices[0].message.role)
+	except Exception as e:
+		print(e)
