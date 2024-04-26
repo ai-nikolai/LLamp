@@ -577,14 +577,14 @@ if __name__=="__main__":
     MAIN_CSV_FILE_NAME = "alfworld_results"
 
     TEST_ENV = False
-    TEST_ENV = True
+    # TEST_ENV = True
 
 
     #CHANGE THIS ONE
     if not TEST_ENV:
-        CURRENT_TRIAL_NAME = "v2_4_eval_0-135"
+        CURRENT_TRIAL_NAME = "v2_6_eval_0-135"
     else:
-        CURRENT_TRIAL_NAME = "v2_4_eval_test"
+        CURRENT_TRIAL_NAME = "v2_5_eval_test"
 
 
     ###############################
@@ -592,13 +592,16 @@ if __name__=="__main__":
     if not TEST_ENV:
         start_env_idx=0
         num_envs = 135
-
+# TODO:
+# 1. Make end start env as option as well (not only num of envs)
+# 2. Make restart from last unfinished possible
+# 3. Todo (record prompts more properly [based on order of input prompts])
     else:
         start_env_idx=4
         num_envs = 1
 
     agent_type = "OpenAITextChat"
-    agent_type = "OpenAITextChatSampling"
+    # agent_type = "OpenAITextChatSampling"
     # agent_type = "HumanAgent"
     model = "gpt-3.5-turbo-0125"
     temperature = 0.0
@@ -630,8 +633,7 @@ if __name__=="__main__":
     # AGENTBENCH_PROMPT = True
     # JSON_REACT_PROMPT = True
 
-    HUMAN_AGENT = agent_type == "HumanAgent"
-    NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT or HUMAN_AGENT
+    NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT or agent_type == "HumanAgent"
 
     # num_examples_react_or_prompt_version_agentbench = 2
     # NOT_OURS_PARAM = num_examples_react_or_prompt_version_agentbench
@@ -654,17 +656,47 @@ if __name__=="__main__":
         # "action"
     ]
 
-    keys_to_remove = [
-        "prompt",
-        "goal", 
-        "plan", 
-        "places_visited", 
-        "current_inventory", 
-        "current_location", 
-        "current_objective",
-        # "thought",
-        # "action"
-    ]
+    # #short with thought (naturally without current_objective)
+    # keys_to_remove = [
+    #     "prompt",
+    #     # "goal", 
+    #     # "plan", 
+    #     "places_visited", 
+    #     "current_inventory", 
+    #     "current_location", 
+    #     "current_objective",
+    #     # "thought",
+    #     # "action"
+    # ]
+
+    # #Long with thought
+    # keys_to_remove = [
+    #     "prompt",
+    #     # "goal", 
+    #     # "plan", 
+    #     # "places_visited", 
+    #     # "current_inventory", 
+    #     # "current_location", 
+    #     # "current_objective",
+    #     # "thought",
+    #     # "action"
+    # ]
+
+
+    # #short without thought with current_objective [i.e. "do we need full thoughts"]
+    # keys_to_remove = [
+    #     "prompt",
+    #     # "goal", 
+    #     # "plan", 
+    #     "places_visited", 
+    #     "current_inventory", 
+    #     "current_location", 
+    #     # "current_objective",
+    #     "thought",
+    #     # "action"
+    # ]
+
+    # #Long with thought without current_objective [i.e. "do we need full thoughts"]
     # keys_to_remove = [
     #     "prompt",
     #     # "goal", 
@@ -673,8 +705,64 @@ if __name__=="__main__":
     #     # "current_inventory", 
     #     # "current_location", 
     #     "current_objective",
+    #     # "thought",
     #     # "action"
     # ]
+
+    # #thought + goal (react-2-goal) (i.e. what is better plan or thought) [need a few more of short without thought, long without thought and thought / plan swapped places]
+    # keys_to_remove = [
+    #     "prompt",
+    #     # "goal", 
+    #     "plan", 
+    #     "places_visited", 
+    #     "current_inventory", 
+    #     "current_location", 
+    #     "current_objective",
+    #     # "thought",
+    #     # "action"
+    # ]
+
+
+    # "long" no plan, + thought, no current_objective (i.e. just goal + current_obj + act)
+    keys_to_remove = [
+        "prompt",
+        # "goal", 
+        "plan", 
+        # "places_visited", 
+        # "current_inventory", 
+        # "current_location", 
+        "current_objective",
+        # "thought",
+        # "action"
+    ]
+
+    # "short" no plan, no thought (i.e. just goal + current_obj + act)
+    # keys_to_remove = [
+    #     "prompt",
+    #     # "goal", 
+    #     "plan", 
+    #     "places_visited", 
+    #     "current_inventory", 
+    #     "current_location", 
+    #     # "current_objective",
+    #     "thought",
+    #     # "action"
+    # ]
+
+    # #old "long"
+    # keys_to_remove = [
+    #     "prompt",
+    #     # "goal", 
+    #     # "plan", 
+    #     # "places_visited", 
+    #     # "current_inventory", 
+    #     # "current_location", 
+    #     # "current_objective",
+    #     "thought",
+    #     # "action"
+    # ]
+
+    # #old "short"
     # keys_to_remove = [
     #     "prompt",
     #     # "goal", 

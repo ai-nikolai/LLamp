@@ -72,15 +72,18 @@ IMPORTANT_STATISTICS = [
     "early_stop"
 ]
 
-def modify_text_prompt(keys_removed):
+def modify_text_prompt(keys_removed, change=False):
     """changes to short version"""
-    keys = keys_removed.count("+")
-    if keys==0:
-        return keys_removed
-    elif keys>1:
-        return "short"
+    if change:
+        keys = keys_removed.count("+")
+        if keys==0:
+            return keys_removed
+        elif keys>1:
+            return "short"
+        else:
+            return "long"
     else:
-        return "long"
+        return keys_removed
 
 def extract_correct_stats_from_string_row(tr, im):
     # tr[im["model"]]
@@ -178,6 +181,10 @@ if __name__=="__main__":
     CURRENT_TRIAL_NAME = "v2_eval_100-35"
     CURRENT_TRIAL_NAME = "v2_3_eval_0-135"
     CURRENT_TRIAL_NAME = "v2_4_eval_0-135"
+    CURRENT_TRIAL_NAME = "v2_5_eval_0-135"
+    CURRENT_TRIAL_NAME = "v2_6_eval_0-135"
+
+
 
 
 
