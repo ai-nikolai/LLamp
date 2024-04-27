@@ -3,31 +3,30 @@ import os
 
 from llamp.utils import cohere_model, openai_model
 
-from prompts.alfworld_prompts_utils import clean_simple_goal_plan_1, \
-cool_simple_goal_plan_1, \
-examine_simple_goal_plan_1, \
-heat_simple_goal_plan_1, \
-clean_state_goal_plan_1, \
-clean_state_goal_plan_v2_1, \
-clean_state_goal_plan_v3_1, \
-clean_state_goal_plan_v4_1, \
-clean_state_goal_plan_v4b_1
+from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base_1, clean_v4_base_2
+from prompts.alfworld_prompts_utils_v4_cool_base import cool_v4_base_1, cool_v4_base_2
+from prompts.alfworld_prompts_utils_v4_examine_base import examine_v4_base_1, examine_v4_base_2
+from prompts.alfworld_prompts_utils_v4_heat_base import heat_v4_base_1, heat_v4_base_2
+from prompts.alfworld_prompts_utils_v4_put_base import put_v4_base_1, put_v4_base_2
+from prompts.alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base_1, puttwo_v4_base_2
 
+ENV_TO_EXAMPLE_MAPPING = {
+    "clean" : clean_v4_base_1,
+    "cool"  : cool_v4_base_1,
+    "examine"   : examine_v4_base_1,
+    "heat"  : heat_v4_base_1,
+    "put"   : put_v4_base_1,
+    "puttwo"    : puttwo_v4_base_1
+}
 
-from prompts.alfworld_prompts_utils_v4_clean import \
-clean_state_goal_plan_v4a_1, \
-clean_state_goal_plan_v4b_1, \
-clean_state_goal_plan_v4c_1, \
-clean_state_goal_plan_v4d_1, \
-clean_state_goal_plan_v4e_1, \
-clean_state_goal_plan_v4f_1, \
-clean_state_goal_plan_v4g_1, \
-clean_state_goal_plan_v4h_1, \
-clean_state_goal_plan_v4i_1
-
-from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base
-from prompts.alfworld_prompts_utils_v4_examine_base import examine_v4_base
-
+ENV_TO_EXAMPLE_MAPPING_2 = {
+    "clean" : clean_v4_base_2,
+    "cool"  : cool_v4_base_2,
+    "examine"   : examine_v4_base_2,
+    "heat"  : heat_v4_base_2,
+    "put"   : put_v4_base_2,
+    "puttwo"    : puttwo_v4_base_2
+}
 
 from playground_alfworld_ablation_generator import generate_string_prompt
 
@@ -39,22 +38,24 @@ openai = openai_model(model="gpt-4-turbo-preview")
 def generate_prompt(prompt_example, target_trace, prompt_trace):
     """ Generate Prompt based on example prompt and desired trace """
     prompt = f"""
-Your task is to change the whole input trace into the correct format.
+Your task is to change the whole input trace into the correct output format.
 
-Here is an example of how the output should look like:
-<<<
-In:
+Here is an example of how the output should look like given the input:
+Example Input Trace:
+\"
 {prompt_trace}
-
+\"
     
-Out:
+Example Output:
+\"
 {prompt_example}
->>>
+\"
 
-This is the input trace, transform it all:
-<<<
+
+Input Trace:
+\"
 {target_trace}
->>>
+\"
 """
     # print(prompt)
 
@@ -73,39 +74,23 @@ def get_variable_name(env_type, current_index, base_variable_name="state_goal_pl
 if __name__=="__main__":
 
 
-    list_of_prompts = [
-        clean_state_goal_plan_v4a_1, 
-        clean_state_goal_plan_v4b_1, 
-        clean_state_goal_plan_v4c_1, 
-        clean_state_goal_plan_v4d_1, 
-        clean_state_goal_plan_v4e_1, 
-        clean_state_goal_plan_v4f_1, 
-        clean_state_goal_plan_v4g_1, 
-        clean_state_goal_plan_v4h_1, 
-        clean_state_goal_plan_v4i_1
-    ]
-
     types_of_envs = ["clean","cool","examine", "heat", "put", "puttwo"]
-    # save_folder = "playgrounds"
-    # base_variable_name = "state_goal_plan_v4"
-    # file_name = "alfworld_prompts_utils_v4_{env_type}.py"
 
 
-    react_prompt_file = "playgrounds/alfworld_react_prompts_original_v3.json"
+    react_prompt_file = "playgrounds/prompts/alfworld_react_prompts_original_v3.json"
     with open(react_prompt_file, "r") as file:
         original_prompts = json.load(file)
 
     env_type = types_of_envs[4]
-    # env_type = "cool"
+    env_type = "puttwo"
 
 
-    prompt_trace = original_prompts["act_examine_1"]
-    target_trace = original_prompts[f"act_{env_type}_2"]
-
+    prompt_trace = original_prompts[f"react_{env_type}_1"]
+    target_trace = original_prompts[f"react_{env_type}_0"]
 
 
     # example_prompt = clean_state_goal_plan_v4i_1
-    example_prompt = generate_string_prompt(examine_v4_base)
+    example_prompt = generate_string_prompt(ENV_TO_EXAMPLE_MAPPING[env_type])
     result = generate_prompt(example_prompt, target_trace, prompt_trace)
 
     print(example_prompt)
@@ -133,7 +118,11 @@ if __name__=="__main__":
 
 # Replace:
 # 1. `\n\n>{` with `""",\n"""{`
+# \n\n>{
+# """,\n"""{
 # 2. `}\n\n` with `}""",\n"""`
+# }\n\n
+# }""",\n"""
 
 # Replace (v2):
 # 1. `\n\n{` with `""",\n"""{`

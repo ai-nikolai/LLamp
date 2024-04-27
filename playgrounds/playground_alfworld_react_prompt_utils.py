@@ -21,14 +21,14 @@ with open(agentbench_prompt_file, "r") as file:
     original_agentbench_prompts_v2 = json.load(file)
 
 
-def return_react_examples(env_type, num=2, swap=False):
+def return_react_examples(env_type, num=2, swap=False, first_id=0, second_id=1):
     """Given the env type return a react example."""
     if swap:
-        first_index = 2
-        second_index = 1
+        first_index = second_id
+        second_index = first_id
     else:
-        first_index = 1
-        second_index = 2
+        first_index = first_id
+        second_index = second_id
     target_trace = ""
     if num == 2:
         target_trace1 = original_react_prompts[f"react_{env_type}_{first_index}"]
@@ -42,7 +42,7 @@ def return_react_examples(env_type, num=2, swap=False):
     return target_trace
 
 
-def return_json_react_examples(env_type, num=1,swap=False):
+def return_json_react_examples(env_type, num=1,swap=False, first_id=0, second_id=1):
     """
     Given the env type return a react example.
 
@@ -52,11 +52,11 @@ def return_json_react_examples(env_type, num=1,swap=False):
     target_trace = ""
 
     if swap:
-        idx1 = 2
-        idx2 = 1
+        idx1 = second_id
+        idx2 = first_id
     else:
-        idx1 = 1
-        idx2 = 2
+        idx1 = first_id
+        idx2 = second_id
 
     string_trace = original_react_prompts[f"react_{env_type}_{idx1}"]
 

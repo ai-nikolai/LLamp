@@ -183,7 +183,8 @@ if __name__=="__main__":
     CURRENT_TRIAL_NAME = "v2_4_eval_0-135"
     CURRENT_TRIAL_NAME = "v2_5_eval_0-135"
     CURRENT_TRIAL_NAME = "v2_6_eval_0-135"
-
+    CURRENT_TRIAL_NAME = "v2_7_eval_0-135"
+    CURRENT_TRIAL_NAME = "v2_8_eval_0-135"
 
 
 

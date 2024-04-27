@@ -36,12 +36,12 @@ from playground_alfworld_ablation_generator import generate_string_prompt, remov
 from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts, return_json_react_examples
 
 
-from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base, clean_v4_base_2
-from prompts.alfworld_prompts_utils_v4_cool_base import cool_v4_base, cool_v4_base_2
-from prompts.alfworld_prompts_utils_v4_examine_base import examine_v4_base, examine_v4_base_2
-from prompts.alfworld_prompts_utils_v4_heat_base import heat_v4_base, heat_v4_base_2
-from prompts.alfworld_prompts_utils_v4_put_base import put_v4_base, put_v4_base_2
-from prompts.alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base, puttwo_v4_base_2
+from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base_1, clean_v4_base_2
+from prompts.alfworld_prompts_utils_v4_cool_base import cool_v4_base_1, cool_v4_base_2
+from prompts.alfworld_prompts_utils_v4_examine_base import examine_v4_base_1, examine_v4_base_2
+from prompts.alfworld_prompts_utils_v4_heat_base import heat_v4_base_1, heat_v4_base_2
+from prompts.alfworld_prompts_utils_v4_put_base import put_v4_base_1, put_v4_base_2
+from prompts.alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base_1, puttwo_v4_base_2
 
 
 
@@ -59,12 +59,12 @@ ENV_TYPES = {
 } 
 
 ENV_TO_EXAMPLE_MAPPING = {
-    "clean" : clean_v4_base,
-    "cool"  : cool_v4_base,
-    "examine"   : examine_v4_base,
-    "heat"  : heat_v4_base,
-    "put"   : put_v4_base,
-    "puttwo"    : puttwo_v4_base
+    "clean" : clean_v4_base_1,
+    "cool"  : cool_v4_base_1,
+    "examine"   : examine_v4_base_1,
+    "heat"  : heat_v4_base_1,
+    "put"   : put_v4_base_1,
+    "puttwo"    : puttwo_v4_base_1
 }
 
 ENV_TO_EXAMPLE_MAPPING_2 = {
@@ -439,7 +439,7 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 #################################################################
 #Display Settings
 #################################################################
-def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agent_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove, not_ours_param, swap_order, keys_to_remove_string):
+def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agent_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove, not_ours_param, swap_order, keys_to_remove_string, correction):
     """ Creates a string to print to the user the current settings. """
     not_ours = react_prompt or agentbench_prompt or json_react_prompt
     if not_ours:
@@ -479,6 +479,9 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
 
     #Name of prompt
     display_text += f"   -The prompt will be called: {keys_to_remove_string}\n" 
+
+    #Name of prompt
+    display_text += f"   -Correction will happen: {correction}\n" 
 
 
     display_text += "Do you want to continue? Press 'y' to continue."
@@ -582,7 +585,7 @@ if __name__=="__main__":
 
     #CHANGE THIS ONE
     if not TEST_ENV:
-        CURRENT_TRIAL_NAME = "v2_6_eval_0-135"
+        CURRENT_TRIAL_NAME = "v2_8_eval_0-135"
     else:
         CURRENT_TRIAL_NAME = "v2_5_eval_test"
 
@@ -629,7 +632,7 @@ if __name__=="__main__":
 
 
     #untick for our prompts
-    # REACT_PROMPT = True 
+    REACT_PROMPT = True 
     # AGENTBENCH_PROMPT = True
     # JSON_REACT_PROMPT = True
 
@@ -639,8 +642,11 @@ if __name__=="__main__":
     # NOT_OURS_PARAM = num_examples_react_or_prompt_version_agentbench
     
     NOT_OURS_PARAM = 2 #Now this is ours and not ours (naming is legacy)
-    # SWAP_ORDER = True
+    SWAP_ORDER = True
     LOG_FULL_PROMPT = True
+
+    CORRECTION = False
+    # CORRECTION = True
 
     ##############################
     # This applies to our prompts
@@ -802,7 +808,8 @@ if __name__=="__main__":
             keys_to_remove=keys_to_remove_string,
             not_ours_param = NOT_OURS_PARAM,
             swap_order = SWAP_ORDER,
-            keys_to_remove_string = keys_to_remove_string2
+            keys_to_remove_string = keys_to_remove_string2,
+            correction = CORRECTION
         )
     print(settings_string)
     user_input = input(">")
@@ -1113,9 +1120,10 @@ if __name__=="__main__":
                 else:
                     num_current_repetitions =0
 
-                # TODO: maybe start tracking those changes.
-                action = transform_put_action(action)
-                print(f"TRANSFORMED_ACTION:{action}")
+                if CORRECTION:
+                    # TODO: maybe start tracking those changes.
+                    action = transform_put_action(action)
+                    print(f"TRANSFORMED_ACTION:{action}")
 
                 prev_action = action
 
