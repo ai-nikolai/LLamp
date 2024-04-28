@@ -341,7 +341,8 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 
     elif agent_type == "Cohere":
         # model = "command"
-        model = "command-nightly"
+        # model = "command-nightly"
+        model = "command-r"
         if proposed_model:
             if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
                 model = proposed_model
@@ -374,7 +375,8 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 
     elif agent_type=="CohereText":
         # model = "command"
-        model = "command-nightly"
+        # model = "command-nightly"
+        model = "command-r"
         if proposed_model:
             if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
                 model = proposed_model
@@ -397,7 +399,8 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
     #CHAT MODELS used as TEXT MODELs
     elif agent_type=="CohereTextChat":
         # model = "command"
-        model = "command-nightly"
+        # model = "command-nightly"
+        model = "command-r"
         if proposed_model:
             if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
                 model = proposed_model
