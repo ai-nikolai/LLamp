@@ -315,16 +315,17 @@ def get_empty_dict_from_csv_header(header):
 #################################################################
 #AGENT Related
 #################################################################
+# TODO: REFACTOR
 AGENT_MODEL_MAPPING = {
-    "Anthropic" : ["claude-2.1"],
-    "Cohere" : ["command","command-nightly"],
-    "OpenAI" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"],
+    "Anthropic" : ["claude-2.1", "claude-3-sonnet"],
+    "Cohere" : ["command","command-nightly", "command-r"],
+    "OpenAI" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
     "AnthropicText" : ["claude-2.1"],
-    "CohereText" : ["command","command-nightly"],
+    "CohereText" : ["command","command-nightly", "command-r"],
     "OpenAIText" : ["davinci-002", "gpt-3.5-turbo-instruct"],
-    "CohereTextChat" : ["command","command-nightly"],
-    "OpenAITextChat" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"],
-    "OpenAITextChatSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"]
+    "CohereTextChat" : ["command","command-nightly", "command-r"],
+    "OpenAITextChat" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
+    "OpenAITextChatSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview","gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"]
 }
 
 def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
@@ -588,11 +589,12 @@ if __name__=="__main__":
 
     #CHANGE THIS ONE
     if not TEST_ENV:
-        CURRENT_TRIAL_NAME = "v2_8_eval_0-135"
+        CURRENT_TRIAL_NAME = "v2_9_eval_0-135"
     else:
-        CURRENT_TRIAL_NAME = "v2_5_eval_test"
+        CURRENT_TRIAL_NAME = "v2_9_eval_test"
 
-
+# gpt-3.5-turbo-instruct
+# gpt-3.5-turbo-instruct-0914
     ###############################
     # Basic Init
     if not TEST_ENV:
@@ -610,6 +612,9 @@ if __name__=="__main__":
     # agent_type = "OpenAITextChatSampling"
     # agent_type = "HumanAgent"
     model = "gpt-3.5-turbo-0125"
+    model = "gpt-3.5-turbo-0301" #Adaplanner paper GPT3.5 (released when?)
+    model = "gpt-3.5-turbo-0613" #slightly newer version than 0301 (released 13.06.2023)
+    model = "gpt-3.5-turbo-1106" #sligthly newer version than 0613 (released 11.06.2023)
     temperature = 0.0
 
     # AGENT_MODEL_MAPPING = {
@@ -885,10 +890,17 @@ if __name__=="__main__":
     #######################################################
     # AGENT Related
     #######################################################
-    agent, model = get_agent_and_model(agent_type=agent_type, temperature=temperature, proposed_model=model)
+    agent, actual_model = get_agent_and_model(agent_type=agent_type, temperature=temperature, proposed_model=model)
     agent.update_save_path(SAVE_FOLDER)
 
-
+    if actual_model != model:
+        print(f"WARNING: Your model:{model} is not used, instead using default model: {actual_model}")
+        print("Do you still want to continue? Press 'y' to continue.")
+        user_input = input(">")
+        if user_input=="y":
+            pass
+        else:
+            exit(1)
 
 
     #######################################################
@@ -994,7 +1006,7 @@ if __name__=="__main__":
         logging_dict["env_idx"]  = env_idx+start_env_idx
         logging_dict["env_type"] = env_type
         logging_dict["agent_type"] = agent_type
-        logging_dict["model"] = model
+        logging_dict["model"] = actual_model
         logging_dict["temperature"] = temperature
 
 
