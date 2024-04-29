@@ -1,5 +1,6 @@
 import os
 import json
+import re
 
 
 from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base_0, clean_v4_base_1, clean_v4_base_2
@@ -148,91 +149,162 @@ def verify_react_and_ours(our_prompt, react_prompt):
     return all_true
 
 
+def extract_react_command_and_arguments(action_string):
+    """ 
+    Extracts the react command and arguments 
+    
+    WARNGING: 
+        At the moment:
+        Only extract commands that change the state, otherwise returns None.
+
+    Regex Builder: https://regex101.com/r/BK3La8/1
+    """
+    # State changing regex expressions.
+    put_regex = """put\s(\w+(?:\s\w+)?\s\d+)\sin\/on\s(\w+(?:\s\w+)?\s\d+)"""
+    goto_regex = """go\sto\s(\w+(?:\s\w+)?\s\d+)"""
+    take_regex = """take\s(\w+(?:\s\w+)?\s\d+)\sfrom\s(\w+(?:\s\w+)?\s\d+)"""
+    
+    # #Commands that do not change the state
+    # TODO they need to be update to extract arguments correctly.
+    # open_regex = """open(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""    
+    # cool_regex = """cool(?:\s\w+)(?:\s\w+)?(?:\s\d+)\swith(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
+    # clean_regex = """clean(?:\s\w+)(?:\s\w+)?(?:\s\d+)\swith(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
+    # use_regex = """use(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
+    # heat_regex = """heat(?:\s\w+)(?:\s\w+)?(?:\s\d+)\swith(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
+    # examine_regex = """examine(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
+    # close_regex = """close(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
+    # look_regex = """look"""
+
+    # changing_regexes = [put_regex, goto_regex, take_regex]
+
+    answer = re.match(put_regex,action_string)
+    if answer: #Put case
+        put_object = answer.group(1)
+        put_place = answer.group(2)
+        return "put", put_object, put_place
+
+    answer = re.match(goto_regex,action_string)
+    if answer: #Put case
+        goto_place = answer.group(1)
+        return "goto", goto_place, None  
+
+    answer = re.match(take_regex,action_string)
+    if answer: #Put case
+        take_object = answer.group(1)
+        take_place = answer.group(2)
+        return "take", take_object, take_place
+
+    # Otherwise return nothing (as it's not changing the state)
+    return None, None, None
+
+
+def update_reference_state_with_action(reference_state, action_string):
+    """ Update the reference state with a given command. """
+    command, arg1, arg2 = extract_react_command_and_arguments(action_string)
+
+    if command == "goto":
+        reference_state["current_location"] = arg1
+        reference_state["places_visited"].append(arg1)
+    
+    if command == "put":
+        # TODO check one actually carries this object.
+        reference_state["current_inventory"] = ""
+
+    if command == "take":
+        # TODO check one can actually take this object. (harder)
+        reference_state["current_inventory"] = arg1
+
+
+def verify_state_tracking(our_prompt):
+    """ 
+    Assumes that our prompts are a: 
+        - list of Observation, Sys Response, 
+        - where sys response is a json with various keys
+    """
+    reference_state = {
+        "places_visited": [],
+        "current_location": "starting location",
+        "current_inventory": ""
+    }
+    keys_to_check = ["current_location","places_visited","current_inventory"]    
+   
+    for idx, response in enumerate(our_prompt):
+        if idx % 2 == 1:
+            our_state = json.loads(response)
+            # try:
+            for key in keys_to_check:
+                assert reference_state[key] == our_state[key],f"States are not the same for: {key} at idx:{idx}\nOurs:\n{our_state[key]}\nTheirs:\n{reference_state[key]}"
+            # except AssertionError as e:
+            #     print("="*8)
+            #     print(f"IDX:{idx} Failed")
+            #     print(e)
+            
+            our_action = our_state["action"]
+            update_reference_state_with_action(reference_state, our_action)
+
+
 if __name__=="__main__":
 
     all_keys = ["prompt", "goal", "plan", "places_visited", "current_inventory", "current_location", "current_objective", "action"]
 
     # base_prompt = clean_v4_base_1
-
     error_flag = False
     alignment_error_flag = False
+    state_error_flag = False
+
+    env_mappings = [ENV_TO_EXAMPLE_MAPPING_0, ENV_TO_EXAMPLE_MAPPING_1, ENV_TO_EXAMPLE_MAPPING_2]
 
     env_types = ["clean","cool","examine","heat","put","puttwo"]
+
+
     for env_type in env_types:
-        base_prompt = ENV_TO_EXAMPLE_MAPPING_0[env_type]
-        try:
-            base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","non-existant-key"])
-            result = generate_string_prompt(base_prompt)
+        for env_idx,env_mapping in enumerate(env_mappings):
+            base_prompt = env_mapping[env_type]
             try:
-                react_list = return_json_react_examples(env_type, num=1, first_id=0, version=1, think_key="think", action_key="action", return_list=True)  
-                success = verify_react_and_ours(base_prompt, react_list[0])
-                    
-            except AssertionError as e:
-                print("\n======")
-                print("0 - Alignmenterror")
-                print(env_type)
-                print(e)                
-                alignment_error_flag=True
+                base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","non-existant-key"])
+                result = generate_string_prompt(base_prompt)
 
-        except Exception as e:
-            print("======")
-            print("0 - Error")
-            print(env_type)
-            print(e)
-            error_flag=True
+                try:
+                    verify_state_tracking(base_prompt)
+                except AssertionError as e:
+                    print("\n======")
+                    print(f"{env_idx} - StateTrackingError")
+                    print(env_type)
+                    print(e)  
+                    state_error_flag = True 
 
-        base_prompt = ENV_TO_EXAMPLE_MAPPING_1[env_type]
-        try:
-            base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","non-existant-key"])
-            result = generate_string_prompt(base_prompt)
+                try:
+                    react_list = return_json_react_examples(env_type, num=1, first_id=env_idx, version=1, think_key="think", action_key="action", return_list=True)  
+                    success = verify_react_and_ours(base_prompt, react_list[0])
+                        
+                except AssertionError as e:
+                    print("\n======")
+                    print(f"{env_idx} - AlignmentError")
+                    print(env_type)
+                    print(e)                
+                    alignment_error_flag=True
 
-            try:
-                react_list = return_json_react_examples(env_type, num=1, first_id=1, version=1, think_key="think", action_key="action", return_list=True)  
-                success = verify_react_and_ours(base_prompt, react_list[0])
-                    
-            except AssertionError as e:
-                print("\n======")
-                print("1 - Alignmenterror")
+            except Exception as e:
+                print("======")
+                print(f"{env_idx} - Error")
                 print(env_type)
                 print(e)
-                alignment_error_flag=True
-
-        except Exception as e:
-            print("======")
-            print("1 - Error")
-            print(env_type)
-            print(e)
-            error_flag=True
-
-            
-        base_prompt = ENV_TO_EXAMPLE_MAPPING_2[env_type]        
-        try:
-            base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","non-existant-key"])
-            result = generate_string_prompt(base_prompt)
-
-            try:
-                react_list = return_json_react_examples(env_type, num=1, first_id=2, version=1, think_key="think", action_key="action", return_list=True)  
-                success = verify_react_and_ours(base_prompt, react_list[0])
-                    
-            except AssertionError as e:
-                print("\n======")
-                print("2 - Alignmenterror")
-                print(env_type)
-                print(e)
-                alignment_error_flag=True
-
-        except Exception as e:
-            print("======")
-            print("2 - Error")
-            print(env_type)
-            print(e)
-            error_flag=True
+                error_flag=True
 
     if not error_flag:
-        print("No Errors encountered with prompts")
+        print("All prompts in correct format and generate correct strings.")
     
     if not alignment_error_flag:
         print("All Prompts align with React")
+
+    if not state_error_flag:
+        print("All States tracked correctly")
+
+    error_present = any([error_flag, alignment_error_flag, state_error_flag])
+    if not error_present:
+        print("==")
+        print("ALL Manual TESTS PASSED")
+
 
     # print(result)
 
