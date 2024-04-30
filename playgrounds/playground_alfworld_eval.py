@@ -3,36 +3,23 @@ import csv
 import os
 import json
 import re
+import argparse
+from datetime import datetime
 
-
-import cohere
 
 import alfworld
 import alfworld.agents.environment
 
-from llamp.human_agent import HumanAgent
 
-from llamp.anthropic_agent import AnthropicAgent
-from llamp.anthropic_text_agent import AnthropicTextAgent
-
-from llamp.cohere_agent import CohereAgent
-from llamp.cohere_text_agent import CohereTextAgent
-from llamp.cohere_text_chat_agent import CohereTextChatAgent
-
-
-from llamp.openai_agent import OpenAIAgent
-from llamp.openai_text_agent import OpenAITextAgent
-from llamp.openai_text_chat_agent import OpenAITextChatAgent
-from llamp.openai_text_chat_sampling_agent import OpenAITextChatSamplingAgent
-
-
-from datetime import datetime
-
-
+from llamp.llms.human import Human
+from llamp.llms.api import (
+    AnthropicChat, AnthropicText,
+    CohereChat, CohereChatText, CohereText,
+    OpenAIChat, OpenAIChatText, OpenAIText, OpenAIChatTextSampling
+)
 
 
 from playground_alfworld_ablation_generator import generate_string_prompt, remove_keys
-
 from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts, return_json_react_examples
 
 
@@ -45,6 +32,7 @@ from prompts.alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base_1, putt
 
 
 
+# Git patch commit: https://stackoverflow.com/questions/1085162/commit-only-part-of-a-files-changes-in-git
 #################################################################
 #GAME LOOP & ENV Related
 #################################################################
@@ -75,6 +63,7 @@ ENV_TO_EXAMPLE_MAPPING_2 = {
     "put"   : put_v4_base_2,
     "puttwo"    : puttwo_v4_base_2
 }
+
 
 def get_env_type(env_name):
     """ Extracts which type of env it is"""
@@ -298,7 +287,6 @@ def save_prompt_file(file_path, raw_prompt):
         file.write(raw_prompt)
 
 
-
 def get_empty_dict_from_csv_header(header):
     """Generate empty dict from csv header"""
     out_dict = {}
@@ -317,30 +305,30 @@ def get_empty_dict_from_csv_header(header):
 #################################################################
 # TODO: REFACTOR
 AGENT_MODEL_MAPPING = {
-    "Anthropic" : ["claude-2.1", "claude-3-sonnet"],
-    "Cohere" : ["command","command-nightly", "command-r"],
-    "OpenAI" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
+    "AnthropicChat" : ["claude-2.1", "claude-3-sonnet"],
+    "CohereChat" : ["command","command-nightly", "command-r"],
+    "OpenAIChat" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
     "AnthropicText" : ["claude-2.1"],
     "CohereText" : ["command","command-nightly", "command-r"],
     "OpenAIText" : ["davinci-002", "gpt-3.5-turbo-instruct"],
-    "CohereTextChat" : ["command","command-nightly", "command-r"],
-    "OpenAITextChat" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
-    "OpenAITextChatSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview","gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"]
+    "CohereChatText" : ["command","command-nightly", "command-r"],
+    "OpenAIChatText" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
+    "OpenAIChatTextSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview","gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"]
 }
 
 def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
     """ Returns Agent, Model"""
     #Standard CHAT Models
-    if agent_type == "Anthropic":
+    if agent_type == "AnthropicChat":
         model = "claude-2.1"
         if proposed_model:
             if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = AnthropicAgent(temperature=temperature, model=model) 
+        agent = AnthropicChat(temperature=temperature, model=model) 
 
-    elif agent_type == "Cohere":
+    elif agent_type == "CohereChat":
         # model = "command"
         # model = "command-nightly"
         model = "command-r"
@@ -349,9 +337,9 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = CohereAgent(temperature=temperature, model=model)
+        agent = CohereChat(temperature=temperature, model=model)
 
-    elif agent_type=="OpenAI":
+    elif agent_type=="OpenAIChat":
         model = "gpt-3.5-turbo-0125"
         # model = "gpt-4-turbo-preview"
         if proposed_model:
@@ -359,7 +347,7 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = OpenAIAgent(temperature=temperature, model=model)
+        agent = OpenAIChat(temperature=temperature, model=model)
  
 
 
@@ -372,7 +360,7 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
                 print("Proposed Model is not available using default model.")
         # model = "claude-1.2"
         model = "claude-2.1"
-        agent = AnthropicTextAgent(temperature=temperature, model=model) 
+        agent = AnthropicText(temperature=temperature, model=model) 
 
     elif agent_type=="CohereText":
         # model = "command"
@@ -383,7 +371,7 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = CohereTextAgent(temperature=temperature, model=model)
+        agent = CohereText(temperature=temperature, model=model)
 
     elif agent_type=="OpenAIText":
         model = "davinci-002"
@@ -393,12 +381,12 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = OpenAITextAgent(temperature=temperature, model=model)     
+        agent = OpenAIText(temperature=temperature, model=model)     
 
 
 
     #CHAT MODELS used as TEXT MODELs
-    elif agent_type=="CohereTextChat":
+    elif agent_type=="CohereChatText":
         # model = "command"
         # model = "command-nightly"
         model = "command-r"
@@ -407,10 +395,10 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = CohereTextChatAgent(temperature=temperature, model=model)
+        agent = CohereChatText(temperature=temperature, model=model)
 
 
-    elif agent_type=="OpenAITextChat":
+    elif agent_type=="OpenAIChatText":
         model = "gpt-3.5-turbo-0125"
         # model = "gpt-4-turbo-preview"
         if proposed_model:
@@ -418,10 +406,10 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = OpenAITextChatAgent(temperature=temperature, model=model) 
+        agent = OpenAIChatText(temperature=temperature, model=model) 
 
 
-    elif agent_type=="OpenAITextChatSampling":
+    elif agent_type=="OpenAIChatTextSampling":
         model = "gpt-3.5-turbo-0125"
         # model = "gpt-4-turbo-preview"
         if proposed_model:
@@ -429,10 +417,10 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = OpenAITextChatSamplingAgent(temperature=temperature, model=model, temperature_jump=0.2) 
+        agent = OpenAIChatTextSampling(temperature=temperature, model=model, temperature_jump=0.2) 
 
 
-    elif agent_type=="HumanAgent":
+    elif agent_type=="Human":
         model = "Human"
         agent = HumanAgent()
 
@@ -605,16 +593,16 @@ if __name__=="__main__":
 # 2. Make restart from last unfinished possible
 # 3. Todo (record prompts more properly [based on order of input prompts])
     else:
-        start_env_idx=4
+        start_env_idx=0
         num_envs = 1
 
-    agent_type = "OpenAITextChat"
-    # agent_type = "OpenAITextChatSampling"
-    # agent_type = "HumanAgent"
+    agent_type = "OpenAIChatText"
+    # agent_type = "OpenAIChatTextSampling"
+    # agent_type = "Human"
     model = "gpt-3.5-turbo-0125"
     model = "gpt-3.5-turbo-0301" #Adaplanner paper GPT3.5 (released when?)
-    model = "gpt-3.5-turbo-0613" #slightly newer version than 0301 (released 13.06.2023)
-    model = "gpt-3.5-turbo-1106" #sligthly newer version than 0613 (released 11.06.2023)
+    # model = "gpt-3.5-turbo-0613" #slightly newer version than 0301 (released 13.06.2023)
+    # model = "gpt-3.5-turbo-1106" #sligthly newer version than 0613 (released 11.06.2023)
     temperature = 0.0
 
     # AGENT_MODEL_MAPPING = {
@@ -953,8 +941,6 @@ if __name__=="__main__":
         observation += "\n"
         # print(info)
         # print(name)
-
-
 
 
         #######################################################
