@@ -15,7 +15,7 @@ from tenacity import (
 from .base_llm_agent import BaseLLMAgent
 
 class AnthropicAgent(BaseLLMAgent):
-	def __init__(self, agent_name="AntropicAgent",save_path="game_logs", temperature=0.0, model="claude-2.1", stop_sequences=None):
+	def __init__(self, agent_name="AnthropicAgent",save_path="game_logs", temperature=0.0, model="claude-2.1", stop_sequences=None):
 		
 		super().__init__(agent_name, save_path, temperature=temperature)		
 		self.client = anthropic.Anthropic(
