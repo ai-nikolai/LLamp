@@ -10,6 +10,8 @@ from datetime import datetime
 import alfworld
 import alfworld.agents.environment
 
+import cohere
+
 
 from llamp.llms.human import Human
 from llamp.llms.api import (
@@ -313,45 +315,48 @@ def get_empty_dict_from_csv_header(header):
 #################################################################
 # TODO: REFACTOR
 AGENT_MODEL_MAPPING = {
-    "AnthropicChat" : ["claude-2.1", "claude-3-sonnet"],
-    "CohereChat" : ["command","command-nightly", "command-r"],
+    "AnthropicChat" : ["claude-2.1", "claude-3-haiku-20240307", "claude-3-sonnet-20240229"],
+    "CohereChat" : ["command","command-nightly", "command-r", "command-r-plus"],
     "OpenAIChat" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
-    "AnthropicText" : ["claude-2.1"],
-    "CohereText" : ["command","command-nightly", "command-r"],
+    "AnthropicText" : ["claude-2.1", "claude-3-haiku-20240307", "claude-3-sonnet-20240229"],
+    "CohereText" : ["command","command-nightly", "command-r", "command-r-plus"],
     "OpenAIText" : ["davinci-002", "gpt-3.5-turbo-instruct"],
-    "CohereChatText" : ["command","command-nightly", "command-r"],
+    "CohereChatText" : ["command","command-nightly", "command-r", "command-r-plus"],
     "OpenAIChatText" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
     "OpenAIChatTextSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview","gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"]
 }
 
-def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
+            
+def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
     """ Returns Agent, Model"""
+    print(llm_type)
+    print(proposed_model)
     #Standard CHAT Models
-    if agent_type == "AnthropicChat":
+    if llm_type == "AnthropicChat":
         model = "claude-2.1"
         if proposed_model:
-            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
         agent = AnthropicChat(temperature=temperature, model=model) 
 
-    elif agent_type == "CohereChat":
+    elif llm_type == "CohereChat":
         # model = "command"
         # model = "command-nightly"
         model = "command-r"
         if proposed_model:
-            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
         agent = CohereChat(temperature=temperature, model=model)
 
-    elif agent_type=="OpenAIChat":
+    elif llm_type=="OpenAIChat":
         model = "gpt-3.5-turbo-0125"
         # model = "gpt-4-turbo-preview"
         if proposed_model:
-            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
@@ -360,9 +365,9 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 
 
     #TEXT BASED MODELs
-    elif agent_type =="AnthropicText":
+    elif llm_type =="AnthropicText":
         if proposed_model:
-            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
@@ -370,22 +375,22 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
         model = "claude-2.1"
         agent = AnthropicText(temperature=temperature, model=model) 
 
-    elif agent_type=="CohereText":
+    elif llm_type=="CohereText":
         # model = "command"
         # model = "command-nightly"
         model = "command-r"
         if proposed_model:
-            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
         agent = CohereText(temperature=temperature, model=model)
 
-    elif agent_type=="OpenAIText":
+    elif llm_type=="OpenAIText":
         model = "davinci-002"
         model = "gpt-3.5-turbo-instruct"
         if proposed_model:
-            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
@@ -394,41 +399,41 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 
 
     #CHAT MODELS used as TEXT MODELs
-    elif agent_type=="CohereChatText":
+    elif llm_type=="CohereChatText":
         # model = "command"
         # model = "command-nightly"
         model = "command-r"
         if proposed_model:
-            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
         agent = CohereChatText(temperature=temperature, model=model)
 
 
-    elif agent_type=="OpenAIChatText":
+    elif llm_type=="OpenAIChatText":
         model = "gpt-3.5-turbo-0125"
         # model = "gpt-4-turbo-preview"
         if proposed_model:
-            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
         agent = OpenAIChatText(temperature=temperature, model=model) 
 
 
-    elif agent_type=="OpenAIChatTextSampling":
+    elif llm_type=="OpenAIChatTextSampling":
         model = "gpt-3.5-turbo-0125"
         # model = "gpt-4-turbo-preview"
         if proposed_model:
-            if proposed_model in AGENT_MODEL_MAPPING[agent_type]:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
         agent = OpenAIChatTextSampling(temperature=temperature, model=model, temperature_jump=0.2) 
 
 
-    elif agent_type=="Human":
+    elif llm_type=="Human":
         model = "Human"
         agent = HumanAgent()
 
@@ -439,7 +444,7 @@ def get_agent_and_model(agent_type, temperature=0.0, proposed_model=""):
 #################################################################
 #Display Settings
 #################################################################
-def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agent_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove, not_ours_param, swap_order, keys_to_remove_string, correction):
+def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agent_type, llm_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove, num_examples, version, swap_order, keys_to_remove_string, correction):
     """ Creates a string to print to the user the current settings. """
     not_ours = react_prompt or agentbench_prompt or json_react_prompt
     if not_ours:
@@ -455,8 +460,9 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
 
     display_text = ""
     display_text += f"You are going to run Alfworld Environment with the following settings:\n"
-    display_text += f"   -Algorithm Family: {which_prompt}\n"
-    display_text += f"   -AgentType: {agent_type}\n"
+    display_text += f"   -Agent Type: {agent_type}\n"
+    display_text += f"   -Agent Type: {which_prompt}\n"
+    display_text += f"   -LLM Type: {llm_type}\n"
     display_text += f"   -Model: {model}\n"
     display_text += f"   -Temperature: {temperature}\n"
     display_text += f"   -Starting env: {starting_env}\n"
@@ -466,13 +472,13 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
     
     if not not_ours:
         display_text += f"   -Keys that will be removed: {keys_to_remove}\n"
-        display_text += f"   -Number of our Prompts: {not_ours_param}\n"  
+        display_text += f"   -Number of our Prompts: {num_examples}\n"  
     if react_prompt:
-        display_text += f"   -Number of React Examples: {not_ours_param}\n"  
+        display_text += f"   -Number of React Examples: {num_examples}\n"  
     if agentbench_prompt:
-        display_text += f"   -Prompt Version AgentBench: {not_ours_param}\n"  
+        display_text += f"   -Prompt Version AgentBench: {version}\n"  
     if json_react_prompt:
-        display_text += f"   -Number JsonReAct Examples: {not_ours_param}\n" 
+        display_text += f"   -Number JsonReAct Examples: {num_examples}\n" 
     
     # Swap Order
     display_text += f"   -Swap Order of Prompts: {swap_order}\n" 
@@ -495,7 +501,7 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
 #################################################################
 #Env Prompt Logic
 #################################################################
-def get_prompt_example(react_prompt, agentbench_prompt, jsonreact_prompt, swap_order, not_ours_param, env_type, log_full_prompt=False, generate_example=True, keys_to_remove=[]):
+def get_prompt_example(react_prompt, agentbench_prompt, jsonreact_prompt, swap_order, num_examples, version, env_type, log_full_prompt=False, generate_example=True, keys_to_remove=[]):
     """ Get name of prompt and example prompts"""
     # Generate correct prompt for this environment (basically pick the right example).  
     new_base_prompt = ""
@@ -503,25 +509,26 @@ def get_prompt_example(react_prompt, agentbench_prompt, jsonreact_prompt, swap_o
 
     #REACT PROMPT or OUR PROMPT
     if react_prompt:
-        num_examples = not_ours_param
+        num_examples = num_examples
         if generate_example:
             prompt_example = return_react_examples(env_type, num=num_examples, swap=swap_order)
         keys_to_remove_string = f"react-{num_examples}"+swap_string
 
     elif agentbench_prompt:
         num_examples = 1
+        version = version
         if generate_example:
-            prompt_example, new_base_prompt = return_agentbench_prompts(env_type, return_base=True, version=not_ours_param)
-        keys_to_remove_string = f"agentbench-v{not_ours_param}"
+            prompt_example, new_base_prompt = return_agentbench_prompts(env_type, return_base=True, version=version)
+        keys_to_remove_string = f"agentbench-v{version}"
         
     elif jsonreact_prompt:            
-        num_examples = not_ours_param
+        num_examples = num_examples
         if generate_example:
             prompt_example = return_json_react_examples(env_type, num=num_examples)
         keys_to_remove_string = f"jsonreact-{num_examples}"
 
     else: #OURS
-        num_examples = not_ours_param
+        num_examples = num_examples
         
         if generate_example:
             if swap_order:
@@ -552,6 +559,98 @@ def get_prompt_example(react_prompt, agentbench_prompt, jsonreact_prompt, swap_o
 
 
 
+# AGENT_MODEL_MAPPING = [
+#     "AnthropicChat",
+#     "CohereChat" ,
+#     "OpenAIChat" ,
+#     "AnthropicText" ,
+#     "CohereText" ,
+#     "OpenAIText" ,
+#     "CohereChatText", 
+#     "OpenAIChatText" ,
+#     "OpenAIChatTextSampling" 
+# ]
+
+
+#################################################################
+#Arg parse
+#################################################################
+def build_arg_parser():
+    """ Returns the argument parser"""
+    parser = argparse.ArgumentParser(description="Alfworld Env with various agents")
+    parser.add_argument(
+        "--agent",
+        type=str,
+        default="ours",
+        choices=[
+            "react",
+            "react-replace",
+            "jsonreact",
+            "agentbench",
+            "ours",
+            "ours-text",
+            "ours-replace"
+        ],
+        help="The Agent / Method choice.",
+    )
+
+    parser.add_argument("--model", type=str, default="gpt-3.5-turbo-0125", help="Underlying Model to use.(Needs to align with agent, otherwise default model will be used.)")
+    parser.add_argument(
+        "--llm_type",
+        type=str,
+        default="OpenAIChatText",
+        choices=[
+            "AnthropicChat",
+            "CohereChat" ,
+            "OpenAIChat" ,
+            "AnthropicText" ,
+            "CohereText" ,
+            "OpenAIText" ,
+            "CohereChatText", 
+            "OpenAIChatText" ,
+            "OpenAIChatTextSampling" 
+        ],
+        help="The type of llamp.llms to use.",
+    )
+
+    parser.add_argument("--agent_version", type=int, default=1, help="Method Version (if applicable)")
+    parser.add_argument("--temperature", type=float, default=0.0, help="Temperature")
+    parser.add_argument("--num_prompts", type=int, default=2, help="Number of prompts to use (if applicable) (LEGACY)")
+
+    parser.add_argument("--prompt_indices", nargs='+', type=int, default=[1,0], help="A list of prompt indices to use, e.g. --prompt_indices 0 1")
+
+    # Keys for our method
+    parser.add_argument("--keys_to_remove", type=str, default="[]",help="Needs to be json.loads-able list of keys to remove (LEGACY).")
+    parser.add_argument("--keys_to_use", type=str, help="Needs to be json.loads-able list of keys to use")
+    parser.add_argument("--keys_renaming", type=str, help="Needs to be json.loads-able list of new key names.")
+
+    # RUN / ENV:
+    parser.add_argument("--trial_name", type=str, default="v3_0_eval_test", help="Underlying Model to use.(Needs to align with agent, otherwise default model will be used.)")
+    parser.add_argument("--start_index", type=int, default=0, help="Starting Index to use (inclusive).")
+    parser.add_argument("--end_index", type=int, default=0, help="Ending index to use (inclusive). (Overrides num_envs)")
+    parser.add_argument("--num_envs", type=int,  default=1, help="Sets the num of envs to run (gets overriden by end index)")
+
+
+    parser.add_argument(
+        "--eval_split",
+        type=str,
+        default="eval_out_of_distribution",
+        choices=[
+            "eval_out_of_distribution",
+            "eval_in_distribution"
+            "jsonreact",
+            "agentbench",
+            "ours",
+            "ours-text",
+            "ours-replace"
+        ],
+        help="The alfworld split to use.",
+    )
+    parser.add_argument("--apply_correction", action="store_true", default=False, help="Whether to apply the 'Put Regex' correction")
+    
+    parser.add_argument("--force_run", action="store_true", default=False, help="Whether to apply the 'Put Regex' correction")
+
+    return parser
 
 
 
@@ -583,88 +682,76 @@ if __name__=="__main__":
     # TEST_ENV = True
 
 
+    parser = build_arg_parser()
+    args = parser.parse_args()
+
+
     #CHANGE THIS ONE
     if not TEST_ENV:
-        CURRENT_TRIAL_NAME = "v2_9_eval_0-135"
+        CURRENT_TRIAL_NAME = args.trial_name
     else:
-        CURRENT_TRIAL_NAME = "v2_9_eval_test"
+        CURRENT_TRIAL_NAME = "v3_0_eval_test"
 
-# gpt-3.5-turbo-instruct
-# gpt-3.5-turbo-instruct-0914
     ###############################
-    # Basic Init
-    if not TEST_ENV:
-        start_env_idx=0
-        num_envs = 135
 # TODO:
 # 1. Make end start env as option as well (not only num of envs)
 # 2. Make restart from last unfinished possible
 # 3. Todo (record prompts more properly [based on order of input prompts])
+    # Basic Init
+    if not TEST_ENV:
+        start_env_idx=args.start_index
+        num_envs = args.num_envs
     else:
         start_env_idx=0
         num_envs = 1
 
-    agent_type = "OpenAIChatText"
-    # agent_type = "OpenAIChatTextSampling"
-    # agent_type = "Human"
-    model = "gpt-3.5-turbo-0125"
-    model = "gpt-3.5-turbo-0301" #Adaplanner paper GPT3.5 (released when?)
+    llm_type = args.llm_type
+    # llm_type = "OpenAIChatTextSampling"
+    # llm_type = "Human"
+    model = args.model
+    # model = "gpt-3.5-turbo-0301" #Adaplanner paper GPT3.5 (released when?)
     # model = "gpt-3.5-turbo-0613" #slightly newer version than 0301 (released 13.06.2023)
     # model = "gpt-3.5-turbo-1106" #sligthly newer version than 0613 (released 11.06.2023)
-    temperature = 0.0
-
-    # AGENT_MODEL_MAPPING = {
-    #     "Anthropic" : ["claude-2.1"],
-    #     "Cohere" : ["command","command-nightly"],
-    #     "OpenAI" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"],
-    #     "AnthropicText" : ["claude-2.1"],
-    #     "CohereText" : ["command","command-nightly"],
-    #     "OpenAIText" : ["davinci-002", "gpt-3.5-turbo-instruct"],
-    #     "CohereTextChat" : ["command","command-nightly"],
-    #     "OpenAITextChat" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview"]
-    # }
-
+# gpt-3.5-turbo-instruct
+# gpt-3.5-turbo-instruct-0914    
+    temperature = args.temperature
 
     ###############################
     # Which METHOD to run (REACT, AGENTBENCH, OURS)
-    REACT_PROMPT = False
-    AGENTBENCH_PROMPT = False
-    JSON_REACT_PROMPT = False
+    agent_type = args.agent
 
-    SWAP_ORDER = False
-    LOG_FULL_PROMPT = False
+    REACT_PROMPT = True if agent_type == "react" else False
+    AGENTBENCH_PROMPT = True if agent_type == "agentbench" else False
+    JSON_REACT_PROMPT = True if agent_type == "jsonreact" else False
 
-
-    #untick for our prompts
-    REACT_PROMPT = True 
-    # AGENTBENCH_PROMPT = True
-    # JSON_REACT_PROMPT = True
-
-    NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT or agent_type == "HumanAgent"
-
-    # num_examples_react_or_prompt_version_agentbench = 2
-    # NOT_OURS_PARAM = num_examples_react_or_prompt_version_agentbench
+    NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT or llm_type == "Human"
     
-    NOT_OURS_PARAM = 2 #Now this is ours and not ours (naming is legacy)
+    NUM_EXAMPLES = args.num_prompts
+    VERSION = args.agent_version
+
+    CORRECTION = args.apply_correction
+
+    # LEGACY
     SWAP_ORDER = True
     LOG_FULL_PROMPT = True
 
-    CORRECTION = False
-    # CORRECTION = True
 
     ##############################
     # This applies to our prompts
-    keys_to_remove = [
-        "prompt",
-        # "goal", 
-        # "plan", 
-        # "places_visited", 
-        # "current_inventory", 
-        # "current_location", 
-        # "current_objective",
-        # "thought",
-        # "action"
-    ]
+
+    keys_to_remove = json.loads(args.keys_to_remove)
+
+    # keys_to_remove = [
+    #     "prompt",
+    #     # "goal", 
+    #     # "plan", 
+    #     # "places_visited", 
+    #     # "current_inventory", 
+    #     # "current_location", 
+    #     # "current_objective",
+    #     # "thought",
+    #     # "action"
+    # ]
 
     # #short with thought (naturally without current_objective)
     # keys_to_remove = [
@@ -734,17 +821,17 @@ if __name__=="__main__":
 
 
     # "long" no plan, + thought, no current_objective (i.e. just goal + current_obj + act)
-    keys_to_remove = [
-        "prompt",
-        # "goal", 
-        "plan", 
-        # "places_visited", 
-        # "current_inventory", 
-        # "current_location", 
-        "current_objective",
-        # "thought",
-        # "action"
-    ]
+    # keys_to_remove = [
+    #     "prompt",
+    #     # "goal", 
+    #     "plan", 
+    #     # "places_visited", 
+    #     # "current_inventory", 
+    #     # "current_location", 
+    #     "current_objective",
+    #     # "thought",
+    #     # "action"
+    # ]
 
     # "short" no plan, no thought (i.e. just goal + current_obj + act)
     # keys_to_remove = [
@@ -790,7 +877,8 @@ if __name__=="__main__":
         agentbench_prompt=AGENTBENCH_PROMPT, 
         jsonreact_prompt=JSON_REACT_PROMPT, 
         swap_order=SWAP_ORDER, 
-        not_ours_param=NOT_OURS_PARAM,
+        num_examples = NUM_EXAMPLES,
+        version = VERSION,
         env_type="",
         log_full_prompt = LOG_FULL_PROMPT,
         generate_example=False,
@@ -804,22 +892,28 @@ if __name__=="__main__":
             agentbench_prompt = AGENTBENCH_PROMPT,
             json_react_prompt = JSON_REACT_PROMPT,
             agent_type = agent_type, 
+            llm_type = llm_type, 
             model = model, 
             temperature = temperature, 
             num_envs = num_envs, 
             starting_env = start_env_idx, 
             current_trial_name = CURRENT_TRIAL_NAME, 
             keys_to_remove=keys_to_remove_string,
-            not_ours_param = NOT_OURS_PARAM,
+            num_examples = NUM_EXAMPLES,
+            version = VERSION,
             swap_order = SWAP_ORDER,
             keys_to_remove_string = keys_to_remove_string2,
             correction = CORRECTION
         )
+
     print(settings_string)
-    user_input = input(">")
-    if not (user_input=="y"):
-        print("Exiting Programme, please change the settings in: playgrounds/playground_alfworld_eval.py")
-        exit(1)
+    if args.force_run:
+        print("WARNING: Running Anyways")
+    else:
+        user_input = input(">")
+        if not (user_input=="y"):
+            print("Exiting Programme, please change the settings in: playgrounds/playground_alfworld_eval.py")
+            exit(1)
 
 
     #TODO for the future
@@ -835,8 +929,9 @@ if __name__=="__main__":
     SAVE_FOLDER = os.path.join(BASE_FOLDER,CURRENT_TRIAL_FOLDER)
     CSV_HEADER = [
         "env_idx", 
-        "env_type", 
-        "agent_type", 
+        "env_type",
+        "agent_type"
+        "llm_type", 
         "model", 
         "temperature", 
         "success",
@@ -886,7 +981,7 @@ if __name__=="__main__":
     #######################################################
     # AGENT Related
     #######################################################
-    agent, actual_model = get_agent_and_model(agent_type=agent_type, temperature=temperature, proposed_model=model)
+    agent, actual_model = get_agent_and_model(llm_type=llm_type, temperature=temperature, proposed_model=model)
     agent.update_save_path(SAVE_FOLDER)
 
     if actual_model != model:
@@ -905,7 +1000,7 @@ if __name__=="__main__":
     # Env Init
     with open('playgrounds/base_config.yaml') as reader:
         config = yaml.safe_load(reader)
-    split = "eval_out_of_distribution"
+    split = args.eval_split
     # split = "eval_in_distribution"
 
     env = getattr(alfworld.agents.environment, config["env"]["type"])(config, train_eval=split)
@@ -959,7 +1054,8 @@ if __name__=="__main__":
             agentbench_prompt=AGENTBENCH_PROMPT, 
             jsonreact_prompt=JSON_REACT_PROMPT, 
             swap_order=SWAP_ORDER, 
-            not_ours_param=NOT_OURS_PARAM,
+            num_examples = NUM_EXAMPLES,
+            version = VERSION,
             env_type=env_type,
             log_full_prompt = LOG_FULL_PROMPT,
             generate_example=True, 
@@ -999,6 +1095,7 @@ if __name__=="__main__":
 
         logging_dict["env_idx"]  = env_idx+start_env_idx
         logging_dict["env_type"] = env_type
+        logging_dict["llm_type"] = llm_type
         logging_dict["agent_type"] = agent_type
         logging_dict["model"] = actual_model
         logging_dict["temperature"] = temperature
