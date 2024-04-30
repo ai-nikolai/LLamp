@@ -1,7 +1,7 @@
-from llamp.minichat_agent import MiniChatAgent
+from llamp.llms.local.minichat import MiniChat
 
 if __name__=="__main__":
-    agent = MiniChatAgent(test_mode=True)
+    agent = MiniChat(test_mode=True)
     # agent.add_first_observation("Yes?")
 
     agent.act("yes?")

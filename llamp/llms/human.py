@@ -1,8 +1,8 @@
-from .base_agent import BaseAgent
+from llamp.llms.base_system import BaseSystem
 
-class HumanAgent(BaseAgent):
-    def __init__(self, agent_name="HumanAgent",save_path="game_logs"):
-        super().__init__(agent_name, save_path)
+class Human(BaseSystem):
+    def __init__(self, system_name="Human",save_path="game_logs"):
+        super().__init__(system_name, save_path)
    
 
     def call_model(self):

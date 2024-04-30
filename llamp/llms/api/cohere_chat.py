@@ -2,7 +2,7 @@ import time
 import os
 import cohere
 
-from .base_llm_agent import BaseLLMAgent
+from llamp.llms.base_llm_system import BaseLLMSystem
 
 from tenacity import (
     retry,
@@ -10,10 +10,10 @@ from tenacity import (
     wait_random_exponential, # type: ignore
 )
 
-class CohereAgent(BaseLLMAgent):
-    def __init__(self, agent_name="CohereAgent",save_path="game_logs", temperature = 0.0, model="command", stop_sequences=None):
+class CohereChat(BaseLLMSystem):
+    def __init__(self, system_name="CohereChat",save_path="game_logs", temperature = 0.0, model="command", stop_sequences=None):
         
-        super().__init__(agent_name, save_path, temperature=temperature)        
+        super().__init__(system_name, save_path, temperature=temperature)        
         self.base_prompt = [{
             "role" : "system",
             "content" : "You will interact with the environment to solve the given task. Think step by step "

@@ -2,15 +2,15 @@ from datetime import datetime
 import os
 import json
 
-from llamp.base_agent import BaseAgent
+from llamp.llms.base_system import BaseSystem
 
 
-class BaseLLMAgent(BaseAgent):
-	def __init__(self, agent_name="base_llm",save_path="game_logs", temperature=0):
-		super().__init__(agent_name, save_path)
+class BaseLLMSystem(BaseSystem):
+	def __init__(self, system_name="base_llm",save_path="game_logs", temperature=0):
+		super().__init__(system_name, save_path)
 		self.base_prompt=[]
 		self.current_prompt = self.base_prompt
-		self.agent_name = agent_name
+		self.system_name = system_name
 		self.file_name = self.get_save_path(save_path)
 		self.temperature=temperature
 	

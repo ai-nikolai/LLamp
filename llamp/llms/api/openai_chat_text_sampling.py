@@ -8,12 +8,12 @@ from tenacity import (
     wait_random_exponential, # type: ignore
 )
 
-from llamp.base_llm_agent import BaseLLMAgent
+from llamp.llms.base_llm_system import BaseLLMSystem
 
-class OpenAITextChatSamplingAgent(BaseLLMAgent):
-    def __init__(self, agent_name="OpenAITextChatSamplingAgent",save_path="game_logs", temperature=0.0, model="gpt-3.5-turbo-0125", stop_sequences=None, temperature_jump=0.2):
+class OpenAIChatTextSampling(BaseLLMSystem):
+    def __init__(self, system_name="OpenAIChatTextSampling",save_path="game_logs", temperature=0.0, model="gpt-3.5-turbo-0125", stop_sequences=None, temperature_jump=0.2):
         
-        super().__init__(agent_name, save_path, temperature=temperature)        
+        super().__init__(system_name, save_path, temperature=temperature)        
         self.client = openai.OpenAI(
         # Defaults to os.environ.get("OPENAI_API_KEY")
         # api_key=OPENAI_KEY,
@@ -121,7 +121,7 @@ class OpenAITextChatSamplingAgent(BaseLLMAgent):
 
 
 if __name__=="__main__":
-    agent = OpenAITextChatSamplingAgent(save_path="./")
+    agent = OpenAIChatTextSampling(save_path="./")
     prompt = []
     agent.set_base_prompt_and_reset(prompt)
 
@@ -139,12 +139,15 @@ if __name__=="__main__":
     print(action)
     agent.prepare_resample(increase_temperature=False) 
     action = agent.act("") #utterance can be empty
+    
+    agent.prepare_resample() 
+    action = agent.act("") #utterance can be empty
 
     action = agent.act("Something about airplanes would be funnier.") #utterance can be empty?
     print(action)
 
     agent.save()
-    agent2 = OpenAITextChatSamplingAgent(save_path="./",temperature_jump=0.3)
+    agent2 = OpenAIChatTextSampling(save_path="./",temperature_jump=0.3)
     agent2.load_from_saved_data(agent.file_name)
     action = agent2.resample()
     print(action)

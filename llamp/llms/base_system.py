@@ -3,14 +3,14 @@ import os
 import json
 from copy import deepcopy
 
-class BaseAgent():
+class BaseSystem():
     LOG_FILE_ENDING = ".json"
 
-    def __init__(self, agent_name="base",save_path="game_logs"):
+    def __init__(self, system_name="base",save_path="game_logs"):
         self.base_prompt = []
         self.current_prompt = []
         self.full_history = []
-        self.agent_name = agent_name
+        self.system_name = system_name
         self.save_path_base = save_path
         self.file_name = self.get_save_path()
 
@@ -128,7 +128,7 @@ class BaseAgent():
     def get_file_name(self, base_name="logs"):
         """creates a file name based on datetime"""
         now = datetime.now()
-        file_name = self.agent_name+"_"+base_name+"_"+now.strftime("%d_%m_%Y_%H_%M_%S")+self.LOG_FILE_ENDING
+        file_name = self.system_name+"_"+base_name+"_"+now.strftime("%d_%m_%Y_%H_%M_%S")+self.LOG_FILE_ENDING
         return file_name
 
     def get_save_path(self, save_path=""):

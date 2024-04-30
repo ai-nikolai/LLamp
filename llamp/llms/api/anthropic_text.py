@@ -1,9 +1,10 @@
+import time
+import os
+
 import anthropic
 from anthropic import HUMAN_PROMPT, AI_PROMPT
 
-
-import time
-import os
+from llamp.llms.base_llm_system import BaseLLMSystem
 
 
 from tenacity import (
@@ -12,12 +13,11 @@ from tenacity import (
     wait_random_exponential, # type: ignore
 )
 
-from .base_llm_agent import BaseLLMAgent
 
-class AnthropicTextAgent(BaseLLMAgent):
-    def __init__(self, agent_name="AntropicTextAgent",save_path="game_logs", temperature=0.0, model="claude-2.1", stop_sequences=None):
+class AnthropicText(BaseLLMSystem):
+    def __init__(self, system_name="AnthropicText",save_path="game_logs", temperature=0.0, model="claude-2.1", stop_sequences=None):
         
-        super().__init__(agent_name, save_path, temperature=temperature)        
+        super().__init__(system_name, save_path, temperature=temperature)        
         self.client = anthropic.Anthropic(
             # defaults to os.environ.get("ANTHROPIC_API_KEY")
             # api_key="my_api_key",

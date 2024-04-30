@@ -1,12 +1,12 @@
 import torch
 import transformers
 
-from .base_llm_agent import BaseLLMAgent
+from llamp.llms.base_llm_system import BaseLLMSystem
 
-class YiAgent(BaseLLMAgent):
-	def __init__(self, agent_name="YiAgent",save_path="game_logs", test_mode=False, temperature=0.0):
+class Orca2(BaseLLMAgent):
+	def __init__(self, system_name="Orca2",save_path="game_logs", test_mode=False, temperature=0.0):
 
-		super().__init__(agent_name, save_path, temperature=temperature)		
+		super().__init__(system_name, save_path, temperature=temperature)		
 		if torch.cuda.is_available():
 			torch.set_default_device("cuda")
 		else:
@@ -15,20 +15,18 @@ class YiAgent(BaseLLMAgent):
 		if test_mode:
 			self.base_prompt=[
 				{
-					"content": "You are an assistant that answers one word.",
+					"content": "Answer one word.",
 					"role": "system"
 				}
 			]
 			self.reset()
 
-		self.model_name = "01-ai/Yi-6b-Chat-4bits"
-
-		self.model = transformers.AutoModelForCausalLM.from_pretrained(self.model_name, device_map='auto', offload_folder="offload_yi")
+		self.model = transformers.AutoModelForCausalLM.from_pretrained("microsoft/Orca-2-7b", device_map='auto', offload_folder="offload")
 
 		# https://github.com/huggingface/transformers/issues/27132
 		# please use the slow tokenizer since fast and slow tokenizer produces different tokens
 		self.tokenizer = transformers.AutoTokenizer.from_pretrained(
-			self.model_name,
+			"microsoft/Orca-2-7b",
 			use_fast=False,
 		)		
 

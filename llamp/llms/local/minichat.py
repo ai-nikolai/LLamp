@@ -1,15 +1,15 @@
 import torch
 import transformers
 
-from .base_llm_agent import BaseLLMAgent
+from llamp.llms.base_llm_system import BaseLLMSystem
 
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 
-class MiniChatAgent(BaseLLMAgent):
-	def __init__(self, agent_name="MiniChatAgent",save_path="game_logs", test_mode=False, temperature=0.0):
+class MiniChat(BaseLLMSystem):
+	def __init__(self, system_name="MiniChat",save_path="game_logs", test_mode=False, temperature=0.0):
 
-		super().__init__(agent_name, save_path, temperature=temperature)		
+		super().__init__(system_name, save_path, temperature=temperature)		
 		if torch.cuda.is_available():
 			torch.set_default_device("cuda")
 		elif torch.backends.mps.is_available():
