@@ -23,13 +23,12 @@ from playground_alfworld_ablation_generator import generate_string_prompt, remov
 from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts, return_json_react_examples
 
 
-from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base_1, clean_v4_base_2
-from prompts.alfworld_prompts_utils_v4_cool_base import cool_v4_base_1, cool_v4_base_2
-from prompts.alfworld_prompts_utils_v4_examine_base import examine_v4_base_1, examine_v4_base_2
-from prompts.alfworld_prompts_utils_v4_heat_base import heat_v4_base_1, heat_v4_base_2
-from prompts.alfworld_prompts_utils_v4_put_base import put_v4_base_1, put_v4_base_2
-from prompts.alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base_1, puttwo_v4_base_2
-
+from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base_0, clean_v4_base_1, clean_v4_base_2
+from prompts.alfworld_prompts_utils_v4_cool_base import cool_v4_base_0, cool_v4_base_1, cool_v4_base_2
+from prompts.alfworld_prompts_utils_v4_examine_base import examine_v4_base_0, examine_v4_base_1, examine_v4_base_2
+from prompts.alfworld_prompts_utils_v4_heat_base import heat_v4_base_0, heat_v4_base_1, heat_v4_base_2
+from prompts.alfworld_prompts_utils_v4_put_base import put_v4_base_0, put_v4_base_1, put_v4_base_2
+from prompts.alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base_0, puttwo_v4_base_1, puttwo_v4_base_2
 
 
 # Git patch commit: https://stackoverflow.com/questions/1085162/commit-only-part-of-a-files-changes-in-git
@@ -46,7 +45,16 @@ ENV_TYPES = {
     'pick_two_obj': 'puttwo'
 } 
 
-ENV_TO_EXAMPLE_MAPPING = {
+ENV_TO_EXAMPLE_MAPPING_0 = {
+    "clean" : clean_v4_base_0,
+    "cool"  : cool_v4_base_0,
+    "examine"   : examine_v4_base_0,
+    "heat"  : heat_v4_base_0,
+    "put"   : put_v4_base_0,
+    "puttwo"    : puttwo_v4_base_0
+}
+
+ENV_TO_EXAMPLE_MAPPING_1 = {
     "clean" : clean_v4_base_1,
     "cool"  : cool_v4_base_1,
     "examine"   : examine_v4_base_1,
@@ -518,9 +526,9 @@ def get_prompt_example(react_prompt, agentbench_prompt, jsonreact_prompt, swap_o
         if generate_example:
             if swap_order:
                 first_prompt_map = ENV_TO_EXAMPLE_MAPPING_2
-                second_prompt_map = ENV_TO_EXAMPLE_MAPPING
+                second_prompt_map = ENV_TO_EXAMPLE_MAPPING_1
             else: #the normal case.
-                first_prompt_map = ENV_TO_EXAMPLE_MAPPING
+                first_prompt_map = ENV_TO_EXAMPLE_MAPPING_1
                 second_prompt_map = ENV_TO_EXAMPLE_MAPPING_2
             base_prompt = remove_keys(first_prompt_map[env_type], keys=keys_to_remove)
             prompt_example = generate_string_prompt(base_prompt)
