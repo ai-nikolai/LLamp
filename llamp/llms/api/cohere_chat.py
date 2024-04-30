@@ -32,8 +32,16 @@ class CohereChat(BaseLLMSystem):
         out_list = []
         for messages in self.current_prompt:
             temp_dict = {}
-            temp_dict["user_name"] = "Chatbot" if messages["role"] == "assistant" else "User"
-            temp_dict["text"] = messages["content"]
+            if messages["role"] == "assistant":
+                cohere_role = "CHATBOT" 
+            elif messages["role"] == "user":
+                cohere_role = "USER"
+            elif messages["role"] == "system":
+                cohere_role = "SYSTEM"
+            else:
+                cohere_role = "user"
+            temp_dict["role"] = cohere_role
+            temp_dict["message"] = messages["content"]
             out_list.append(temp_dict)
 
         return out_list
@@ -44,7 +52,7 @@ class CohereChat(BaseLLMSystem):
 
         current_prompt = self.get_current_prompt_cohere()
 
-        message = current_prompt[-1]["text"]
+        message = current_prompt[-1]["message"]
         if len(current_prompt)>1:
             chat_history = current_prompt[:-1]
 

@@ -1,6 +1,5 @@
 from llamp.llms.api.anthropic_chat import AnthropicChat
 from llamp.llms.api.anthropic_text import AnthropicText
-from llamp.llms.api.anthropic_chat_text import AnthropicChatText
 
 from llamp.llms.api.cohere_chat import CohereChat
 from llamp.llms.api.cohere_text import CohereText
