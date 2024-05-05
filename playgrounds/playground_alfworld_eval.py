@@ -20,8 +20,7 @@ from llamp.llms.api import (
     OpenAIChat, OpenAIChatText, OpenAIText, OpenAIChatTextSampling
 )
 
-
-from playground_alfworld_ablation_generator import generate_string_prompt, remove_keys
+from playground_alfworld_ablation_generator import generate_string_prompt, remove_keys, restructure_prompt
 from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts, return_json_react_examples
 
 
@@ -738,8 +737,8 @@ if __name__=="__main__":
 
     ##############################
     # This applies to our prompts
-
     keys_to_remove = json.loads(args.keys_to_remove)
+    # keys_to_use = json.loads(args.keys_to_use)
 
     # keys_to_remove = [
     #     "prompt",
@@ -931,7 +930,7 @@ if __name__=="__main__":
         "env_idx", 
         "env_type",
         "agent_type"
-        "llm_type", 
+        "llm_type",
         "model", 
         "temperature", 
         "success",
@@ -945,9 +944,13 @@ if __name__=="__main__":
         "num_multi_json",
         "num_no_json",
         "num_json_and_text",
+        "correction",
+        "correction_count",
         "error", 
         "early_stop",
-        "keys_removed", 
+        "keys_removed",
+        "keys_to_use",
+        "prompt_name",
         "additional_prompt_annotation",
         "trace_file", 
         "prompt_file"

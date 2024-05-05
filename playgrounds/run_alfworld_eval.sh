@@ -11,6 +11,25 @@ if [ $1 == "test" ]; then
         # --end_index \
 fi;
 
+
+if [ $1 == "test_ours" ]; then
+    var='["prompt","plan"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours" \
+        --llm_type "OpenAIChatText" \
+        --model "gpt-3.5-turbo-0301" \
+        --trial_name "v3_1_eval_test" \
+        --start_index 0 \
+        --num_envs 1 \
+        --keys_to_remove $var
+        # --end_index \
+fi;
+
+
+
+
+
+
 if [ $1 == "eval" ]; then
     python3 playgrounds/playground_alfworld_eval.py \
         --agent "react" \
@@ -21,6 +40,8 @@ if [ $1 == "eval" ]; then
         --num_envs 135 \
         # --end_index \
 fi;
+
+
 
 
 

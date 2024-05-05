@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import random
 
 
 from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base_0, clean_v4_base_1, clean_v4_base_2
@@ -72,6 +73,51 @@ def remove_keys(base_prompt, keys=[]):
         
         out_list.append(component)
     return out_list
+
+
+def restructure_prompt(base_prompt, keys=[], key_renaming={}):
+    """
+    restructures the prompt:
+        - according to the order present in keys.
+        - NOTE: it will only keep the keys present in keys
+        - NOTE: if keys is empty it will throw an error.
+
+    if key_renaming is also present it renames the keys:
+        key_renaming = {original_name : new_name}
+        - NOTE: you need to make sure the names don't have conflicts.
+    """
+    if not keys:
+        raise Exception("You need to specify the keys to use in the resulting prompt.")
+
+    # TODO WRITE THE CORRECT FUNCTION BELOW.
+    out_list = []
+    for idx, component in enumerate(base_prompt):
+        if idx % 2 == 1:
+            try:
+                new_state = {}
+                current_state = json.loads(component)
+                for key in keys:
+                    try:
+                        value = current_state[key]
+                    except KeyError as e:
+                        raise KeyError(f"Idx:{idx}\nKey:{key}\n---\nState:\n{current_state}\n---\nComponent:\n{component}")
+
+                    if key_renaming:
+                        if key_renaming.get(key):
+                            new_state[key_renaming[key]] = current_state[key]
+                        else:
+                            new_state[key] = current_state[key]
+                    else:
+                        new_state[key] = current_state[key]
+
+                component = json.dumps(new_state,indent=2)
+            except Exception as e:
+                print(idx)
+                raise e
+        
+        out_list.append(component)
+    return out_list
+
 
 
 def get_string_difference(string1, string2):
@@ -204,7 +250,7 @@ def update_reference_state_with_action(reference_state, action_string):
 
     if command == "goto":
         reference_state["current_location"] = arg1
-        reference_state["places_visited"].append(arg1)
+        reference_state["locations_visited"].append(arg1)
     
     if command == "put":
         # TODO check one actually carries this object.
@@ -222,11 +268,11 @@ def verify_state_tracking(our_prompt):
         - where sys response is a json with various keys
     """
     reference_state = {
-        "places_visited": [],
+        "locations_visited": [],
         "current_location": "starting location",
         "current_inventory": ""
     }
-    keys_to_check = ["current_location","places_visited","current_inventory"]    
+    keys_to_check = ["current_location","locations_visited","current_inventory"]    
    
     for idx, response in enumerate(our_prompt):
         if idx % 2 == 1:
@@ -245,17 +291,29 @@ def verify_state_tracking(our_prompt):
 
 if __name__=="__main__":
 
-    all_keys = ["prompt", "goal", "plan", "places_visited", "current_inventory", "current_location", "current_objective", "action"]
+    all_keys = ["prompt", "goal", "plan", "locations_visited", "current_inventory", "current_location", "current_objective", "thought", "action"]
 
     # base_prompt = clean_v4_base_1
     error_flag = False
     alignment_error_flag = False
     state_error_flag = False
+    key_error_flag = False
 
     env_mappings = [ENV_TO_EXAMPLE_MAPPING_0, ENV_TO_EXAMPLE_MAPPING_1, ENV_TO_EXAMPLE_MAPPING_2]
 
     env_types = ["clean","cool","examine","heat","put","puttwo"]
-
+    
+    key_renaming = {
+        "prompt": "task_description",
+        # "goal": "goal",
+        "plan": "global_thought",
+        "locations_visited": "places_visited",
+        # "current_inventory": "",
+        "current_location": "current_place",
+        "current_objective": "summary_thought",
+        "thought": "thinking",
+        "action": "act"
+    }
 
     for env_type in env_types:
         for env_idx,env_mapping in enumerate(env_mappings):
@@ -263,6 +321,20 @@ if __name__=="__main__":
             try:
                 base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","non-existant-key"])
                 result = generate_string_prompt(base_prompt)
+
+
+                try:
+                    random_key_orders = random.sample(all_keys,len(all_keys))
+                    base_prompt2 = env_mapping[env_type]
+                    new_prompt = restructure_prompt(base_prompt2, keys = random_key_orders, key_renaming = key_renaming)
+                    result = generate_string_prompt(new_prompt)
+
+                except KeyError as e:
+                    print("\n======")
+                    print(f"{env_idx} - KeyError")
+                    print(env_type)
+                    print(e)  
+                    key_error_flag = True                     
 
                 try:
                     verify_state_tracking(base_prompt)
@@ -300,10 +372,38 @@ if __name__=="__main__":
     if not state_error_flag:
         print("All States tracked correctly")
 
-    error_present = any([error_flag, alignment_error_flag, state_error_flag])
+    if not key_error_flag:
+        print("All Keys are correct")
+
+    error_present = any([error_flag, alignment_error_flag, state_error_flag, key_error_flag])
     if not error_present:
         print("==")
         print("ALL Manual TESTS PASSED")
+
+
+    # #########################
+    # Manual test prompt "restructure"
+    # #########################
+    # env_type = "cool"
+    # base_prompt = ENV_TO_EXAMPLE_MAPPING_0[env_type]
+    # no_prompt_keys = ["prompt", "goal", "locations_visited", "current_inventory", "current_location", "plan", "current_objective", "thought", "action"]  
+    # keys_renamed = {
+    #     "prompt": "task_description",
+    #     # "goal": "goal",
+    #     "plan": "global_thought",
+    #     "locations_visited": "locations_visited",
+    #     # "current_inventory": "",
+    #     "current_location": "current_place",
+    #     "current_objective": "summary_thought",
+    #     "thought": "thinking",
+    #     "action": "act"
+    # }
+
+    # new_prompt = restructure_prompt(base_prompt, keys = no_prompt_keys, key_renaming = keys_renamed)
+    # result = generate_string_prompt(new_prompt)
+
+    # print(result)    
+
 
 
     # print(result)
@@ -331,7 +431,7 @@ if __name__=="__main__":
     #     base_prompt = ENV_TO_EXAMPLE_MAPPING_2[env_type]
 
     # print("++++")
-    # base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","goal","plan","places_visited","current_inventory","current_location"])
+    # base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","goal","plan","locations_visited","current_inventory","current_location"])
     # result = generate_string_prompt(base_prompt)
     # print(result)
 
