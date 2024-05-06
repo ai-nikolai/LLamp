@@ -20,16 +20,8 @@ from llamp.llms.api import (
     OpenAIChat, OpenAIChatText, OpenAIText, OpenAIChatTextSampling
 )
 
-from playground_alfworld_ablation_generator import generate_string_prompt, remove_keys, restructure_prompt
+from playground_alfworld_ablation_generator import return_jsonstate_prompt
 from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts, return_json_react_examples
-
-
-from prompts.alfworld_prompts_utils_v4_clean_base import clean_v4_base_0, clean_v4_base_1, clean_v4_base_2
-from prompts.alfworld_prompts_utils_v4_cool_base import cool_v4_base_0, cool_v4_base_1, cool_v4_base_2
-from prompts.alfworld_prompts_utils_v4_examine_base import examine_v4_base_0, examine_v4_base_1, examine_v4_base_2
-from prompts.alfworld_prompts_utils_v4_heat_base import heat_v4_base_0, heat_v4_base_1, heat_v4_base_2
-from prompts.alfworld_prompts_utils_v4_put_base import put_v4_base_0, put_v4_base_1, put_v4_base_2
-from prompts.alfworld_prompts_utils_v4_puttwo_base import puttwo_v4_base_0, puttwo_v4_base_1, puttwo_v4_base_2
 
 
 # Git patch commit: https://stackoverflow.com/questions/1085162/commit-only-part-of-a-files-changes-in-git
@@ -45,34 +37,6 @@ ENV_TYPES = {
     'look_at_obj': 'examine',
     'pick_two_obj': 'puttwo'
 } 
-
-ENV_TO_EXAMPLE_MAPPING_0 = {
-    "clean" : clean_v4_base_0,
-    "cool"  : cool_v4_base_0,
-    "examine"   : examine_v4_base_0,
-    "heat"  : heat_v4_base_0,
-    "put"   : put_v4_base_0,
-    "puttwo"    : puttwo_v4_base_0
-}
-
-ENV_TO_EXAMPLE_MAPPING_1 = {
-    "clean" : clean_v4_base_1,
-    "cool"  : cool_v4_base_1,
-    "examine"   : examine_v4_base_1,
-    "heat"  : heat_v4_base_1,
-    "put"   : put_v4_base_1,
-    "puttwo"    : puttwo_v4_base_1
-}
-
-ENV_TO_EXAMPLE_MAPPING_2 = {
-    "clean" : clean_v4_base_2,
-    "cool"  : cool_v4_base_2,
-    "examine"   : examine_v4_base_2,
-    "heat"  : heat_v4_base_2,
-    "put"   : put_v4_base_2,
-    "puttwo"    : puttwo_v4_base_2
-}
-
 
 def get_env_type(env_name):
     """ Extracts which type of env it is"""
@@ -443,24 +407,15 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
 #################################################################
 #Display Settings
 #################################################################
-def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agent_type, llm_type, model, temperature, num_envs, starting_env, current_trial_name, keys_to_remove, num_examples, version, swap_order, keys_to_remove_string, correction):
+# TODO changre to agent type
+def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agent_type, llm_type, model, temperature, num_envs, starting_env, prompt_ids, current_trial_name, keys_to_use_string, prompt_name, version, correction):
     """ Creates a string to print to the user the current settings. """
     not_ours = react_prompt or agentbench_prompt or json_react_prompt
-    if not_ours:
-        if react_prompt:
-            which_prompt = "ReAct"
-        elif agentbench_prompt:
-            which_prompt = "Agentbench"
-        elif json_react_prompt:
-            which_prompt = "JsonReAct"
-
-    else:
-        which_prompt = "Ours"
+    num_examples = len(prompt_ids)
 
     display_text = ""
     display_text += f"You are going to run Alfworld Environment with the following settings:\n"
     display_text += f"   -Agent Type: {agent_type}\n"
-    display_text += f"   -Agent Type: {which_prompt}\n"
     display_text += f"   -LLM Type: {llm_type}\n"
     display_text += f"   -Model: {model}\n"
     display_text += f"   -Temperature: {temperature}\n"
@@ -470,7 +425,7 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
     display_text += f"   -Current Trial Name: {current_trial_name}\n"
     
     if not not_ours:
-        display_text += f"   -Keys that will be removed: {keys_to_remove}\n"
+        display_text += f"   -Keys that will be used: {keys_to_use_string}\n"
         display_text += f"   -Number of our Prompts: {num_examples}\n"  
     if react_prompt:
         display_text += f"   -Number of React Examples: {num_examples}\n"  
@@ -480,10 +435,11 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
         display_text += f"   -Number JsonReAct Examples: {num_examples}\n" 
     
     # Swap Order
-    display_text += f"   -Swap Order of Prompts: {swap_order}\n" 
+    if not agentbench_prompt:
+        display_text += f"   -Prompt Ids: {prompt_ids}\n" 
 
     #Name of prompt
-    display_text += f"   -The prompt will be called: {keys_to_remove_string}\n" 
+    display_text += f"   -The prompt will be called: {prompt_name}\n" 
 
     #Name of prompt
     display_text += f"   -Correction will happen: {correction}\n" 
@@ -500,61 +456,53 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
 #################################################################
 #Env Prompt Logic
 #################################################################
-def get_prompt_example(react_prompt, agentbench_prompt, jsonreact_prompt, swap_order, num_examples, version, env_type, log_full_prompt=False, generate_example=True, keys_to_remove=[]):
+# TODO:
+# Change to Agent-type from individual prompt_flags.
+def get_prompt_example(agent_type, env_type, prompt_ids, version, generate_prompt=True, keys_to_use=[], key_renaming={}):
     """ Get name of prompt and example prompts"""
     # Generate correct prompt for this environment (basically pick the right example).  
     new_base_prompt = ""
-    swap_string = "-swaped" if swap_order else ""
 
+    # num_examples needed for prompt_ids
+    num_examples = len(prompt_ids)
+    
     #REACT PROMPT or OUR PROMPT
-    if react_prompt:
-        num_examples = num_examples
-        if generate_example:
-            prompt_example = return_react_examples(env_type, num=num_examples, swap=swap_order)
-        keys_to_remove_string = f"react-{num_examples}"+swap_string
+    if agent_type=="react":
+        if generate_prompt:
+            prompt_example = return_react_examples(env_type, prompt_ids=prompt_ids)
+        
+        prompt_id_string = '_'.join([str(y) for y in prompt_ids])
+        prompt_name = f"react-{prompt_id_string}"
 
-    elif agentbench_prompt:
-        num_examples = 1
-        version = version
-        if generate_example:
+
+    elif agent_type=="agentbench":
+        num_examples=1
+        if generate_prompt:
             prompt_example, new_base_prompt = return_agentbench_prompts(env_type, return_base=True, version=version)
-        keys_to_remove_string = f"agentbench-v{version}"
+        prompt_name = f"agentbench-v{version}"
         
-    elif jsonreact_prompt:            
-        num_examples = num_examples
-        if generate_example:
-            prompt_example = return_json_react_examples(env_type, num=num_examples)
-        keys_to_remove_string = f"jsonreact-{num_examples}"
+    elif agent_type=="jsonreact":           
+        if generate_prompt:
+            prompt_example = return_json_react_examples(env_type, prompt_ids=prompt_ids, version=version)
+        prompt_id_string = '_'.join([str(y) for y in prompt_ids])
+        prompt_name = f"jsonreact-{prompt_id_string}-v{version}"
 
-    else: #OURS
-        num_examples = num_examples
-        
-        if generate_example:
-            if swap_order:
-                first_prompt_map = ENV_TO_EXAMPLE_MAPPING_2
-                second_prompt_map = ENV_TO_EXAMPLE_MAPPING_1
-            else: #the normal case.
-                first_prompt_map = ENV_TO_EXAMPLE_MAPPING_1
-                second_prompt_map = ENV_TO_EXAMPLE_MAPPING_2
-            base_prompt = remove_keys(first_prompt_map[env_type], keys=keys_to_remove)
-            prompt_example = generate_string_prompt(base_prompt)
-            
-            if num_examples==2:
-                base_prompt = remove_keys(second_prompt_map[env_type], keys=keys_to_remove)
-                prompt_example2 = generate_string_prompt(base_prompt)
-                prompt_example += "\n\n"+prompt_example2
+    elif agent_type=="ours":  
+        if generate_prompt:
+            prompt_example = return_jsonstate_prompt(env_type, prompt_ids=prompt_ids, keys_to_use=keys_to_use, key_renaming=key_renaming)
+        prompt_id_string = '_'.join([str(y) for y in prompt_ids])
+        # TODO: properly test key_renaming.
+        keys_string = '_'.join([str(y) for y in keys_to_use])
 
-        if log_full_prompt:
-            keys_to_remove_string = "+".join(keys_to_remove)+swap_string
- 
-        else:
-            long_string = "short" if len(keys_to_remove) > 2 else "long"
-            keys_to_remove_string = long_string+f"-{num_examples}"+swap_string
+        prompt_name = f"jsonstate-{prompt_id_string}-k-{keys_string}"
 
-    if generate_example:
-        return keys_to_remove_string, prompt_example, new_base_prompt, num_examples
     else:
-        return keys_to_remove_string
+        raise NotImplementedError(f"Trying to call agent_type: {agent_type}, but it doesn't exist.")
+
+    if generate_prompt:
+        return prompt_name, prompt_example, new_base_prompt, num_examples
+    else:
+        return prompt_name
 
 
 
@@ -616,10 +564,10 @@ def build_arg_parser():
     parser.add_argument("--temperature", type=float, default=0.0, help="Temperature")
     parser.add_argument("--num_prompts", type=int, default=2, help="Number of prompts to use (if applicable) (LEGACY)")
 
-    parser.add_argument("--prompt_indices", nargs='+', type=int, default=[1,0], help="A list of prompt indices to use, e.g. --prompt_indices 0 1")
+    parser.add_argument("--prompt_ids", nargs='+', type=int, default=[1,0], help="A list of prompt indices to use, e.g. --prompt_indices 0 1")
 
     # Keys for our method
-    parser.add_argument("--keys_to_remove", type=str, default="[]",help="Needs to be json.loads-able list of keys to remove (LEGACY).")
+    parser.add_argument("--keys_to_remove", type=str, default="[]",help="DEPRACTED => Doesn't Work anymore. Needs to be json.loads-able list of keys to remove (LEGACY).")
     parser.add_argument("--keys_to_use", type=str, help="Needs to be json.loads-able list of keys to use")
     parser.add_argument("--keys_renaming", type=str, help="Needs to be json.loads-able list of new key names.")
 
@@ -717,16 +665,18 @@ if __name__=="__main__":
 
     ###############################
     # Which METHOD to run (REACT, AGENTBENCH, OURS)
-    agent_type = args.agent
+    AGENT_TYPE = args.agent
 
-    REACT_PROMPT = True if agent_type == "react" else False
-    AGENTBENCH_PROMPT = True if agent_type == "agentbench" else False
-    JSON_REACT_PROMPT = True if agent_type == "jsonreact" else False
+    REACT_PROMPT = True if AGENT_TYPE == "react" else False
+    AGENTBENCH_PROMPT = True if AGENT_TYPE == "agentbench" else False
+    JSON_REACT_PROMPT = True if AGENT_TYPE == "jsonreact" else False
 
     NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT or llm_type == "Human"
     
-    NUM_EXAMPLES = args.num_prompts
+    # NUM_EXAMPLES = args.num_prompts
     VERSION = args.agent_version
+
+    PROMPT_IDS = args.prompt_ids
 
     CORRECTION = args.apply_correction
 
@@ -737,171 +687,41 @@ if __name__=="__main__":
 
     ##############################
     # This applies to our prompts
-    keys_to_remove = json.loads(args.keys_to_remove)
-    # keys_to_use = json.loads(args.keys_to_use)
-
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     # "plan", 
-    #     # "places_visited", 
-    #     # "current_inventory", 
-    #     # "current_location", 
-    #     # "current_objective",
-    #     # "thought",
-    #     # "action"
-    # ]
-
-    # #short with thought (naturally without current_objective)
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     # "plan", 
-    #     "places_visited", 
-    #     "current_inventory", 
-    #     "current_location", 
-    #     "current_objective",
-    #     # "thought",
-    #     # "action"
-    # ]
-
-    # #Long with thought
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     # "plan", 
-    #     # "places_visited", 
-    #     # "current_inventory", 
-    #     # "current_location", 
-    #     # "current_objective",
-    #     # "thought",
-    #     # "action"
-    # ]
+    if args.keys_to_use:
+        KEYS_TO_USE = json.loads(args.keys_to_use)
+    elif AGENT_TYPE == "ours":
+        print("FAIL - Need to specify which keys to use with 'ours' agents.")
+        exit(-1)
+    else:
+        KEYS_TO_USE = ""
 
 
-    # #short without thought with current_objective [i.e. "do we need full thoughts"]
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     # "plan", 
-    #     "places_visited", 
-    #     "current_inventory", 
-    #     "current_location", 
-    #     # "current_objective",
-    #     "thought",
-    #     # "action"
-    # ]
-
-    # #Long with thought without current_objective [i.e. "do we need full thoughts"]
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     # "plan", 
-    #     # "places_visited", 
-    #     # "current_inventory", 
-    #     # "current_location", 
-    #     "current_objective",
-    #     # "thought",
-    #     # "action"
-    # ]
-
-    # #thought + goal (react-2-goal) (i.e. what is better plan or thought) [need a few more of short without thought, long without thought and thought / plan swapped places]
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     "plan", 
-    #     "places_visited", 
-    #     "current_inventory", 
-    #     "current_location", 
-    #     "current_objective",
-    #     # "thought",
-    #     # "action"
-    # ]
-
-
-    # "long" no plan, + thought, no current_objective (i.e. just goal + current_obj + act)
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     "plan", 
-    #     # "places_visited", 
-    #     # "current_inventory", 
-    #     # "current_location", 
-    #     "current_objective",
-    #     # "thought",
-    #     # "action"
-    # ]
-
-    # "short" no plan, no thought (i.e. just goal + current_obj + act)
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     "plan", 
-    #     "places_visited", 
-    #     "current_inventory", 
-    #     "current_location", 
-    #     # "current_objective",
-    #     "thought",
-    #     # "action"
-    # ]
-
-    # #old "long"
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     # "plan", 
-    #     # "places_visited", 
-    #     # "current_inventory", 
-    #     # "current_location", 
-    #     # "current_objective",
-    #     "thought",
-    #     # "action"
-    # ]
-
-    # #old "short"
-    # keys_to_remove = [
-    #     "prompt",
-    #     # "goal", 
-    #     # "plan", 
-    #     "places_visited", 
-    #     "current_inventory", 
-    #     "current_location", 
-    #     "current_objective",
-    #     "thought",
-    #     # "action"
-    # ]
-
-    keys_to_remove_string2 = get_prompt_example(
-        react_prompt=REACT_PROMPT,
-        agentbench_prompt=AGENTBENCH_PROMPT, 
-        jsonreact_prompt=JSON_REACT_PROMPT, 
-        swap_order=SWAP_ORDER, 
-        num_examples = NUM_EXAMPLES,
+    prompt_name2 = get_prompt_example(
+        agent_type= AGENT_TYPE,
         version = VERSION,
+        prompt_ids = PROMPT_IDS,
         env_type="",
-        log_full_prompt = LOG_FULL_PROMPT,
-        generate_example=False,
-        keys_to_remove=keys_to_remove)
+        generate_prompt=False,
+        keys_to_use=KEYS_TO_USE)
 
     ##############################
     # Checking settings with the user. User needs to type y.
-    keys_to_remove_string = "+".join(keys_to_remove)
+    keys_to_use_string = "+".join(KEYS_TO_USE)
     settings_string = get_settings_string(
             react_prompt = REACT_PROMPT, 
             agentbench_prompt = AGENTBENCH_PROMPT,
             json_react_prompt = JSON_REACT_PROMPT,
-            agent_type = agent_type, 
+            agent_type = AGENT_TYPE, 
             llm_type = llm_type, 
             model = model, 
             temperature = temperature, 
             num_envs = num_envs, 
+            prompt_ids = PROMPT_IDS,
             starting_env = start_env_idx, 
             current_trial_name = CURRENT_TRIAL_NAME, 
-            keys_to_remove=keys_to_remove_string,
-            num_examples = NUM_EXAMPLES,
+            keys_to_use_string=keys_to_use_string,
             version = VERSION,
-            swap_order = SWAP_ORDER,
-            keys_to_remove_string = keys_to_remove_string2,
+            prompt_name = prompt_name2,
             correction = CORRECTION
         )
 
@@ -929,28 +749,28 @@ if __name__=="__main__":
     CSV_HEADER = [
         "env_idx", 
         "env_type",
-        "agent_type"
+        "agent_type",
         "llm_type",
         "model", 
-        "temperature", 
+        "temperature",
+        "prompt_name", 
         "success",
         "done",
         "total_reward",
+        "early_stop",
+        "error", 
+        "correction_count",
         "num_of_steps", 
-        "num_illegal_actions", 
         "num_nothing_happens", 
         "num_repetitions",
+        "num_illegal_actions", 
         "num_json_dsnt_load",
-        "num_multi_json",
-        "num_no_json",
-        "num_json_and_text",
-        "correction",
-        "correction_count",
-        "error", 
-        "early_stop",
+        "num_multi_json", #what is this?
+        "num_no_json", #what is this?
+        "num_json_and_text", #what is this?
+        "correction", #boolean flag
         "keys_removed",
         "keys_to_use",
-        "prompt_name",
         "additional_prompt_annotation",
         "trace_file", 
         "prompt_file"
@@ -1052,17 +872,14 @@ if __name__=="__main__":
         #######################################################
         # PROMPT Related
         #######################################################     
-        keys_to_remove_string, prompt_example, new_base_prompt, num_examples = get_prompt_example(
-            react_prompt=REACT_PROMPT,
-            agentbench_prompt=AGENTBENCH_PROMPT, 
-            jsonreact_prompt=JSON_REACT_PROMPT, 
-            swap_order=SWAP_ORDER, 
-            num_examples = NUM_EXAMPLES,
-            version = VERSION,
-            env_type=env_type,
-            log_full_prompt = LOG_FULL_PROMPT,
-            generate_example=True, 
-            keys_to_remove=keys_to_remove)
+        prompt_name, prompt_example, new_base_prompt, num_examples = get_prompt_example(
+            agent_type=AGENT_TYPE, 
+            env_type=env_type, 
+            prompt_ids=PROMPT_IDS, 
+            version=VERSION, 
+            generate_prompt=True, 
+            keys_to_use=KEYS_TO_USE
+        )
 
         prompt = generate_prompt_from_example(prompt_example, number_of_examples=num_examples, base_prompt=new_base_prompt)
         agent.set_base_prompt_and_reset(prompt)
@@ -1099,7 +916,7 @@ if __name__=="__main__":
         logging_dict["env_idx"]  = env_idx+start_env_idx
         logging_dict["env_type"] = env_type
         logging_dict["llm_type"] = llm_type
-        logging_dict["agent_type"] = agent_type
+        logging_dict["agent_type"] = AGENT_TYPE
         logging_dict["model"] = actual_model
         logging_dict["temperature"] = temperature
 
@@ -1139,6 +956,8 @@ if __name__=="__main__":
         num_no_json = 0
         num_json_and_text = 0
 
+        correction_count = 0
+
         prev_action = ""
         num_current_repetitions = 0
 
@@ -1146,6 +965,7 @@ if __name__=="__main__":
         # for resampling
         CURRENT_NOTHING_HAPPENS = False
 
+        error_count = 0
 
         #######################################################
         # Main Game Loop
@@ -1233,6 +1053,7 @@ if __name__=="__main__":
                     # TODO: maybe start tracking those changes.
                     action = transform_put_action(action)
                     print(f"TRANSFORMED_ACTION:{action}")
+                    correction_count += 1
 
                 prev_action = action
 
@@ -1286,30 +1107,51 @@ if __name__=="__main__":
             print("COHERE API ERROR")
             print(e)
             print(e.body)
+            error_count += 1
             error = str(e)
+
 
         except Exception as e:
-            print("ANOTHER EXCEPTION")
-            error = str(e)
+            print("ANOTHER EXCEPTION")            
             print(error)
             print(e)
+            error_count += 1
+            error = str(e)
+
 
         finally:
-            logging_dict["num_illegal_actions"] = num_illegal_actions
-            logging_dict["num_nothing_happens"] = num_nothing_happens
-            logging_dict["num_repetitions"] = num_repetitions
-
-            logging_dict["num_json_dsnt_load"] = num_json_dsnt_load
-            logging_dict["num_multi_json"] = num_multi_json
-            logging_dict["num_no_json"] = num_no_json
-            logging_dict["num_json_and_text"] = num_json_and_text
-            logging_dict["num_of_steps"] = counter
+            # MAIN Score Logging
             logging_dict["success"] = success
             logging_dict["done"] = logging_done
             logging_dict["total_reward"] = total_reward
             logging_dict["error"] = error
             logging_dict["early_stop"] = early_stop
-            logging_dict["keys_removed"] = keys_to_remove_string
+
+            # Step logging
+            logging_dict["num_of_steps"] = counter
+
+            # Additional per step Logging
+            logging_dict["num_nothing_happens"] = num_nothing_happens
+            logging_dict["num_repetitions"] = num_repetitions
+            logging_dict["num_illegal_actions"] = num_illegal_actions
+            logging_dict["num_json_dsnt_load"] = num_json_dsnt_load
+
+            # Not Clear per step logging
+            logging_dict["num_multi_json"] = num_multi_json
+            logging_dict["num_no_json"] = num_no_json
+            logging_dict["num_json_and_text"] = num_json_and_text
+
+            # CORRECTION
+            logging_dict["correction"] = CORRECTION
+            logging_dict["correction_count"] = correction_count
+
+
+            # Prompt Name Logging
+            logging_dict["prompt_name"] = prompt_name
+            logging_dict["keys_to_use"] = KEYS_TO_USE
+            logging_dict["keys_removed"] = None
+
+            #File Loggin
             logging_dict["trace_file"] = agent.file_name
             logging_dict["prompt_file"] = prompt_save_path
             logging_dict["additional_prompt_annotation"] = additional_prompt_annotation

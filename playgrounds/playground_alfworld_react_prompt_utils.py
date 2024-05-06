@@ -22,24 +22,15 @@ with open(agentbench_prompt_file, "r") as file:
     original_agentbench_prompts_v2 = json.load(file)
 
 
-def return_react_examples(env_type, num=2, swap=False, first_id=0, second_id=1):
+def return_react_examples(env_type, prompt_ids=[1,0]):
     """Given the env type return a react example."""
-    if swap:
-        first_index = second_id
-        second_index = first_id
-    else:
-        first_index = first_id
-        second_index = second_id
+    index_list = prompt_ids
     target_trace = ""
-    if num == 2:
-        target_trace1 = original_react_prompts[f"react_{env_type}_{first_index}"]
-        target_trace2 = original_react_prompts[f"react_{env_type}_{second_index}"]
-
-        target_trace = target_trace1+ "\n\n" + target_trace2
-
-    elif num==1:
-        target_trace = original_react_prompts[f"react_{env_type}_{first_index}"]
-
+    for example_idx in range(len(index_list)):
+        if example_idx>0:
+            target_trace+="\n\n"
+        target_trace += original_react_prompts[f"react_{env_type}_{index_list[example_idx]}"]
+  
     return target_trace
 
 
@@ -72,12 +63,15 @@ def extract_command_and_format(command, version=1, think_key="think", action_key
         else:
             sys_response = f'{{\n"response": "{sys_act}"\n}}'
 
+    else:
+        raise NotImplementedError(f"No other versions available for jsonreact at the moment. You tried version: {version}")
+
     env_observation = command.split("\n")[1]
 
     return sys_response, env_observation
 
 
-def return_json_react_examples(env_type, num=1, swap=False, first_id=0, second_id=1, version=1, think_key="think", action_key="action", return_list=False):
+def return_json_react_examples(env_type, prompt_ids=[1,0], version=1, think_key="think", action_key="action", return_list=False):
     """
     Given the env type return a react example.
 
@@ -86,12 +80,9 @@ def return_json_react_examples(env_type, num=1, swap=False, first_id=0, second_i
     if return_list:
         target_trace_list = []
 
-    if swap:
-        index_list = [second_id, first_id]
-    else:
-        index_list = [first_id, second_id]
+    index_list = prompt_ids
 
-    for example_idx in range(num):
+    for example_idx in range(len(index_list)):
         if example_idx>0:
             target_trace+="\n\n"
         
@@ -125,7 +116,7 @@ def return_agentbench_prompts(env_type, return_base=True, version=2):
     elif version == 2:
         original_agentbench_prompts = original_agentbench_prompts_v2
     else:
-        raise Exception("Wrong version number for Agentbench prompt")
+        raise NotImplementedError(f"Wrong version number for Agentbench prompt. You tried version: {version}")
     
     prompt_example = "".join(original_agentbench_prompts[env_type])
     if return_base:
@@ -147,9 +138,10 @@ def check_all_json(react_json_list):
 
 if __name__=="__main__":
     env_type = "puttwo"
-    prompt_trace = return_json_react_examples(env_type, num=2, version=1, think_key="think", action_key="action", return_list=False)
-    print(prompt_trace)
+    prompt_trace = return_json_react_examples(env_type, prompt_ids=[1,0], think_key="think", action_key="action", return_list=False)
+    # print(prompt_trace)
 
+    # CHECKING JSON REACT PROMPTS.
     env_types = ["clean","cool","examine","heat","put","puttwo"]
     indexs=[0,1,2]
     versions = [1,2,3]
@@ -157,7 +149,7 @@ if __name__=="__main__":
     for env_type in env_types:
         for index in indexs:
             for version in versions:
-                list1 = return_json_react_examples(env_type, num=1, first_id=index, second_id=1, version=version, think_key="think", action_key="action", return_list=True)
+                list1 = return_json_react_examples(env_type, prompt_ids=[index],  version=version, think_key="think", action_key="action", return_list=True)
                 success, example, json_idx, error_message= check_all_json(list1[0])
                 if not success:
                     global_success = False
@@ -168,8 +160,45 @@ if __name__=="__main__":
                     print("--")
                     print(error_message)
 
+
+    # CHECKING REACT PROMPTS:
+    import itertools
+    for env_type in env_types:
+        for prompt_ids in itertools.permutations([0,1,2]):
+            prompt_example = return_react_examples(env_type,prompt_ids)
+
+            constructed_prompt = ""
+            for idx, ex_id in enumerate(prompt_ids):
+                if idx>0:
+                    constructed_prompt += "\n\n"
+                constructed_prompt += original_react_prompts[f"react_{env_type}_{ex_id}"]
+
+            assert constructed_prompt==prompt_example, f"React prompts don't match up for: {env_type}, {prompt_ids}"
+
+            current_index = 0     
+            for idx, ex_id in enumerate(prompt_ids):
+                tmp = return_react_examples(env_type,[ex_id])
+                assert tmp==prompt_example[current_index:current_index+len(tmp)], f"Failed for: {env_type}_{idx}__+{ex_id}"
+                current_index += len(tmp)+2
+
+    # CHECKING JSON REACT PROMPTS:
+    for env_type in env_types:
+        for version in range(1,1+3):
+            for prompt_ids in itertools.permutations([0,1,2]):
+                j_prompt_example = return_json_react_examples(env_type,prompt_ids, version=version)
+
+                current_index = 0     
+                for idx, ex_id in enumerate(prompt_ids):
+                    j_tmp = return_json_react_examples(env_type,[ex_id], version=version)
+                    j_len = len(j_tmp)
+                    assert j_tmp==j_prompt_example[current_index:current_index+j_len], f"Failed for: {env_type}_{idx}__+ex{ex_id}__+v+{version}"
+                    current_index += j_len+2
+
+
     if global_success:
         print("All prompts are correct")
+
+
 
     # print(list1)
     # print(len(list1))

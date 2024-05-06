@@ -56,15 +56,15 @@ def generate_string_prompt(base_prompt, system_prefix="", agent_prefix=">"):
     return prompt
 
 
-def remove_keys(base_prompt, keys=[]):
+def remove_keys(base_prompt, keys_to_remove=[]):
     """Removes keys from the prompt and returns a base prompt."""
     out_list = []
     for idx, component in enumerate(base_prompt):
         if idx % 2 == 1:
             try:
                 data = json.loads(component)
-                if keys:
-                    for key in keys:
+                if keys_to_remove:
+                    for key in keys_to_remove:
                         data.pop(key, None)
                 component = json.dumps(data,indent=2)
             except Exception as e:
@@ -75,7 +75,7 @@ def remove_keys(base_prompt, keys=[]):
     return out_list
 
 
-def restructure_prompt(base_prompt, keys=[], key_renaming={}):
+def restructure_prompt(base_prompt, keys_to_use=[], key_renaming={}):
     """
     restructures the prompt:
         - according to the order present in keys.
@@ -86,7 +86,7 @@ def restructure_prompt(base_prompt, keys=[], key_renaming={}):
         key_renaming = {original_name : new_name}
         - NOTE: you need to make sure the names don't have conflicts.
     """
-    if not keys:
+    if not keys_to_use:
         raise Exception("You need to specify the keys to use in the resulting prompt.")
 
     # TODO WRITE THE CORRECT FUNCTION BELOW.
@@ -96,7 +96,7 @@ def restructure_prompt(base_prompt, keys=[], key_renaming={}):
             try:
                 new_state = {}
                 current_state = json.loads(component)
-                for key in keys:
+                for key in keys_to_use:
                     try:
                         value = current_state[key]
                     except KeyError as e:
@@ -117,6 +117,25 @@ def restructure_prompt(base_prompt, keys=[], key_renaming={}):
         
         out_list.append(component)
     return out_list
+
+def return_jsonstate_prompt(env_type, prompt_ids=[1,0], keys_to_use=["thought","action"], key_renaming={}):
+    """ 
+    Returns our prompt based on prompt_ids and keys_to_use. 
+
+    TODO: add key_renaming.
+    """
+    prompt_mappings = [ENV_TO_EXAMPLE_MAPPING_0, ENV_TO_EXAMPLE_MAPPING_1, ENV_TO_EXAMPLE_MAPPING_2]
+
+    prompt_example = ""
+    for idx, example_idx in enumerate(prompt_ids):
+        if idx>0:
+            prompt_example += "\n\n"
+
+        base_prompt = prompt_mappings[example_idx][env_type]
+        updated_base_prompt = restructure_prompt(base_prompt, keys_to_use, key_renaming)
+        prompt_example += generate_string_prompt(updated_base_prompt) 
+
+    return prompt_example
 
 
 
@@ -147,8 +166,8 @@ def get_string_difference(string1, string2):
         else:
             out_string += f"The {longer_str} is longer: len1:{len(string1)}, len2:{len(string2)}\n"
 
-    # return out_string
-    return None
+    return out_string
+    # return None
 
 
 def verify_react_and_ours(our_prompt, react_prompt):
@@ -298,11 +317,14 @@ if __name__=="__main__":
     alignment_error_flag = False
     state_error_flag = False
     key_error_flag = False
+    key_renaming_error_flag = False
+    return_jsonstate_error_flag = False
 
     env_mappings = [ENV_TO_EXAMPLE_MAPPING_0, ENV_TO_EXAMPLE_MAPPING_1, ENV_TO_EXAMPLE_MAPPING_2]
 
     env_types = ["clean","cool","examine","heat","put","puttwo"]
     
+    key_renaming_none = {}   
     key_renaming = {
         "prompt": "task_description",
         # "goal": "goal",
@@ -319,15 +341,49 @@ if __name__=="__main__":
         for env_idx,env_mapping in enumerate(env_mappings):
             base_prompt = env_mapping[env_type]
             try:
-                base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","non-existant-key"])
+                base_prompt = remove_keys(base_prompt, keys_to_remove=["prompt","current_objective","non-existant-key"])
                 result = generate_string_prompt(base_prompt)
 
 
                 try:
                     random_key_orders = random.sample(all_keys,len(all_keys))
                     base_prompt2 = env_mapping[env_type]
-                    new_prompt = restructure_prompt(base_prompt2, keys = random_key_orders, key_renaming = key_renaming)
+
+                    new_prompt = restructure_prompt(base_prompt2, keys_to_use = random_key_orders, key_renaming = key_renaming_none)
+                    result_none = generate_string_prompt(new_prompt)
+
+                    new_prompt = restructure_prompt(base_prompt2, keys_to_use = random_key_orders, key_renaming = key_renaming)
                     result = generate_string_prompt(new_prompt)
+                    
+                    try:
+                        assert result_none != result, "Results should be different, as keys are renamed."
+                    except AssertionError as e:
+                        print("\n======")
+                        print(f"{env_idx} - KeyRenaming Error")
+                        print(env_type)
+                        print(e)  
+                        key_renaming_error_flag = True                          
+                    
+                    try:
+                        available_prompt_index = random.sample(list({0,1,2} - {env_idx}),2)
+
+                        result2 = return_jsonstate_prompt(env_type, prompt_ids=[available_prompt_index[0],env_idx], keys_to_use=random_key_orders, key_renaming = key_renaming)
+                        result3 = return_jsonstate_prompt(env_type, prompt_ids=[env_idx], keys_to_use=random_key_orders, key_renaming = key_renaming)
+                        result4 = return_jsonstate_prompt(env_type, prompt_ids=[available_prompt_index[0]], keys_to_use=random_key_orders, key_renaming = key_renaming)
+                        result5 = return_jsonstate_prompt(env_type, prompt_ids=[available_prompt_index[1]], keys_to_use=random_key_orders, key_renaming = key_renaming)
+
+                        diff = get_string_difference(result,result3)
+                        assert result==result3, f"JSONSTATE PROMPTS ARE OFF:\n---\n{diff}"
+                        assert (result3==result2[len(result4)+2:]) and (result4==result2[:len(result4)]), "Composite JSONSTATE is not working."
+                        assert not (result5 in result2) , "Composite JSONSTATE part 2 is not working."
+
+                    except AssertionError as e:
+                        print("\n======")
+                        print(f"{env_idx} - JsonState Error")
+                        print(env_type)
+                        print(e)  
+                        return_jsonstate_error_flag = True   
+
 
                 except KeyError as e:
                     print("\n======")
@@ -346,7 +402,7 @@ if __name__=="__main__":
                     state_error_flag = True 
 
                 try:
-                    react_list = return_json_react_examples(env_type, num=1, first_id=env_idx, version=1, think_key="think", action_key="action", return_list=True)  
+                    react_list = return_json_react_examples(env_type, prompt_ids=[env_idx], think_key="think", action_key="action", return_list=True)  
                     success = verify_react_and_ours(base_prompt, react_list[0])
                         
                 except AssertionError as e:
@@ -363,22 +419,38 @@ if __name__=="__main__":
                 print(e)
                 error_flag=True
 
+    failing_test_cases = ""
     if not error_flag:
         print("All prompts in correct format and generate correct strings.")
-    
+        failing_test_cases += "error_flag+"
+
     if not alignment_error_flag:
         print("All Prompts align with React")
+        failing_test_cases += "alignment_error_flag+"    
 
     if not state_error_flag:
         print("All States tracked correctly")
+        failing_test_cases += "state_error_flag+"    
 
     if not key_error_flag:
         print("All Keys are correct")
+        failing_test_cases += "key_error_flag+"    
 
-    error_present = any([error_flag, alignment_error_flag, state_error_flag, key_error_flag])
+    if not key_renaming_error_flag:
+        print("All Key Renaming has worked.")
+        failing_test_cases += "key_renaming_error_flag+"    
+
+    if not return_jsonstate_error_flag:
+        print("All json states generated correctly.")
+        failing_test_cases += "return_jsonstate_error_flag+"    
+
+    error_present = any([error_flag, alignment_error_flag, state_error_flag, key_error_flag, key_renaming_error_flag, return_jsonstate_error_flag])
     if not error_present:
         print("==")
-        print("ALL Manual TESTS PASSED")
+        print("SUCCESS - ALL Manual TESTS PASSED")
+    else:
+        print("==")
+        print(f"FAIL - Cases Failed:{failing_test_cases}")
 
 
     # #########################
@@ -399,7 +471,7 @@ if __name__=="__main__":
     #     "action": "act"
     # }
 
-    # new_prompt = restructure_prompt(base_prompt, keys = no_prompt_keys, key_renaming = keys_renamed)
+    # new_prompt = restructure_prompt(base_prompt, keys_to_use = no_prompt_keys, key_renaming = keys_renamed)
     # result = generate_string_prompt(new_prompt)
 
     # print(result)    
