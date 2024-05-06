@@ -47,6 +47,178 @@ def get_env_type(env_name):
     return env_type
 
 
+def transform_put_action(action):
+    """ Put action grammar correction. """
+    put_regex_1 = """put(?:\s\w+)(?:\s\w+)?(?:\s\d+)\son(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
+    put_regex_2 = """put(?:\s\w+)(?:\s\w+)?(?:\s\d+)\sin(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
+
+    if action.startswith("put"):
+        answer = re.match(put_regex_1,action)
+        if answer:
+            action = action.replace(" on "," in/on ")
+
+        else:
+            answer = re.match(put_regex_2,action)
+            if answer:
+                action = action.replace(" in "," in/on ")
+    return action
+
+
+
+#################################################################
+#PROCESSING ACTIONS & OBSERVATIONS BASED on AGENTS
+#################################################################
+def get_observation_agentbench_thought():
+    observation = "\n"
+    return observation
+
+def get_observation_react_thought():
+    observation = "OK.\n"
+    return observation
+
+def get_observation_jsonreact_thought():
+    observation = "OK.\n"
+    return observation
+
+
+
+def general_action_cleaning(action):
+    """ General action cleaning. """
+    if action.startswith("> "):
+        action = action.replace("> ","")
+
+    if action.startswith(">"):
+        action = action.replace(">","")
+
+    return action
+
+def json_action_cleaning(action):
+    """Action Cleaning for json."""
+    action = action.strip()
+    if action.startswith("```json"):
+        action = action.replace("```json","")
+
+    if action.startswith("```"):
+        action = action.replace("```","")
+
+    if action.endswith("```"):
+        action = action.replace("```","")
+    
+    if not action.endswith("}"):
+        action+="\n}\n"
+
+    return action
+
+
+def nojson_action_cleaning(action):
+    """Action cleaning for no json."""
+    action = action.strip()        
+    action+="\n"
+    return action
+
+
+def is_react_thought(action):
+    return action.startswith("think:")
+
+def is_jsonreact_thought(action, version=1):
+    """ Todo: version number. """
+    return '"think": "' in action
+
+def is_agentbench_thought(action):
+    return "THOUGHT:" in action
+
+
+
+def get_action_jsonreact(action, version=1, key="action"):
+    """
+    Extracts 'actual_action' from action. 
+    
+    'key' is not used at the moment.
+    """
+    if version==1:
+        key = "action"
+    
+    actual_action = action
+    was_command = False
+    valid_json = False
+    try:
+        data = json.loads(action.strip())
+        valid_json = True
+        potential_action = data.get(key)
+        if potential_action:
+            actual_action = potential_action
+            was_command = True
+    except Exception as e:
+        if (f'"{key}" : "' in action):
+            was_command = True
+            actions = action.split(f'"{key}" : "')
+            actual_action = actions[1].split('"')[0]
+            print(f"Extracted Action:{actual_action}")
+
+        elif (f'"{key}": "' in action):
+            was_command = True
+            actions = action.split(f'"{key}": "')
+            actual_action = actions[1].split('"')[0]
+            print(f"Extracted Action:{actual_action}")
+
+        elif (f'"{key}":"' in action):
+            was_command = True
+            actions = action.split(f'"{key}":"')
+            actual_action = actions[1].split('"')[0]
+            print(f"Extracted Action:{actual_action}")  
+
+    return actual_action, was_command, valid_json      
+
+
+
+def get_action_jsonstate(action, key="action"):
+    """Extracts 'actual_action' from action. """
+    actual_action = action
+    was_command = False
+    valid_json = False
+    try:
+        data = json.loads(action.strip())
+        valid_json = True
+        potential_action = data.get(key)
+        if potential_action:
+            actual_action = potential_action
+            was_command = True
+    except Exception as e:
+        if (f'"{key}" : "' in action):
+            was_command = True
+            actions = action.split(f'"{key}" : "')
+            actual_action = actions[1].split('"')[0]
+            print(f"Extracted Action:{actual_action}")
+
+        elif (f'"{key}": "' in action):
+            was_command = True
+            actions = action.split(f'"{key}": "')
+            actual_action = actions[1].split('"')[0]
+            print(f"Extracted Action:{actual_action}")
+
+        elif (f'"{key}":"' in action):
+            was_command = True
+            actions = action.split(f'"{key}":"')
+            actual_action = actions[1].split('"')[0]
+            print(f"Extracted Action:{actual_action}")  
+
+    return actual_action, was_command, valid_json 
+
+
+def get_action_agentbench(action):
+    """Extracts 'actual_action' from action. """
+    actual_action = action
+    was_command = False
+
+    if "ACTION:" in action:
+        actions = action.split('ACTION:')
+        actual_action = actions[1]
+        was_command = True
+        print(f"Extracted Action:{actual_action}")
+
+    return actual_action, was_command
+
+
 def process_action(action, track_is_illegal=False):
     """Processes Action of Agent."""
     illegal_action = False
@@ -104,24 +276,6 @@ def process_ob(ob, track_nothing_happens=False):
         return ob, nothing_happens
     else:
         return ob
-
-
-def transform_put_action(action):
-    """ Put action grammar correction. """
-    put_regex_1 = """put(?:\s\w+)(?:\s\w+)?(?:\s\d+)\son(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
-    put_regex_2 = """put(?:\s\w+)(?:\s\w+)?(?:\s\d+)\sin(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
-
-    if action.startswith("put"):
-        answer = re.match(put_regex_1,action)
-        if answer:
-            action = action.replace(" on "," in/on ")
-
-        else:
-            answer = re.match(put_regex_2,action)
-            if answer:
-                action = action.replace(" in "," in/on ")
-    return action
-
 
 
 
@@ -597,6 +751,8 @@ def build_arg_parser():
     
     parser.add_argument("--force_run", action="store_true", default=False, help="Whether to apply the 'Put Regex' correction")
 
+    parser.add_argument("--silent", action="store_true", default=False, help="Whether to suppress messages during the game loop.")
+
     return parser
 
 
@@ -680,9 +836,8 @@ if __name__=="__main__":
 
     CORRECTION = args.apply_correction
 
-    # LEGACY
-    SWAP_ORDER = True
-    LOG_FULL_PROMPT = True
+    # OTHER
+    SILENT_MODE = args.silent
 
 
     ##############################
@@ -747,6 +902,7 @@ if __name__=="__main__":
     CURRENT_TRIAL_FOLDER = BASE_EVAL_NAME+"_"+CURRENT_TRIAL_NAME
     SAVE_FOLDER = os.path.join(BASE_FOLDER,CURRENT_TRIAL_FOLDER)
     CSV_HEADER = [
+        # GENERAL AGENT/ENV Settings
         "env_idx", 
         "env_type",
         "agent_type",
@@ -754,27 +910,27 @@ if __name__=="__main__":
         "model", 
         "temperature",
         "prompt_name", 
+        # PER GAME METRICS
         "success",
         "done",
         "total_reward",
         "early_stop",
         "error", 
-        "correction_count",
+        # PER STEP METRICS
         "num_of_steps", 
         "num_nothing_happens", 
         "num_repetitions",
-        "num_illegal_actions", 
-        "num_json_dsnt_load",
-        "num_multi_json", #what is this?
-        "num_no_json", #what is this?
-        "num_json_and_text", #what is this?
+        "num_no_command", 
+        "num_no_json",
+        "num_correction",
+        # TOKEN COUNT
         "total_prompt_token", #How many tokens the prompt is
         "total_in_token_accumulated", #Total number of in tokens accumulated
         "total_in_token_message_accumulated", #Total number of in message tokens accumulated
         "total_out_token_accumulated", #Total number of tokens of the entire history (measured at the end)
         "total_history_token",
+        # VARIOUS FLAGS and ADDITIONAL DESCRIPTIONS
         "correction", #boolean flag
-        "keys_removed",
         "keys_to_use",
         "additional_prompt_annotation",
         "trace_file", 
@@ -868,7 +1024,8 @@ if __name__=="__main__":
         #     continue
         print(f"Starting Env with Index: {env_idx+start_env_idx} of type: {env_type}")
 
-        print(observation)
+        if not SILENT_MODE:
+            print(observation)
         observation += "\n"
         # print(info)
         # print(name)
@@ -907,7 +1064,7 @@ if __name__=="__main__":
             agent.stop_sequences = ["\n"]
             OUR_PROMPT_ADD_BRACKET_CONDITION=False
         else:
-            agent.stop_sequences = ["}\n"]
+            agent.stop_sequences = ["}\n", "\n}"]
             OUR_PROMPT_ADD_BRACKET_CONDITION=True
 
 
@@ -932,7 +1089,7 @@ if __name__=="__main__":
         # GAME VARIABLES AND SETTINGS
         #######################################################   
         # FIXED VARIABLES
-        LIMIT = 60
+        LIMIT = 100
         INPUT_TOKEN = ""
         OUTPUT_TOKEN = ""
 
@@ -952,16 +1109,14 @@ if __name__=="__main__":
         logging_done = False
         total_reward = 0
 
-        num_illegal_actions = 0
+ 
         num_nothing_happens = 0
         num_repetitions = 0
-        
-        num_json_dsnt_load = 0
-        num_multi_json = 0
-        num_no_json = 0
-        num_json_and_text = 0
 
-        correction_count = 0
+        num_no_command = 0
+        num_no_json = 0
+
+        num_correction = 0
 
         prev_action = ""
         num_current_repetitions = 0
@@ -981,9 +1136,12 @@ if __name__=="__main__":
         ####################################################### 
         try:
             while game_running_flag:
-                is_illegal_action = False
+
+                was_command = False
+                valid_json = False
                 is_nothing_happens = False
 
+                continue_flag = False
 
                 # #####################
                 # Action related
@@ -993,86 +1151,101 @@ if __name__=="__main__":
                 total_in_message_token += token_count_dictionary["in_token_message"]
                 total_out_token += token_count_dictionary["out_token_action"]
 
-                # print(action)
-                # input(">")
-
-                #Modify Actions
-                if OUR_PROMPT_ADD_BRACKET_CONDITION and (not action.endswith("}")):
-                    action+="}"
-                    agent.update_latest_history(action)
-                if not action.endswith("\n"):
-                    action+="\n"
-                    agent.update_latest_history(action)
-
-                print("<<< ACTION >>>:"+action)
-
-                # for char in action:
-                #     print(ord(char))
-                #     print(chr(ord(char)).encode("utf-8"))
-
-                if action.startswith("> "):
-                    action = action.replace("> ","")
-
-                if action.startswith(">"):
-                    action = action.replace(">","")
                 
-                # TODO: This is ReAct
-                if action.startswith("think:") or '"think": "' in action:
-                    observation = "OK.\n"
-                    print("<> OBSERVATION <>:"+observation)
-                    continue
-
-                if action.startswith('think("'):
-                    observation = "You are thinking.\n"
-                    print("<> OBSERVATION <>:"+observation)
-                    continue
-
-                action_count = action.count('"action"')
-                if action_count > 1:
-                    num_multi_json += 1
-                    appendix = action.split("}")[-1]
-                    if any(y in appendix for y in CAPITAL+LOWER):
-                        num_json_and_text += 1
-
-                elif action_count == 0:
-                    num_no_json += 1
+                #########################
+                # Adding early stop here, as while loop could continue for ever otherwise (in some cases).
+                counter += 1
+                if counter == LIMIT:
+                    early_stop = f"ENV_ERROR: Reached Step Limit:{LIMIT}"
+                    print("\nFalse\nFalse")
+                    print("EARLY STOP: Limit")
+                    break
+                
 
 
-                try:
-                    _ = json.loads(action)
-                except Exception as e:
-                    num_json_dsnt_load += 1
+                #########################
+                # New Flow Split by agenttype.
+                action = general_action_cleaning(action) #Done
+                if not SILENT_MODE:
+                    print("<<< RAW ACTION >>>:"+action)
 
 
-                action, is_illegal_action = process_action(action, track_is_illegal=True)
-                # TODO: This is Agentbench
-                if "THOUGHT:" in action:
-                    observation = "\n"
-                    continue
+                if not NOT_JSON_PROMPTS: #i.e.: The JSON prompts
+                    action = json_action_cleaning(action) #Done
 
-                if is_illegal_action:
-                    num_illegal_actions += 1
+                    if AGENT_TYPE == "jsonreact":
+                        if is_jsonreact_thought(action, version=VERSION): #Done
+                            observation = get_observation_jsonreact_thought() #Done
+                            if not SILENT_MODE:
+                                print("<> OBSERVATION <>:"+observation)
+                            continue_flag = True
+                        
+                        actual_action, was_command, valid_json = get_action_jsonreact(action, version=VERSION, key="action") #Done                      
+
+                    elif AGENT_TYPE == "ours":
+                        actual_action, was_command, valid_json= get_action_jsonstate(action, key="action") #Done                      
+
+                else:
+                    action = nojson_action_cleaning(action) #Done
+
+                    if AGENT_TYPE == "react":
+                        if is_react_thought(action): #Done
+                            observation = get_observation_react_thought() #Done
+                            if not SILENT_MODE:
+                                print("<> OBSERVATION <>:"+observation)
+                            continue_flag = True
+                        
+                        actual_action = action
+
+                    elif AGENT_TYPE == "agentbench":
+                        actual_action, was_command = get_action_agentbench(action) #Done
+                        if not was_command:
+                            if is_agentbench_thought(action): #Done
+                                observation = get_observation_agentbench_thought() #Done
+                                continue_flag = True
+
+                # Updating the agent with a cleaned action
+                agent.update_latest_history(action)
+                if not SILENT_MODE:
+                    print("<<< CLEANED ACTION >>>:"+action)
+                    print("<<< EXTRACTED ACTION >>>:"+actual_action)
 
                 if action == prev_action:
                     num_repetitions += 1
                     num_current_repetitions +=1
                 else:
-                    num_current_repetitions =0
-
-                if CORRECTION:
-                    # TODO: maybe start tracking those changes.
-                    action = transform_put_action(action)
-                    print(f"TRANSFORMED_ACTION:{action}")
-                    correction_count += 1
+                    num_current_repetitions = 0
 
                 prev_action = action
 
+                # TRACKING VARIOUS METRICS
+                if not was_command:
+                    num_no_command += 1
 
+                if not valid_json:
+                    num_no_json += 1
 
+                if CORRECTION:
+                    actual_action = transform_put_action(actual_action)
+                    if not SILENT_MODE:
+                        print(f"TRANSFORMED_ACTION:{actual_action}")
+                    num_correction += 1
+                
+                # Breaking early in case thoughts were repeated as well.
+                if num_current_repetitions == LIMIT_CURRENT_REPETITIONS:
+                    early_stop = f"ENV_ERROR: Too many ({LIMIT_CURRENT_REPETITIONS}) consecutive repetitions."
+                    print("\nFalse\nFalse")
+                    print("EARLY STOP: Repetitions")
+                    break
+
+                if continue_flag:
+                    continue
+
+            
 
                 # #####################
                 # Observation Related
-                observation, reward, done, info = env.step([action])
+                observation, reward, done, info = env.step([actual_action])
                 total_reward += reward[0]
 
 
@@ -1084,11 +1257,11 @@ if __name__=="__main__":
                     CURRENT_NOTHING_HAPPENS = False
 
 
-                
-                print("<> OBSERVATION <>:"+observation)
-                print(info["won"][0])
-                print(done[0])
-                print(reward[0])
+                if not SILENT_MODE:
+                    print("<> OBSERVATION <>:"+observation)
+                    print(info["won"][0])
+                    print(done[0])
+                    print(reward[0])
 
                 if done[0] or info["won"][0]:
                     if info["won"][0]:
@@ -1102,16 +1275,6 @@ if __name__=="__main__":
                         logging_done=False
 
                     break
-                    
-                counter += 1
-                if counter == LIMIT:
-                    early_stop = "ENV_ERROR: Reached Step Limit"
-                    break
-
-                if num_current_repetitions == LIMIT_CURRENT_REPETITIONS:
-                    early_stop = "ENV_ERROR: Too many ({LIMIT_CURRENT_REPETITIONS}) consecutive repetitions."
-                    break
-
 
         except cohere.core.ApiError as e:
             print("COHERE API ERROR")
@@ -1137,29 +1300,17 @@ if __name__=="__main__":
             logging_dict["error"] = error
             logging_dict["early_stop"] = early_stop
 
-            # Step logging
+            # Step logging & per step logging
             logging_dict["num_of_steps"] = counter
 
-            # Additional per step Logging
             logging_dict["num_nothing_happens"] = num_nothing_happens
             logging_dict["num_repetitions"] = num_repetitions
-            logging_dict["num_illegal_actions"] = num_illegal_actions
-            logging_dict["num_json_dsnt_load"] = num_json_dsnt_load
-
-            # Not Clear per step logging
-            logging_dict["num_multi_json"] = num_multi_json
+            logging_dict["num_no_command"] = num_no_command
             logging_dict["num_no_json"] = num_no_json
-            logging_dict["num_json_and_text"] = num_json_and_text
 
-            # CORRECTION
+            # CORRECTION & per step correction logging
             logging_dict["correction"] = CORRECTION
-            logging_dict["correction_count"] = correction_count
-
-
-            # Prompt Name Logging
-            logging_dict["prompt_name"] = prompt_name
-            logging_dict["keys_to_use"] = KEYS_TO_USE
-            logging_dict["keys_removed"] = None
+            logging_dict["correction_count"] = num_correction
 
             # Token Count
             logging_dict["total_prompt_token"] = total_prompt_tokens
@@ -1167,6 +1318,10 @@ if __name__=="__main__":
             logging_dict["total_in_token_message_accumulated"] = total_in_message_token
             logging_dict["total_out_token_accumulated"] = total_out_token
             logging_dict["total_history_token"] = agent.count_tokens()
+
+            # Prompt Name Logging
+            logging_dict["prompt_name"] = prompt_name
+            logging_dict["keys_to_use"] = KEYS_TO_USE
 
             #File Loggin
             logging_dict["trace_file"] = agent.file_name

@@ -76,11 +76,13 @@ class BaseSystem():
             pass
 
 
-    def update_latest_history(self, content, key="content"):
+    def update_latest_history(self, content, key="content", old_key="old_content"):
         """
         Updates the latest history with new content. By default uses the key 'content' 
         """
+        previous_content = self.full_history[-1][key]
         self.full_history[-1][key] = content
+        self.full_history[-1][old_key] = previous_content
 
 
     def _extract_prompt_from_history(self, history, keys_to_keep_in_prompt=["role","content"]):
