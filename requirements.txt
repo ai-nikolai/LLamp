@@ -1,6 +1,4 @@
 textworld
 openai
-transformers
-accelerate
-sentencepiece
-protobuf
+cohere
+anthropic
