@@ -49,7 +49,7 @@ class OpenAIChatText(BaseLLMSystem):
 
 if __name__=="__main__":
     print("Nothing to run here.")
-    agent = OpenAITextChatAgent(save_path="./")
+    agent = OpenAIChatText(save_path="./")
     prompt = []
     agent.save()
 

@@ -76,7 +76,14 @@ class BaseSystem():
             pass
 
 
-    def _extraxt_prompt_from_history(self, history, keys_to_keep_in_prompt=["role","content"]):
+    def update_latest_history(self, content, key="content"):
+        """
+        Updates the latest history with new content. By default uses the key 'content' 
+        """
+        self.full_history[-1][key] = content
+
+
+    def _extract_prompt_from_history(self, history, keys_to_keep_in_prompt=["role","content"]):
         """Extracts prompt from history."""
         prompt = []
         for segment in history:
@@ -111,7 +118,7 @@ class BaseSystem():
             previous_history = json.load(previous_history)
             self.full_history = previous_history
 
-        self.current_prompt = self._extraxt_prompt_from_history(self.full_history, keys_to_keep_in_prompt)
+        self.current_prompt = self._extract_prompt_from_history(self.full_history, keys_to_keep_in_prompt)
 
 
     def set_base_prompt_and_reset(self,base_prompt):
@@ -156,7 +163,9 @@ class BaseSystem():
                     os.mkdir(current_path)
 
 
-
+    def count_tokens(self):
+        """ Creating this function for completeness """
+        return 0
 
 
     

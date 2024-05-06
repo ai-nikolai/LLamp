@@ -5,7 +5,7 @@ if [ $1 == "test" ]; then
         --agent "react" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v3_3_test" \
+        --trial_name "v3_4_2_test" \
         --start_index 0 \
         --num_envs 1 \
         # --end_index \
@@ -19,7 +19,7 @@ if [ $1 == "test_ours" ]; then
         --agent "ours" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-1106" \
-        --trial_name "v3_3_test" \
+        --trial_name "v3_4_2_test" \
         --start_index 0 \
         --num_envs 1 \
         --prompt_ids 0 1 \
@@ -35,7 +35,7 @@ if [ $1 == "test_ours_full" ]; then
         --agent "ours" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-1106" \
-        --trial_name "v3_3_test" \
+        --trial_name "v3_4_2_test" \
         --start_index 0 \
         --num_envs 10 \
         --keys_to_use $keys_to_use \
@@ -56,7 +56,7 @@ if [ $1 == "test_all" ]; then
         --agent "react" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v3_3_test" \
+        --trial_name "v3_4_2_test" \
         --start_index 0 \
         --num_envs 1 \
         --prompt_ids 2 0 1 \
@@ -69,7 +69,7 @@ if [ $1 == "test_all" ]; then
         --agent "ours" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v3_3_test" \
+        --trial_name "v3_4_2_test" \
         --start_index 0 \
         --num_envs 1 \
         --keys_to_use $keys_to_use \
@@ -82,7 +82,7 @@ if [ $1 == "test_all" ]; then
         --agent "agentbench" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v3_3_test" \
+        --trial_name "v3_4_2_test" \
         --start_index 0 \
         --num_envs 1 \
         --force_run
@@ -94,7 +94,7 @@ if [ $1 == "test_all" ]; then
         --agent "jsonreact" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v3_3_test" \
+        --trial_name "v3_4_2_test" \
         --start_index 0 \
         --num_envs 1 \
         --agent_version 2 \
@@ -107,7 +107,7 @@ if [ $1 == "test_all" ]; then
         --agent "react" \
         --llm_type "OpenAIChatTextSampling" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v3_3_test" \
+        --trial_name "v3_4_2_test" \
         --start_index 0 \
         --num_envs 1 \
         --force_run
@@ -119,7 +119,7 @@ if [ $1 == "test_all" ]; then
         --agent "react" \
         --llm_type "OpenAIText" \
         --model "gpt-3.5-turbo-instruct" \
-        --trial_name "v3_3_test" \
+        --trial_name "v3_4_2_test" \
         --start_index 0 \
         --num_envs 1 \
         --force_run
@@ -131,7 +131,7 @@ if [ $1 == "test_all" ]; then
         --agent "react" \
         --llm_type "CohereChat" \
         --model "command-r-plus" \
-        --trial_name "v3_3_test" \
+        --trial_name "v3_4_2_test" \
         --start_index 0 \
         --num_envs 1 \
         --force_run
@@ -147,7 +147,7 @@ if [ $1 == "eval" ]; then
         --agent "react" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v3_3_eval_full" \
+        --trial_name "v3_4_2_eval_full" \
         --start_index 0 \
         --num_envs 135 \
         # --end_index \

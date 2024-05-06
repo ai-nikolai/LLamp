@@ -492,7 +492,7 @@ def get_prompt_example(agent_type, env_type, prompt_ids, version, generate_promp
             prompt_example = return_jsonstate_prompt(env_type, prompt_ids=prompt_ids, keys_to_use=keys_to_use, key_renaming=key_renaming)
         prompt_id_string = '_'.join([str(y) for y in prompt_ids])
         # TODO: properly test key_renaming.
-        keys_string = '_'.join([str(y) for y in keys_to_use])
+        keys_string = '+'.join([str(y) for y in keys_to_use])
 
         prompt_name = f"jsonstate-{prompt_id_string}-k-{keys_string}"
 
@@ -768,6 +768,11 @@ if __name__=="__main__":
         "num_multi_json", #what is this?
         "num_no_json", #what is this?
         "num_json_and_text", #what is this?
+        "total_prompt_token", #How many tokens the prompt is
+        "total_in_token_accumulated", #Total number of in tokens accumulated
+        "total_in_token_message_accumulated", #Total number of in message tokens accumulated
+        "total_out_token_accumulated", #Total number of tokens of the entire history (measured at the end)
+        "total_history_token",
         "correction", #boolean flag
         "keys_removed",
         "keys_to_use",
@@ -892,7 +897,7 @@ if __name__=="__main__":
 
         raw_prompt = generate_prompt_from_example(prompt_example, return_raw_prompt=True, number_of_examples=num_examples, base_prompt=new_base_prompt)
         save_prompt_file(prompt_save_path, raw_prompt)
-
+        total_prompt_tokens = agent.count_tokens(raw_prompt)
 
 
 
@@ -960,6 +965,10 @@ if __name__=="__main__":
 
         prev_action = ""
         num_current_repetitions = 0
+        total_in_token = 0
+        total_out_token = 0
+        total_in_message_token = 0
+        total_token = 0
 
 
         # for resampling
@@ -978,21 +987,22 @@ if __name__=="__main__":
 
                 # #####################
                 # Action related
+                action, token_count_dictionary = agent.act(f"{INPUT_TOKEN}"+observation+f"{OUTPUT_TOKEN}", return_token_count=True)
+                
+                total_in_token += token_count_dictionary["in_token_all"]
+                total_in_message_token += token_count_dictionary["in_token_message"]
+                total_out_token += token_count_dictionary["out_token_action"]
 
-                # action = input(">")
-                action = agent.act(f"{INPUT_TOKEN}"+observation+f"{OUTPUT_TOKEN}")
                 # print(action)
                 # input(">")
 
                 #Modify Actions
                 if OUR_PROMPT_ADD_BRACKET_CONDITION and (not action.endswith("}")):
-                    agent.pop_from_history()
                     action+="}"
-                    agent.add_to_history(action,"assistant")
+                    agent.update_latest_history(action)
                 if not action.endswith("\n"):
-                    agent.pop_from_history()
                     action+="\n"
-                    agent.add_to_history(action,"assistant")
+                    agent.update_latest_history(action)
 
                 print("<<< ACTION >>>:"+action)
 
@@ -1150,6 +1160,13 @@ if __name__=="__main__":
             logging_dict["prompt_name"] = prompt_name
             logging_dict["keys_to_use"] = KEYS_TO_USE
             logging_dict["keys_removed"] = None
+
+            # Token Count
+            logging_dict["total_prompt_token"] = total_prompt_tokens
+            logging_dict["total_in_token_accumulated"] = total_in_token
+            logging_dict["total_in_token_message_accumulated"] = total_in_message_token
+            logging_dict["total_out_token_accumulated"] = total_out_token
+            logging_dict["total_history_token"] = agent.count_tokens()
 
             #File Loggin
             logging_dict["trace_file"] = agent.file_name

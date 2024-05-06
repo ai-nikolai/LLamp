@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     prompt_id_strings = [ "1_0", "0_1", "1_2_0"]
     version_strings = ["v1","v2","v3"]
-    keys_to_use_string = "k-goal_thought_plan_action"
+    keys_to_use_string = "k-goal+thought+plan+action"
 
 
     error_flag = False
