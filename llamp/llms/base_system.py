@@ -169,7 +169,9 @@ class BaseSystem():
         """ Creating this function for completeness """
         return 0
 
-
+    def is_resample(self):
+        """Returns whether this system is designed for resampling."""
+        return False
     
 
 

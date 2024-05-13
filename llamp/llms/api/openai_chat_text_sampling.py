@@ -11,7 +11,7 @@ from tenacity import (
 from llamp.llms.base_llm_system import BaseLLMSystem
 
 class OpenAIChatTextSampling(BaseLLMSystem):
-    def __init__(self, system_name="OpenAIChatTextSampling",save_path="game_logs", temperature=0.0, model="gpt-3.5-turbo-0125", stop_sequences=None, temperature_jump=0.2):
+    def __init__(self, system_name="OpenAIChatTextSampling",save_path="game_logs", temperature=0.0, model="gpt-3.5-turbo-0125", stop_sequences=None, resample_temperature_jump=0.1):
         
         super().__init__(system_name, save_path, temperature=temperature)        
         self.client = openai.OpenAI(
@@ -24,7 +24,7 @@ class OpenAIChatTextSampling(BaseLLMSystem):
         self.original_temperature = temperature
 
         self.current_sample = 0
-        self.temperature_jump = temperature_jump
+        self.resample_temperature_jump = resample_temperature_jump
 
         self.previous_samples = {}
         self.resampling = False
@@ -110,7 +110,7 @@ class OpenAIChatTextSampling(BaseLLMSystem):
             self.previous_samples = previous_samples
 
         if increase_temperature:
-            self.temperature += self.temperature_jump
+            self.temperature += self.resample_temperature_jump
 
 
     def resample(self, increase_temperature=True):
@@ -138,6 +138,10 @@ class OpenAIChatTextSampling(BaseLLMSystem):
         chat_message = chat_completion.choices[0].message.content
 
         return chat_message
+
+    def is_resample(self):
+        """Returns whether this system is designed for resampling."""
+        return True
 
 
 if __name__=="__main__":
@@ -179,7 +183,7 @@ if __name__=="__main__":
     print(action)
 
     agent.save()
-    agent2 = OpenAIChatTextSampling(save_path="./",temperature_jump=0.3)
+    agent2 = OpenAIChatTextSampling(save_path="./",resample_temperature_jump=0.3)
     agent2.load_from_saved_data(agent.file_name)
     print("----")
     print("6")

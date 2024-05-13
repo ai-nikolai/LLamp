@@ -51,17 +51,19 @@ def transform_put_action(action):
     """ Put action grammar correction. """
     put_regex_1 = """put(?:\s\w+)(?:\s\w+)?(?:\s\d+)\son(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
     put_regex_2 = """put(?:\s\w+)(?:\s\w+)?(?:\s\d+)\sin(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
-
+    correction_happened = False
+    
     if action.startswith("put"):
         answer = re.match(put_regex_1,action)
         if answer:
             action = action.replace(" on "," in/on ")
-
+            correction_happened = True
         else:
             answer = re.match(put_regex_2,action)
             if answer:
                 action = action.replace(" in "," in/on ")
-    return action
+                correction_happened = True
+    return action, correction_happened
 
 
 
@@ -547,7 +549,7 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = OpenAIChatTextSampling(temperature=temperature, model=model, temperature_jump=0.2) 
+        agent = OpenAIChatTextSampling(temperature=temperature, model=model) 
 
 
     elif llm_type=="Human":
@@ -699,7 +701,7 @@ def build_arg_parser():
     parser.add_argument(
         "--llm_type",
         type=str,
-        default="OpenAIChatText",
+        default="OpenAIChatTextSampling",
         choices=[
             "AnthropicChat",
             "CohereChat" ,
@@ -748,14 +750,14 @@ def build_arg_parser():
         help="The alfworld split to use.",
     )
     parser.add_argument("--apply_correction", action="store_true", default=False, help="Whether to apply the 'Put Regex' correction")
-    
+    parser.add_argument("--resample", action="store_true", default=False, help="Whether to resample on repetition")
+    parser.add_argument("--resample_temperature", type=float, default=0.1, help="Resample Temperature increase.")
+
     parser.add_argument("--force_run", action="store_true", default=False, help="Whether to apply the 'Put Regex' correction")
 
     parser.add_argument("--silent", action="store_true", default=False, help="Whether to suppress messages during the game loop.")
 
     return parser
-
-
 
 
 
@@ -835,6 +837,11 @@ if __name__=="__main__":
     PROMPT_IDS = args.prompt_ids
 
     CORRECTION = args.apply_correction
+    RESAMPLE = args.resample
+    if RESAMPLE:
+        RESAMPLE_TEMPERATURE = args.resample_temperature
+    else:
+        RESAMPLE_TEMPERATURE = None
 
     # OTHER
     SILENT_MODE = args.silent
@@ -923,6 +930,7 @@ if __name__=="__main__":
         "num_no_command", 
         "num_no_json",
         "num_correction",
+        "num_resample",
         # TOKEN COUNT
         "total_prompt_token", #How many tokens the prompt is
         "total_in_token_accumulated", #Total number of in tokens accumulated
@@ -931,6 +939,8 @@ if __name__=="__main__":
         "total_history_token",
         # VARIOUS FLAGS and ADDITIONAL DESCRIPTIONS
         "correction", #boolean flag
+        "resample", #boolean flag,
+        "resample_temperature",
         "keys_to_use",
         "additional_prompt_annotation",
         "trace_file", 
@@ -967,6 +977,19 @@ if __name__=="__main__":
     #######################################################
     agent, actual_model = get_agent_and_model(llm_type=llm_type, temperature=temperature, proposed_model=model)
     agent.update_save_path(SAVE_FOLDER)
+
+    if RESAMPLE:
+        if not agent.is_resample():
+            RESAMPLE = False
+            print(f"WARNING: Your llm_type:{llm_type} does not support sampling, disabling resampling.")
+            print("Do you still want to continue? Press 'y' to continue.")
+            user_input = input(">")
+            if user_input=="y":
+                pass
+            else:
+                exit(1)
+        else:
+            agent.resample_temperature_jump = RESAMPLE_TEMPERATURE
 
     if actual_model != model:
         print(f"WARNING: Your model:{model} is not used, instead using default model: {actual_model}")
@@ -1074,7 +1097,7 @@ if __name__=="__main__":
         # Logging Init & Initial values
         ####################################################### 
         logging_dict = get_empty_dict_from_csv_header(CSV_HEADER)
-
+        # 28
         logging_dict["env_idx"]  = env_idx+start_env_idx
         logging_dict["env_type"] = env_type
         logging_dict["llm_type"] = llm_type
@@ -1097,7 +1120,7 @@ if __name__=="__main__":
         LOWER = [chr(x+97) for x in range(26)]
 
         LIMIT_CURRENT_REPETITIONS = 5 #after 5 repetitions stop current run.
-
+        MAX_RESAMPLE = 10 #after 10 resamples the agent will continue
 
 
         # To be reset at each run.
@@ -1117,6 +1140,9 @@ if __name__=="__main__":
         num_no_json = 0
 
         num_correction = 0
+
+        num_resample = 0
+        num_current_resample = 0
 
         prev_action = ""
         num_current_repetitions = 0
@@ -1163,6 +1189,10 @@ if __name__=="__main__":
                 
 
 
+                # ###################################
+                # Per Agent Type Cleaning
+                # ###################################
+
                 #########################
                 # New Flow Split by agenttype.
                 action = general_action_cleaning(action) #Done
@@ -1204,6 +1234,9 @@ if __name__=="__main__":
                                 observation = get_observation_agentbench_thought() #Done
                                 continue_flag = True
 
+                # ###################################
+                # Per action logging and logic.
+                # ###################################
                 # Updating the agent with a cleaned action
                 agent.update_latest_history(action)
                 if not SILENT_MODE:
@@ -1211,10 +1244,19 @@ if __name__=="__main__":
                     print("<<< EXTRACTED ACTION >>>:"+actual_action)
 
                 if action == prev_action:
+                    if RESAMPLE:
+                        if num_current_resample < MAX_RESAMPLE:
+                            num_resample += 1
+                            num_current_resample += 1
+                            agent.prepare_resample()
+                            print(f"RESAMPLING: {num_current_resample}")
+                            continue
+
                     num_repetitions += 1
                     num_current_repetitions +=1
                 else:
                     num_current_repetitions = 0
+                    num_current_resample = 0
 
                 prev_action = action
 
@@ -1226,10 +1268,11 @@ if __name__=="__main__":
                     num_no_json += 1
 
                 if CORRECTION:
-                    actual_action = transform_put_action(actual_action)
+                    actual_action, correction_happened = transform_put_action(actual_action)
                     if not SILENT_MODE:
                         print(f"TRANSFORMED_ACTION:{actual_action}")
-                    num_correction += 1
+                    if correction_happened:
+                        num_correction += 1
                 
                 # Breaking early in case thoughts were repeated as well.
                 if num_current_repetitions == LIMIT_CURRENT_REPETITIONS:
@@ -1243,8 +1286,9 @@ if __name__=="__main__":
 
             
 
-                # #####################
-                # Observation Related
+                # ###################################
+                # Observation Related.
+                # ###################################
                 observation, reward, done, info = env.step([actual_action])
                 total_reward += reward[0]
 
@@ -1310,8 +1354,12 @@ if __name__=="__main__":
 
             # CORRECTION & per step correction logging
             logging_dict["correction"] = CORRECTION
-            logging_dict["correction_count"] = num_correction
+            logging_dict["num_correction"] = num_correction
 
+            # RESAMPLE & per step resample logging
+            logging_dict["resample"] = RESAMPLE
+            logging_dict["resample_temperature"] = RESAMPLE_TEMPERATURE
+            logging_dict["num_resample"] = num_resample
             # Token Count
             logging_dict["total_prompt_token"] = total_prompt_tokens
             logging_dict["total_in_token_accumulated"] = total_in_token
@@ -1328,6 +1376,7 @@ if __name__=="__main__":
             logging_dict["prompt_file"] = prompt_save_path
             logging_dict["additional_prompt_annotation"] = additional_prompt_annotation
             write_line_to_main_log_csv(MAIN_CSV_FILEPATH, logging_dict)
+            print(logging_dict)
             agent.save()
 
     
