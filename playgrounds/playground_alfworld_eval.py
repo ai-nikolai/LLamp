@@ -20,7 +20,7 @@ from llamp.llms.api import (
     OpenAIChat, OpenAIChatText, OpenAIText, OpenAIChatTextSampling
 )
 
-from playground_alfworld_ablation_generator import return_jsonstate_prompt
+from playground_alfworld_ablation_generator import return_jsonstate_prompt, return_stringstate_prompt
 from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts, return_json_react_examples
 
 
@@ -109,6 +109,13 @@ def json_action_cleaning(action):
     if not action.endswith("}"):
         action+="\n}\n"
 
+    return action
+
+
+def our_text_action_cleaning(action):
+    """Action cleaning for our text"""
+    action = action.strip()        
+    action+="\n\n"
     return action
 
 
@@ -205,6 +212,20 @@ def get_action_jsonstate(action, key="action"):
             print(f"Extracted Action:{actual_action}")  
 
     return actual_action, was_command, valid_json 
+
+
+def get_action_stringstate(action, key="action"):
+    """Extracts 'actual_action' from action. """
+    actual_action = action
+    was_command = False
+
+    SEP = f"{key}: "
+    if SEP in action:
+        split_sys_response = action.split(SEP)
+        actual_action = split_sys_response[-1]
+        was_command = True
+
+    return actual_action, was_command
 
 
 def get_action_agentbench(action):
@@ -652,6 +673,15 @@ def get_prompt_example(agent_type, env_type, prompt_ids, version, generate_promp
 
         prompt_name = f"jsonstate-{prompt_id_string}-k-{keys_string}"
 
+    elif agent_type=="ours-text":  
+        if generate_prompt:
+            prompt_example = return_stringstate_prompt(env_type, prompt_ids=prompt_ids, keys_to_use=keys_to_use, key_renaming=key_renaming)
+        prompt_id_string = '_'.join([str(y) for y in prompt_ids])
+        # TODO: properly test key_renaming.
+        keys_string = '+'.join([str(y) for y in keys_to_use])
+
+        prompt_name = f"stringstate-{prompt_id_string}-k-{keys_string}"
+
     else:
         raise NotImplementedError(f"Trying to call agent_type: {agent_type}, but it doesn't exist.")
 
@@ -687,12 +717,10 @@ def build_arg_parser():
         default="ours",
         choices=[
             "react",
-            "react-replace",
             "jsonreact",
             "agentbench",
             "ours",
-            "ours-text",
-            "ours-replace"
+            "ours-text"
         ],
         help="The Agent / Method choice.",
     )
@@ -741,11 +769,6 @@ def build_arg_parser():
         choices=[
             "eval_out_of_distribution",
             "eval_in_distribution"
-            "jsonreact",
-            "agentbench",
-            "ours",
-            "ours-text",
-            "ours-replace"
         ],
         help="The alfworld split to use.",
     )
@@ -829,6 +852,8 @@ if __name__=="__main__":
     AGENTBENCH_PROMPT = True if AGENT_TYPE == "agentbench" else False
     JSON_REACT_PROMPT = True if AGENT_TYPE == "jsonreact" else False
 
+
+    OUR_TEXT_PROMPTS = True if AGENT_TYPE == "ours-text" else False
     NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT or llm_type == "Human"
     
     # NUM_EXAMPLES = args.num_prompts
@@ -1083,7 +1108,10 @@ if __name__=="__main__":
 
         # ####################################
         # SETTING the STOP Condition for AGENT
-        if NOT_JSON_PROMPTS:
+        if OUR_TEXT_PROMPTS:
+            agent.stop_sequences = ["\n\n"]
+            OUR_PROMPT_ADD_BRACKET_CONDITION=False
+        elif NOT_JSON_PROMPTS:
             agent.stop_sequences = ["\n"]
             OUR_PROMPT_ADD_BRACKET_CONDITION=False
         else:
@@ -1200,7 +1228,13 @@ if __name__=="__main__":
                     print("<<< RAW ACTION >>>:"+action)
 
 
-                if not NOT_JSON_PROMPTS: #i.e.: The JSON prompts
+                if OUR_TEXT_PROMPTS:
+                    action = our_text_action_cleaning(action) #Done
+
+                    if AGENT_TYPE =="ours-text":
+                        actual_action, was_command = get_action_stringstate(action, key="action") #TODO                      
+
+                elif not NOT_JSON_PROMPTS: #i.e.: The JSON prompts
                     action = json_action_cleaning(action) #Done
 
                     if AGENT_TYPE == "jsonreact":
@@ -1215,7 +1249,7 @@ if __name__=="__main__":
                     elif AGENT_TYPE == "ours":
                         actual_action, was_command, valid_json= get_action_jsonstate(action, key="action") #Done                      
 
-                else:
+                elif NOT_JSON_PROMPTS:
                     action = nojson_action_cleaning(action) #Done
 
                     if AGENT_TYPE == "react":
@@ -1233,6 +1267,8 @@ if __name__=="__main__":
                             if is_agentbench_thought(action): #Done
                                 observation = get_observation_agentbench_thought() #Done
                                 continue_flag = True
+                else:
+                    raise Exception("What happened there?")
 
                 # ###################################
                 # Per action logging and logic.

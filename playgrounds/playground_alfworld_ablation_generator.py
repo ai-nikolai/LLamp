@@ -41,7 +41,7 @@ ENV_TO_EXAMPLE_MAPPING_2 = {
     "puttwo"    : puttwo_v4_base_2
 }
 
-def generate_string_prompt(base_prompt, system_prefix="", agent_prefix=">"):
+def transform_baseprompt_into_jsonstate_string(base_prompt, system_prefix="", agent_prefix=">"):
     """ Generate simple prompt based on the base."""
     base_prompt = remove_keys(base_prompt)
     prompt=""
@@ -52,6 +52,35 @@ def generate_string_prompt(base_prompt, system_prefix="", agent_prefix=">"):
             prefix = agent_prefix
         
         prompt+=prefix + component + '\n\n'
+
+    return prompt
+
+
+def transform_baseprompt_into_stringstate_string(base_prompt, system_prefix="", agent_prefix=">"):
+    """ Generate simple prompt based on the base."""
+    base_prompt = remove_keys(base_prompt)
+    prompt=""
+    for idx, component in enumerate(base_prompt):
+        output = ""    
+        if idx % 2 == 0:
+            prefix = system_prefix
+            output = component
+        else:
+            prefix = agent_prefix
+            data = json.loads(component)
+            for key,value in data.items():
+                if not value:
+                    value = "None"
+                elif type(value) == list:
+                    value = ", ".join(value)
+
+                if "_" in key:
+                    key = key.replace("_"," ")
+                output += f'{key}: {value}\n'
+            output = output[:-1]
+
+        
+        prompt+=prefix + output + '\n\n'
 
     return prompt
 
@@ -133,7 +162,27 @@ def return_jsonstate_prompt(env_type, prompt_ids=[1,0], keys_to_use=["thought","
 
         base_prompt = prompt_mappings[example_idx][env_type]
         updated_base_prompt = restructure_prompt(base_prompt, keys_to_use, key_renaming)
-        prompt_example += generate_string_prompt(updated_base_prompt) 
+        prompt_example += transform_baseprompt_into_jsonstate_string(updated_base_prompt) 
+
+    return prompt_example
+
+
+def return_stringstate_prompt(env_type, prompt_ids=[1,0], keys_to_use=["thought","action"], key_renaming={}):
+    """ 
+    Returns our prompt based on prompt_ids and keys_to_use. 
+
+    TODO: add key_renaming.
+    """
+    prompt_mappings = [ENV_TO_EXAMPLE_MAPPING_0, ENV_TO_EXAMPLE_MAPPING_1, ENV_TO_EXAMPLE_MAPPING_2]
+
+    prompt_example = ""
+    for idx, example_idx in enumerate(prompt_ids):
+        if idx>0:
+            prompt_example += "\n\n"
+
+        base_prompt = prompt_mappings[example_idx][env_type]
+        updated_base_prompt = restructure_prompt(base_prompt, keys_to_use, key_renaming)
+        prompt_example += transform_baseprompt_into_stringstate_string(updated_base_prompt) 
 
     return prompt_example
 
@@ -342,7 +391,7 @@ if __name__=="__main__":
             base_prompt = env_mapping[env_type]
             try:
                 base_prompt = remove_keys(base_prompt, keys_to_remove=["prompt","current_objective","non-existant-key"])
-                result = generate_string_prompt(base_prompt)
+                result = transform_baseprompt_into_jsonstate_string(base_prompt)
 
 
                 try:
@@ -350,10 +399,10 @@ if __name__=="__main__":
                     base_prompt2 = env_mapping[env_type]
 
                     new_prompt = restructure_prompt(base_prompt2, keys_to_use = random_key_orders, key_renaming = key_renaming_none)
-                    result_none = generate_string_prompt(new_prompt)
+                    result_none = transform_baseprompt_into_jsonstate_string(new_prompt)
 
                     new_prompt = restructure_prompt(base_prompt2, keys_to_use = random_key_orders, key_renaming = key_renaming)
-                    result = generate_string_prompt(new_prompt)
+                    result = transform_baseprompt_into_jsonstate_string(new_prompt)
                     
                     try:
                         assert result_none != result, "Results should be different, as keys are renamed."
@@ -453,6 +502,9 @@ if __name__=="__main__":
         print(f"FAIL - Cases Failed:{failing_test_cases}")
 
 
+    example = return_stringstate_prompt("cool", keys_to_use=all_keys)
+    print(example)
+
     # #########################
     # Manual test prompt "restructure"
     # #########################
@@ -472,7 +524,7 @@ if __name__=="__main__":
     # }
 
     # new_prompt = restructure_prompt(base_prompt, keys_to_use = no_prompt_keys, key_renaming = keys_renamed)
-    # result = generate_string_prompt(new_prompt)
+    # result = transform_baseprompt_into_jsonstate_string(new_prompt)
 
     # print(result)    
 
@@ -504,7 +556,7 @@ if __name__=="__main__":
 
     # print("++++")
     # base_prompt = remove_keys(base_prompt, keys=["prompt","current_objective","goal","plan","locations_visited","current_inventory","current_location"])
-    # result = generate_string_prompt(base_prompt)
+    # result = transform_baseprompt_into_jsonstate_string(base_prompt)
     # print(result)
 
 # EOF
