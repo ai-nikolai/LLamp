@@ -14,6 +14,7 @@ offload*
 *prompts*
 .DS_Store
 results/test*
+results/*.csv
 all_results.csv
 deepdive_results.csv
 .ipynb_checkpoints*
