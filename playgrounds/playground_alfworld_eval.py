@@ -307,51 +307,53 @@ def process_ob(ob, track_nothing_happens=False):
 #PROMPT RELATED
 #################################################################
 
-OPENING_MARK="<<<"
+# OPENING_MARK="<<<"
 OPENING_MARK=""
-CLOSING_MARK=">>>"
+# CLOSING_MARK=">>>"
 CLOSING_MARK=""
 
-HINTS=f"""
-A few hints:
-{OPENING_MARK}
-1. When "Nothing happens." this means your action was not successful or not valid. If this happen, then try a valid action that you have not tried before.
+# HINTS=f"""
+# A few hints:
+# {OPENING_MARK}
+# 1. When "Nothing happens." this means your action was not successful or not valid. If this happen, then try a valid action that you have not tried before.
 
-2. If you repeat yourself, try a different valid action. 
+# 2. If you repeat yourself, try a different valid action. 
 
-3. Visit new places to find an object.
+# 3. Visit new places to find an object.
 
-4. Some actions can be only executed in specific places, such as cleaning, heating, cooling...
+# 4. Some actions can be only executed in specific places, such as cleaning, heating, cooling...
 
-5. Be literatal.
+# 5. Be literatal.
 
-6. Initially you have not visited any places and you are starting at the 'starting_location'.
+# 6. Initially you have not visited any places and you are starting at the 'starting_location'.
 
-7. Generate one JSON output only.
-{CLOSING_MARK}
-"""
+# 7. Generate one JSON output only.
+# {CLOSING_MARK}
+# """
 
 HINTS=""
 
-INSTRUCTIONS=f"""
-This is the list of all valid actions that you can use:
-{OPENING_MARK}
-- go to <dir> [example: go to table 1]
-- open <obj> [example: open door 1]
-- close <obj> [example: close door 1]
-- put <obj> in/on <obj> [example: put apple 1 in/on table 1]
-- take <obj> from <obj> [example: take apple 1 from table 1]
-- cool <obj> with <obj> [example: cool apple 1 with fridge 1]
-- heat <obj> with <obj> [example: heat apple 1 with fire 1]
-- use <obj> [example: use desklamp 1]
-{CLOSING_MARK}
-"""
+# INSTRUCTIONS=f"""
+# This is the list of all valid actions that you can use:
+# {OPENING_MARK}
+# - go to <dir> [example: go to table 1]
+# - open <obj> [example: open door 1]
+# - close <obj> [example: close door 1]
+# - put <obj> in/on <obj> [example: put apple 1 in/on table 1]
+# - take <obj> from <obj> [example: take apple 1 from table 1]
+# - cool <obj> with <obj> [example: cool apple 1 with fridge 1]
+# - heat <obj> with <obj> [example: heat apple 1 with fire 1]
+# - use <obj> [example: use desklamp 1]
+# {CLOSING_MARK}
+# """
 
 INSTRUCTIONS=""
 
 
 BASE_PROMPT1 = "Interact with a household to solve a task."
 BASE_PROMPT2 = "You will interact with the environment to solve the given task."
+
+TASK_MESSAGE = "Here is the task."
 
 def generate_prompt_from_example(examples, return_raw_prompt = False, number_of_examples=1, base_prompt = "", instructions = "", hints = ""):
     """ Generates prompt """
@@ -375,21 +377,23 @@ def generate_prompt_from_example(examples, return_raw_prompt = False, number_of_
     if not hints:
         hints = HINTS
 
+    task_message = TASK_MESSAGE
+
     #########################################
     #
     #This is the part for the raw prompt.
     #
     #########################################
-    raw_prompt = f"""
-{base_prompt}
+    raw_prompt = f"""{base_prompt}
 {instructions}
 
 Here {is_are} {number_of_examples_string} example{s_string}:
 {OPENING_MARK}
 {examples}
 {CLOSING_MARK}
-
 {hints}
+{task_message}
+
 """
     prompt = [{
                 "role" : "system",
@@ -1274,7 +1278,7 @@ if __name__=="__main__":
                 # Per action logging and logic.
                 # ###################################
                 # Updating the agent with a cleaned action
-                agent.update_latest_history(action)
+                agent.update_latest_history(">"+action) #Adding '>' symbol back in as this is how the example prompt is presented to LLMs.
                 if not SILENT_MODE:
                     print("<<< CLEANED ACTION >>>:"+action)
                     print("<<< EXTRACTED ACTION >>>:"+actual_action)
