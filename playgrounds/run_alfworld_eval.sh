@@ -159,6 +159,22 @@ fi;
 
 
 if [ $1 == "eval_mix" ]; then
+
+    echo "=============================="
+    echo "Running react with command-r-plus"
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "react" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_2_test" \
+        --start_index 0 \
+        --num_envs 1 \
+        --force_run 
+        # --end_index \
+
+fi;
+
+if [ $1 == "eval_mix" ]; then
     keys_to_use='["thought","action"]'
     python3 playgrounds/playground_alfworld_eval.py \
         --agent "ours" \
@@ -1025,6 +1041,88 @@ if [ $1 == "eval_additional_1106" ]; then
 fi;
 
 
+if [ $1 == "eval_extra_1106" ]; then
+    keys_to_use='["goal","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "OpenAIChatText" \
+        --model "gpt-3.5-turbo-1106" \
+        --trial_name "v4_1_2_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["goal","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "OpenAIChatText" \
+        --model "gpt-3.5-turbo-1106" \
+        --trial_name "v4_1_2_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+    keys_to_use='["thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "OpenAIChatText" \
+        --model "gpt-3.5-turbo-1106" \
+        --trial_name "v4_1_2_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "OpenAIChatText" \
+        --model "gpt-3.5-turbo-1106" \
+        --trial_name "v4_1_2_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+    keys_to_use='["goal","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "OpenAIChatText" \
+        --model "gpt-3.5-turbo-1106" \
+        --trial_name "v4_1_2_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["goal","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "OpenAIChatText" \
+        --model "gpt-3.5-turbo-1106" \
+        --trial_name "v4_1_2_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+fi;
 
 
 if [ $1 == "eval_additional_0125" ]; then
@@ -1032,7 +1130,7 @@ if [ $1 == "eval_additional_0125" ]; then
         --agent "react" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval" \
+        --trial_name "v4_1_3_eval" \
         --start_index 0 \
         --num_envs 135 \
         --prompt_ids 1 0 \
@@ -1043,7 +1141,7 @@ if [ $1 == "eval_additional_0125" ]; then
         --agent "react" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval_correction" \
+        --trial_name "v4_1_3_eval_correction" \
         --start_index 0 \
         --num_envs 135 \
         --prompt_ids 1 0 \
@@ -1056,7 +1154,7 @@ if [ $1 == "eval_additional_0125" ]; then
         --agent "ours-text" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval" \
+        --trial_name "v4_1_3_eval" \
         --start_index 0 \
         --num_envs 135 \
         --keys_to_use $keys_to_use \
@@ -1069,7 +1167,7 @@ if [ $1 == "eval_additional_0125" ]; then
         --agent "ours-text" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval" \
+        --trial_name "v4_1_3_eval" \
         --start_index 0 \
         --num_envs 135 \
         --keys_to_use $keys_to_use \
@@ -1095,7 +1193,7 @@ if [ $1 == "eval_additional_0125" ]; then
         --agent "ours-text" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval_correction" \
+        --trial_name "v4_1_3_eval_correction" \
         --start_index 0 \
         --num_envs 135 \
         --keys_to_use $keys_to_use \
@@ -1109,7 +1207,7 @@ if [ $1 == "eval_additional_0125" ]; then
         --agent "ours-text" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval_correction" \
+        --trial_name "v4_1_3_eval_correction" \
         --start_index 0 \
         --num_envs 135 \
         --keys_to_use $keys_to_use \
@@ -1123,7 +1221,7 @@ if [ $1 == "eval_additional_0125" ]; then
         --agent "ours-text" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval_correction" \
+        --trial_name "v4_1_3_eval_correction" \
         --start_index 0 \
         --num_envs 135 \
         --keys_to_use $keys_to_use \
@@ -1137,7 +1235,7 @@ if [ $1 == "eval_additional_0125" ]; then
         --agent "ours-text" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval" \
+        --trial_name "v4_1_3_eval" \
         --start_index 0 \
         --num_envs 135 \
         --keys_to_use $keys_to_use \
@@ -1150,7 +1248,7 @@ if [ $1 == "eval_additional_0125" ]; then
         --agent "ours-text" \
         --llm_type "OpenAIChatText" \
         --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval_correction" \
+        --trial_name "v4_1_3_eval_correction" \
         --start_index 0 \
         --num_envs 135 \
         --keys_to_use $keys_to_use \
@@ -1162,10 +1260,10 @@ if [ $1 == "eval_additional_0125" ]; then
 
     keys_to_use='["goal","action"]'
     python3 playgrounds/playground_alfworld_eval.py \
-        --agent "ours" \
-        --llm_type "OpenAIChatText" \
-        --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval" \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_3_eval" \
         --start_index 0 \
         --num_envs 135 \
         --keys_to_use $keys_to_use \
@@ -1175,10 +1273,282 @@ if [ $1 == "eval_additional_0125" ]; then
 
     keys_to_use='["goal","action"]'
     python3 playgrounds/playground_alfworld_eval.py \
-        --agent "ours" \
-        --llm_type "OpenAIChatText" \
-        --model "gpt-3.5-turbo-0125" \
-        --trial_name "v4_1_2_eval_correction" \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_3_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+
+    keys_to_use='["thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_3_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_3_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+    keys_to_use='["goal","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_3_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["goal","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_3_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+fi;
+
+if [ $1 == "eval_cohere_full" ]; then
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "react" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --prompt_ids 1 0 \
+        --force_run 
+        # --end_index \
+
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "react" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+    keys_to_use='["goal","current_location","current_inventory","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["current_location","current_inventory","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["current_location","current_inventory","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["goal","current_location","current_inventory","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+    keys_to_use='["current_location","current_inventory","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+    keys_to_use='["current_location","current_inventory","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+    keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+
+    keys_to_use='["goal","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["goal","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+
+    keys_to_use='["thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run \
+        --apply_correction
+        # --end_index \
+
+    keys_to_use='["goal","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["goal","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_4_eval_correction" \
         --start_index 0 \
         --num_envs 135 \
         --keys_to_use $keys_to_use \
