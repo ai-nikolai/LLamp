@@ -107,6 +107,17 @@ def get_average_scores(df, bucket_size=10, key="num_of_steps", prompt_name = "pr
     return  average_scores   
 
 
+def get_number_of_step(df, bucket_size=10, key="num_of_steps", prompt_name = "prompt_name_clean"):
+    """computes the average scores."""
+    # df['score'] = df['success'].astype(int)
+    df['num_of_steps_bucket'] = pd.cut(df[key], bins=range(0, df[key].max() + bucket_size, bucket_size), right=False)
+
+    # Calculate the average score for each num_of_steps
+    average_scores = df.groupby(['num_of_steps_bucket', prompt_name]).count().reset_index()
+    
+    return  average_scores  
+
+
 def plot_avg(df, bucket_size=10, key="num_of_steps"):
     average_scores = get_average_scores(df, bucket_size=bucket_size, key=key)
 
@@ -673,8 +684,8 @@ if __name__=="__main__":
 
 
 
-    # trial_name = "v4_1_2_eval_correction"
-    # CORRECTION_STRING = "Corrections"
+    trial_name = "v4_1_2_eval_correction"
+    CORRECTION_STRING = "Corrections"
 
 
     base_path = os.path.join("game_logs",f"alfworld_eval_{trial_name}")
@@ -724,20 +735,73 @@ if __name__=="__main__":
         "StateAct (goal+state+thought+action)",
     ]
 
+    hue_order = [
+        "StateAct (state+action)",
+        "StateAct (state+thought+action)",
+        "StateAct (goal+state+action)",
+        "StateAct (goal+state+thought+action)",
+    ]
+
+    hue_order = [
+        "ReAct (thought + action)",
+        "StateAct (goal+state+thought+action)",
+    ]
+
     # df00 = get_df_states(df)
-    # average_scores = get_average_scores(df00, bucket_size=10, key="num_of_steps_updated")
-    # x = sns.barplot(x="num_of_steps_bucket",y="score", hue="prompt_name_clean", hue_order=hue_order,data=average_scores)
-    # plt.legend(title="")
-    # x.set_ylabel('')
-    # x.set_xlabel('Number of Steps')
-    # plt.title("Average Success Rate vs. Number of Steps")
+    # average_scores = get_average_scores(df, bucket_size=10, key="num_of_steps_updated")
+
+    average_scores = get_number_of_step(df, bucket_size=10, key="num_of_steps_updated")
+    average_scores.to_csv(f"num_steps_count_{CORRECTION_STRING}.csv", sep='&', float_format='%.4f', index=False)
+
+    x = sns.barplot(x="num_of_steps_bucket", y="num_of_steps",hue="prompt_name_clean", hue_order=hue_order,data=average_scores)
+    plt.legend(title="")
+    x.set_ylabel('Count')
+    x.set_xlabel('Number of Steps')
+    plt.title("Average Success Rate vs. Number of Steps")
 
     
-    average_scores = df.groupby(['prompt_name'])[what_to_plot].mean().reset_index()
-    average_scores.to_csv(f"states_count_{CORRECTION_STRING}.csv", sep='&', float_format='%.4f', index=False)
-    sns.barplot(y=what_to_plot, hue="prompt_name", data=average_scores)
+    # #############################################
+    # Plotting Custom Stuff
+    # ############################################ 
+    # average_scores = df.groupby(['prompt_name_clean'])[what_to_plot].mean().reset_index()
+    # average_scores.to_csv(f"states_count_{CORRECTION_STRING}.csv", sep='&', float_format='%.4f', index=False)
+    # x = sns.barplot(y=what_to_plot, hue="prompt_name_clean", hue_order=hue_order, data=average_scores)
+    # plt.legend(title="", loc="lower left")
+    # x.set_ylabel('Accuracy')
+    # x.set_xlabel('Method')
+    # x.set_ylim(0, 1)
 
+    # for i,container in enumerate(x.containers):
+    #     labels = []
+    #     for j, v in enumerate(container):
+    #         print(v)
+    #         print(i)
+    #         if i==0:
+    #             first_value = v.get_height()
+    #         if i % 2 == 1:
+    #             current_diff = (v.get_height() - prev_value)*100
+    #             labels.append(f'{v.get_height():.2f}(+{current_diff:.2f}%)\n +Thought' )
+    #         else:
+    #             prev_value=v.get_height()
+    #             labels.append(f'{v.get_height():.2f}')
+    #         if i==0:
+    #             labels[-1]+= "\nBase"
+    #         if i==1:
+    #             labels[-1]+= " (vs. Base)"
+    #         if i==2:
+    #             current_diff = (v.get_height() - first_value)*100
+    #             labels[-1]+= f"(+{current_diff:.2f}%)\n+Goal (vs. Base)"
+    #         if i==3:
+    #             labels[-1]+= " (vs. Goal)"
+    #         print(labels)
+    #     x.bar_label(container, labels=labels)
+    
+    # plt.title("State Tracking Accuracy")
+    # plt.show()
+
+    plt.title("State Tracking Accuracy")
     plt.show()
+
     input()
     ################
     print(df.columns)

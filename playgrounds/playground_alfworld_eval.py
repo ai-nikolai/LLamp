@@ -17,7 +17,8 @@ from llamp.llms.human import Human
 from llamp.llms.api import (
     AnthropicChat, AnthropicText,
     CohereChat, CohereChatText, CohereText,
-    OpenAIChat, OpenAIChatText, OpenAIText, OpenAIChatTextSampling
+    OpenAIChat, OpenAIChatText, OpenAIText, OpenAIChatTextSampling, 
+    NvidiaChatText
 )
 
 from playground_alfworld_ablation_generator import return_jsonstate_prompt, return_stringstate_prompt
@@ -466,8 +467,9 @@ AGENT_MODEL_MAPPING = {
     "CohereText" : ["command","command-nightly", "command-r", "command-r-plus"],
     "OpenAIText" : ["davinci-002", "gpt-3.5-turbo-instruct"],
     "CohereChatText" : ["command","command-nightly", "command-r", "command-r-plus"],
-    "OpenAIChatText" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
-    "OpenAIChatTextSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview","gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"]
+    "OpenAIChatText" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106", "gpt-4o-mini"],
+    "OpenAIChatTextSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview","gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
+    "NvidiaChatText" :["mistralai/mixtral-8x22b-instruct-v0.1","meta/llama-3.1-8b-instruct","meta/llama-3.1-70b-instruct"]
 }
 
             
@@ -576,7 +578,17 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
                 print("Proposed Model is not available using default model.")
         agent = OpenAIChatTextSampling(temperature=temperature, model=model) 
 
-
+    elif llm_type=="NvidiaChatText":
+        model = "meta/llama-3.1-8b-instruct"
+        # model = "meta/llama-3.1-70b-instruct"
+        # model = "gpt-4-turbo-preview"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = NvidiaChatText(temperature=temperature, model=model) 
+    
     elif llm_type=="Human":
         model = "Human"
         agent = HumanAgent()
@@ -743,7 +755,8 @@ def build_arg_parser():
             "OpenAIText" ,
             "CohereChatText", 
             "OpenAIChatText" ,
-            "OpenAIChatTextSampling" 
+            "OpenAIChatTextSampling",
+            "NvidiaChatText"
         ],
         help="The type of llamp.llms to use.",
     )

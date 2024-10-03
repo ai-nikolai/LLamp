@@ -28,6 +28,178 @@ if [ $1 == "test_ours" ]; then
 
 fi;
 
+if [ $1 == "camera_ready_test" ]; then
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "react" \
+        --llm_type "NvidiaChatText" \
+        --model "mistralai/mixtral-8x22b-instruct-v0.1" \
+        --trial_name "v4_1_6_test" \
+        --start_index 0 \
+        --num_envs 1 \
+        --prompt_ids 1 0 \
+        --apply_correction \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "NvidiaChatText" \
+        --model "mistralai/mixtral-8x22b-instruct-v0.1" \
+        --trial_name "v4_1_6_test" \
+        --start_index 0 \
+        --num_envs 1 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --apply_correction \
+        --force_run
+        # --end_index \
+
+    # python3 playgrounds/playground_alfworld_eval.py \
+    #     --agent "react" \
+    #     --llm_type "OpenAIChatText" \
+    #     --model "gpt-4o-mini" \
+    #     --trial_name "v4_1_6_test" \
+    #     --start_index 0 \
+    #     --num_envs 1 \
+    #     --prompt_ids 1 0 \
+    #     --apply_correction \
+    #     --force_run
+    #     # --end_index \
+
+    # keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+    # python3 playgrounds/playground_alfworld_eval.py \
+    #     --agent "ours-text" \
+    #     --llm_type "OpenAIChatText" \
+    #     --model "gpt-4o-mini" \
+    #     --trial_name "v4_1_6_test" \
+    #     --start_index 0 \
+    #     --num_envs 1 \
+    #     --keys_to_use $keys_to_use \
+    #     --prompt_ids 1 0 \
+    #     --apply_correction \
+    #     --force_run
+    #     # --end_index \
+
+
+    # python3 playgrounds/playground_alfworld_eval.py \
+    #     --agent "react" \
+    #     --llm_type "CohereChatText" \
+    #     --model "command-r-plus" \
+    #     --trial_name "v4_1_6_test" \
+    #     --start_index 0 \
+    #     --num_envs 1 \
+    #     --prompt_ids 1 0 \
+    #     --apply_correction \
+    #     --force_run
+    #     # --end_index \
+
+    # keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+    # python3 playgrounds/playground_alfworld_eval.py \
+    #     --agent "ours-text" \
+    #     --llm_type "CohereChatText" \
+    #     --model "command-r-plus" \
+    #     --trial_name "v4_1_6_test" \
+    #     --start_index 0 \
+    #     --num_envs 1 \
+    #     --keys_to_use $keys_to_use \
+    #     --prompt_ids 1 0 \
+    #     --apply_correction \
+    #     --force_run
+    #     # --end_index \
+
+fi;
+
+if [ $1 == "camera_ready_cohere" ]; then
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "react" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_6_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --prompt_ids 1 0 \
+        --apply_correction \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "CohereChatText" \
+        --model "command-r-plus" \
+        --trial_name "v4_1_6_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --apply_correction \
+        --force_run
+        # --end_index \
+
+
+fi;
+
+
+if [ $1 == "camera_ready_nvidia" ]; then
+    # python3 playgrounds/playground_alfworld_eval.py \
+    #     --agent "react" \
+    #     --llm_type "NvidiaChatText" \
+    #     --model "mistralai/mixtral-8x22b-instruct-v0.1" \
+    #     --trial_name "v4_1_9_eval_correction" \
+    #     --start_index 0 \
+    #     --num_envs 135 \
+    #     --prompt_ids 1 0 \
+    #     --apply_correction \
+    #     --force_run
+    #     # --end_index \
+
+    keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "NvidiaChatText" \
+        --model "mistralai/mixtral-8x22b-instruct-v0.1" \
+        --trial_name "v4_1_9_eval_correction" \
+        --start_index 113 \
+        --num_envs 22 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --apply_correction \
+        --force_run
+        # --end_index \
+
+fi;
+
+if [ $1 == "camera_ready_gpt4o" ]; then
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "react" \
+        --llm_type "OpenAIChatText" \
+        --model "gpt-4o-mini" \
+        --trial_name "v4_1_7_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --prompt_ids 1 0 \
+        --apply_correction \
+        --force_run
+        # --end_index \
+
+    keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "OpenAIChatText" \
+        --model "gpt-4o-mini" \
+        --trial_name "v4_1_7_eval_correction" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --apply_correction \
+        --force_run
+        # --end_index \
+
+
+fi;
+
 if [ $1 == "test_ours_instruct" ]; then
     keys_to_use='["goal","current_location","current_inventory","thought","action"]'
     python3 playgrounds/playground_alfworld_eval.py \
@@ -1100,6 +1272,64 @@ if [ $1 == "eval_instruct" ]; then
         --force_run \
         --apply_correction
         # --end_index \
+fi;
+
+if [ $1 == "eval_instruct_extra" ]; then
+
+    # keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+    # python3 playgrounds/playground_alfworld_eval.py \
+    #     --agent "ours-text" \
+    #     --llm_type "OpenAIText" \
+    #     --model "gpt-3.5-turbo-instruct" \
+    #     --trial_name "v4_1_5_eval_correction" \
+    #     --start_index 0 \
+    #     --num_envs 135 \
+    #     --keys_to_use $keys_to_use \
+    #     --prompt_ids 1 0 \
+    #     --force_run \
+    #     --apply_correction
+    #     # --end_index \
+
+
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "react" \
+        --llm_type "OpenAIText" \
+        --model "gpt-3.5-turbo-instruct" \
+        --trial_name "v4_1_5_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --prompt_ids 1 0 \
+        --force_run         
+        # --end_index \
+fi;
+
+
+if [ $1 == "eval_instruct_additional" ]; then
+
+    keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "OpenAIText" \
+        --model "gpt-3.5-turbo-instruct" \
+        --trial_name "v4_1_5_eval" \
+        --start_index 0 \
+        --num_envs 135 \
+        --keys_to_use $keys_to_use \
+        --prompt_ids 1 0 \
+        --force_run
+        # --end_index \
+
+
+    # python3 playgrounds/playground_alfworld_eval.py \
+    #     --agent "react" \
+    #     --llm_type "OpenAIText" \
+    #     --model "gpt-3.5-turbo-instruct" \
+    #     --trial_name "v4_1_5_eval" \
+    #     --start_index 0 \
+    #     --num_envs 135 \
+    #     --prompt_ids 1 0 \
+    #     --force_run         
+    #     # --end_index \
 fi;
 
 if [ $1 == "eval_extra_1106" ]; then

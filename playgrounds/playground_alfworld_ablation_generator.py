@@ -502,7 +502,7 @@ if __name__=="__main__":
         print(f"FAIL - Cases Failed:{failing_test_cases}")
 
 
-    example = return_stringstate_prompt("cool", keys_to_use=all_keys)
+    example = return_stringstate_prompt("puttwo", keys_to_use=all_keys)
     print(example)
 
     # #########################
