@@ -9,3 +9,5 @@ from llamp.llms.api.openai_chat import OpenAIChat
 from llamp.llms.api.openai_text import OpenAIText
 from llamp.llms.api.openai_chat_text import OpenAIChatText
 from llamp.llms.api.openai_chat_text_sampling import OpenAIChatTextSampling
+
+from llamp.llms.api.nvidia_chat_text import NvidiaChatText
