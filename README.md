@@ -1,6 +1,46 @@
 # LLamp - Large Languge Models for Planning
 
-This is a package that uses LLMs (closed and open-source) for planning. 
+This is a package that uses LLMs (closed and open-source) for planning.
+
+## Pre-requisites:
+1. Python3.9
+2. (recommended) virtualenv
+
+## Installation:
+1. `pip install -r requirements.txt`
+2. `alfworld-download`
+3. `pip install -e .` (this installs llamp)
+
+## Exporting API Keys:
+1. `export OPENAI_API_KEY=""`
+2. `export CEREBRAS_API_KEY=""`
+3. ... (and so on for all the providers you want to use, e.g. Anthropic, Nvidia, Cohere)
+
+## Testing everything works:
+1. Basic test:
+```bash
+cd test
+./test.sh
+```
+
+2. More advanced test:
+```bash
+cd root_folder
+./playgrounds/run_alfworld_eval.sh test_ours
+```
+
+## Running Evaluation
+1. Running Eval:
+```bash
+cd root_folder
+./playgrounds/run_alfworld_eval.sh cerebras_main
+```
+
+
+
+
+---
+## Previous README (currently being archived and refactored.)
 
 **WARNING PACKAGE IS STILL UNDER DEVELOPMENT and requirements needs cleaning up.**
 

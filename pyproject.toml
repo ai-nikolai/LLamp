@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llamp"
+version = "0.0.3"
+description = "LLAMP - Large Language Model for Planning"
+authors = [
+    {name = "Nikolai Rozanov", email = "nikolai.rozanov@gmail.com"},
+]
+readme = "README.md"
+
+[tool.setuptools]
+packages = ["llamp"]

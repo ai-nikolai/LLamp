@@ -23,3 +23,8 @@ pandas_output*
 examples.csv
 playgrounds/*.csv
 playgrounds/*.txt
+
+archive_logs
+playgrounds/alfworld_data
+__pycache__
+*.whl

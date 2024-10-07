@@ -5,7 +5,7 @@ with open("README.md", 'r') as f:
 
 setup(
     name='llamp',
-    version='0.0.2',
+    version='0.0.3',
     description='LLAMP - Large Language Model for Planning',
     long_description=long_description,
     long_description_content_type="markdown",
