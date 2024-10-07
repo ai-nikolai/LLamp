@@ -4,11 +4,11 @@ import cohere
 
 from llamp.llms.base_llm_system import BaseLLMSystem
 
-from tenacity import (
-    retry,
-    stop_after_attempt, # type: ignore
-    wait_random_exponential, # type: ignore
-)
+# from tenacity import (
+#     retry,
+#     stop_after_attempt, # type: ignore
+#     wait_random_exponential, # type: ignore
+# )
 
 class CohereChatText(BaseLLMSystem):
     def __init__(self, system_name="CohereChatText",save_path="game_logs", temperature = 0.0, model="command", stop_sequences=None):

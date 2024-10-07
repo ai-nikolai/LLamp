@@ -7,8 +7,11 @@ import argparse
 from datetime import datetime
 
 
-import alfworld
-import alfworld.agents.environment
+# import alfworld
+# import alfworld.agents.environment
+
+import alfworld.agents.environment as environment
+# import alfworld.agents.modules.generic as generic
 
 import cohere
 
@@ -17,13 +20,16 @@ from llamp.llms.human import Human
 from llamp.llms.api import (
     AnthropicChat, AnthropicText,
     CohereChat, CohereChatText, CohereText,
-    OpenAIChat, OpenAIChatText, OpenAIText, OpenAIChatTextSampling, 
-    NvidiaChatText
+    OpenAIChat, OpenAIChatText, OpenAIText, OpenAIChatTextSampling,
+    NvidiaChatText,
+    CerebrasChatText
 )
 
 from playground_alfworld_ablation_generator import return_jsonstate_prompt, return_stringstate_prompt
 from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts, return_json_react_examples
 
+
+print("Successfully imported everything.")
 
 # Git patch commit: https://stackoverflow.com/questions/1085162/commit-only-part-of-a-files-changes-in-git
 #################################################################
@@ -37,7 +43,7 @@ ENV_TYPES = {
     'pick_cool_then_place': 'cool',
     'look_at_obj': 'examine',
     'pick_two_obj': 'puttwo'
-} 
+}
 
 def get_env_type(env_name):
     """ Extracts which type of env it is"""
@@ -53,7 +59,7 @@ def transform_put_action(action):
     put_regex_1 = """put(?:\s\w+)(?:\s\w+)?(?:\s\d+)\son(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
     put_regex_2 = """put(?:\s\w+)(?:\s\w+)?(?:\s\d+)\sin(?:\s\w+)(?:\s\w+)?(?:\s\d+)"""
     correction_happened = False
-    
+
     if action.startswith("put"):
         answer = re.match(put_regex_1,action)
         if answer:
@@ -106,7 +112,7 @@ def json_action_cleaning(action):
 
     if action.endswith("```"):
         action = action.replace("```","")
-    
+
     if not action.endswith("}"):
         action+="\n}\n"
 
@@ -115,14 +121,14 @@ def json_action_cleaning(action):
 
 def our_text_action_cleaning(action):
     """Action cleaning for our text"""
-    action = action.strip()        
+    action = action.strip()
     action+="\n\n"
     return action
 
 
 def nojson_action_cleaning(action):
     """Action cleaning for no json."""
-    action = action.strip()        
+    action = action.strip()
     action+="\n"
     return action
 
@@ -141,13 +147,13 @@ def is_agentbench_thought(action):
 
 def get_action_jsonreact(action, version=1, key="action"):
     """
-    Extracts 'actual_action' from action. 
-    
+    Extracts 'actual_action' from action.
+
     'key' is not used at the moment.
     """
     if version==1:
         key = "action"
-    
+
     actual_action = action
     was_command = False
     valid_json = False
@@ -175,9 +181,9 @@ def get_action_jsonreact(action, version=1, key="action"):
             was_command = True
             actions = action.split(f'"{key}":"')
             actual_action = actions[1].split('"')[0]
-            print(f"Extracted Action:{actual_action}")  
+            print(f"Extracted Action:{actual_action}")
 
-    return actual_action, was_command, valid_json      
+    return actual_action, was_command, valid_json
 
 
 
@@ -210,9 +216,9 @@ def get_action_jsonstate(action, key="action"):
             was_command = True
             actions = action.split(f'"{key}":"')
             actual_action = actions[1].split('"')[0]
-            print(f"Extracted Action:{actual_action}")  
+            print(f"Extracted Action:{actual_action}")
 
-    return actual_action, was_command, valid_json 
+    return actual_action, was_command, valid_json
 
 
 def get_action_stringstate(action, key="action"):
@@ -286,12 +292,12 @@ def process_action(action, track_is_illegal=False):
 def process_ob(ob, track_nothing_happens=False):
     if ob.startswith('You arrive at loc '):
         ob = ob[ob.find('. ')+2:]
-    
+
     nothing_happens = False
 
     if ob == "Nothing happens.":
         nothing_happens = True
-        # ob = "Invalid or Impossible Action. Try again." 
+        # ob = "Invalid or Impossible Action. Try again."
 
     if not ob.endswith("\n"):
         ob += "\n"
@@ -318,7 +324,7 @@ CLOSING_MARK=""
 # {OPENING_MARK}
 # 1. When "Nothing happens." this means your action was not successful or not valid. If this happen, then try a valid action that you have not tried before.
 
-# 2. If you repeat yourself, try a different valid action. 
+# 2. If you repeat yourself, try a different valid action.
 
 # 3. Visit new places to find an object.
 
@@ -435,7 +441,7 @@ def write_line_to_main_log_csv(name, data):
         elif type(data) == dict:
             data_list = [x for _,x in data.items()]
             wr.writerow(data_list)
-  
+
 def save_prompt_file(file_path, raw_prompt):
     """ Saves a prompt file """
     with open(file_path, "w") as file:
@@ -469,10 +475,11 @@ AGENT_MODEL_MAPPING = {
     "CohereChatText" : ["command","command-nightly", "command-r", "command-r-plus"],
     "OpenAIChatText" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106", "gpt-4o-mini"],
     "OpenAIChatTextSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview","gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
-    "NvidiaChatText" :["mistralai/mixtral-8x22b-instruct-v0.1","meta/llama-3.1-8b-instruct","meta/llama-3.1-70b-instruct"]
+    "NvidiaChatText" :["mistralai/mixtral-8x22b-instruct-v0.1","meta/llama-3.1-8b-instruct","meta/llama-3.1-70b-instruct"],
+    "CerebrasChatText" :["llama3.1-8b","llama3.1-70b"]
 }
 
-            
+
 def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
     """ Returns Agent, Model"""
     print(llm_type)
@@ -485,7 +492,7 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = AnthropicChat(temperature=temperature, model=model) 
+        agent = AnthropicChat(temperature=temperature, model=model)
 
     elif llm_type == "CohereChat":
         # model = "command"
@@ -507,7 +514,7 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
             else:
                 print("Proposed Model is not available using default model.")
         agent = OpenAIChat(temperature=temperature, model=model)
- 
+
 
 
     #TEXT BASED MODELs
@@ -519,7 +526,7 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
                 print("Proposed Model is not available using default model.")
         # model = "claude-1.2"
         model = "claude-2.1"
-        agent = AnthropicText(temperature=temperature, model=model) 
+        agent = AnthropicText(temperature=temperature, model=model)
 
     elif llm_type=="CohereText":
         # model = "command"
@@ -540,7 +547,7 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = OpenAIText(temperature=temperature, model=model)     
+        agent = OpenAIText(temperature=temperature, model=model)
 
 
 
@@ -565,7 +572,7 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = OpenAIChatText(temperature=temperature, model=model) 
+        agent = OpenAIChatText(temperature=temperature, model=model)
 
 
     elif llm_type=="OpenAIChatTextSampling":
@@ -576,7 +583,7 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = OpenAIChatTextSampling(temperature=temperature, model=model) 
+        agent = OpenAIChatTextSampling(temperature=temperature, model=model)
 
     elif llm_type=="NvidiaChatText":
         model = "meta/llama-3.1-8b-instruct"
@@ -587,8 +594,17 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
                 model = proposed_model
             else:
                 print("Proposed Model is not available using default model.")
-        agent = NvidiaChatText(temperature=temperature, model=model) 
-    
+        agent = NvidiaChatText(temperature=temperature, model=model)
+
+    elif llm_type=="CerebrasChatText":
+        model = "llama3.1-8b"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = CerebrasChatText(temperature=temperature, model=model)
+
     elif llm_type=="Human":
         model = "Human"
         agent = HumanAgent()
@@ -616,26 +632,26 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
     display_text += f"   -Ending env: {starting_env+num_envs-1}\n"
     display_text += f"   -Num of envs: {num_envs}\n"
     display_text += f"   -Current Trial Name: {current_trial_name}\n"
-    
+
     if not not_ours:
         display_text += f"   -Keys that will be used: {keys_to_use_string}\n"
-        display_text += f"   -Number of our Prompts: {num_examples}\n"  
+        display_text += f"   -Number of our Prompts: {num_examples}\n"
     if react_prompt:
-        display_text += f"   -Number of React Examples: {num_examples}\n"  
+        display_text += f"   -Number of React Examples: {num_examples}\n"
     if agentbench_prompt:
-        display_text += f"   -Prompt Version AgentBench: {version}\n"  
+        display_text += f"   -Prompt Version AgentBench: {version}\n"
     if json_react_prompt:
-        display_text += f"   -Number JsonReAct Examples: {num_examples}\n" 
-    
+        display_text += f"   -Number JsonReAct Examples: {num_examples}\n"
+
     # Swap Order
     if not agentbench_prompt:
-        display_text += f"   -Prompt Ids: {prompt_ids}\n" 
+        display_text += f"   -Prompt Ids: {prompt_ids}\n"
 
     #Name of prompt
-    display_text += f"   -The prompt will be called: {prompt_name}\n" 
+    display_text += f"   -The prompt will be called: {prompt_name}\n"
 
     #Name of prompt
-    display_text += f"   -Correction will happen: {correction}\n" 
+    display_text += f"   -Correction will happen: {correction}\n"
 
 
     display_text += "Do you want to continue? Press 'y' to continue."
@@ -653,17 +669,17 @@ def get_settings_string(react_prompt, agentbench_prompt, json_react_prompt, agen
 # Change to Agent-type from individual prompt_flags.
 def get_prompt_example(agent_type, env_type, prompt_ids, version, generate_prompt=True, keys_to_use=[], key_renaming={}):
     """ Get name of prompt and example prompts"""
-    # Generate correct prompt for this environment (basically pick the right example).  
+    # Generate correct prompt for this environment (basically pick the right example).
     new_base_prompt = ""
 
     # num_examples needed for prompt_ids
     num_examples = len(prompt_ids)
-    
+
     #REACT PROMPT or OUR PROMPT
     if agent_type=="react":
         if generate_prompt:
             prompt_example = return_react_examples(env_type, prompt_ids=prompt_ids)
-        
+
         prompt_id_string = '_'.join([str(y) for y in prompt_ids])
         prompt_name = f"react-{prompt_id_string}"
 
@@ -673,14 +689,14 @@ def get_prompt_example(agent_type, env_type, prompt_ids, version, generate_promp
         if generate_prompt:
             prompt_example, new_base_prompt = return_agentbench_prompts(env_type, return_base=True, version=version)
         prompt_name = f"agentbench-v{version}"
-        
-    elif agent_type=="jsonreact":           
+
+    elif agent_type=="jsonreact":
         if generate_prompt:
             prompt_example = return_json_react_examples(env_type, prompt_ids=prompt_ids, version=version)
         prompt_id_string = '_'.join([str(y) for y in prompt_ids])
         prompt_name = f"jsonreact-{prompt_id_string}-v{version}"
 
-    elif agent_type=="ours":  
+    elif agent_type=="ours":
         if generate_prompt:
             prompt_example = return_jsonstate_prompt(env_type, prompt_ids=prompt_ids, keys_to_use=keys_to_use, key_renaming=key_renaming)
         prompt_id_string = '_'.join([str(y) for y in prompt_ids])
@@ -689,7 +705,7 @@ def get_prompt_example(agent_type, env_type, prompt_ids, version, generate_promp
 
         prompt_name = f"jsonstate-{prompt_id_string}-k-{keys_string}"
 
-    elif agent_type=="ours-text":  
+    elif agent_type=="ours-text":
         if generate_prompt:
             prompt_example = return_stringstate_prompt(env_type, prompt_ids=prompt_ids, keys_to_use=keys_to_use, key_renaming=key_renaming)
         prompt_id_string = '_'.join([str(y) for y in prompt_ids])
@@ -715,9 +731,9 @@ def get_prompt_example(agent_type, env_type, prompt_ids, version, generate_promp
 #     "AnthropicText" ,
 #     "CohereText" ,
 #     "OpenAIText" ,
-#     "CohereChatText", 
+#     "CohereChatText",
 #     "OpenAIChatText" ,
-#     "OpenAIChatTextSampling" 
+#     "OpenAIChatTextSampling"
 # ]
 
 
@@ -753,10 +769,11 @@ def build_arg_parser():
             "AnthropicText" ,
             "CohereText" ,
             "OpenAIText" ,
-            "CohereChatText", 
+            "CohereChatText",
             "OpenAIChatText" ,
             "OpenAIChatTextSampling",
-            "NvidiaChatText"
+            "NvidiaChatText",
+            "CerebrasChatText"
         ],
         help="The type of llamp.llms to use.",
     )
@@ -813,9 +830,9 @@ if __name__=="__main__":
 
     # More things to track:
     # 1. Tokens generated / consumed (i.e. estimated price)
-    # 2. Time taken 
+    # 2. Time taken
 
-    
+
     ####################################################
     # BASIC CONFIGURATION
     ####################################################
@@ -858,7 +875,7 @@ if __name__=="__main__":
     # model = "gpt-3.5-turbo-0613" #slightly newer version than 0301 (released 13.06.2023)
     # model = "gpt-3.5-turbo-1106" #sligthly newer version than 0613 (released 11.06.2023)
 # gpt-3.5-turbo-instruct
-# gpt-3.5-turbo-instruct-0914    
+# gpt-3.5-turbo-instruct-0914
     temperature = args.temperature
 
     ###############################
@@ -872,7 +889,7 @@ if __name__=="__main__":
 
     OUR_TEXT_PROMPTS = True if AGENT_TYPE == "ours-text" else False
     NOT_JSON_PROMPTS = REACT_PROMPT or AGENTBENCH_PROMPT or llm_type == "Human"
-    
+
     # NUM_EXAMPLES = args.num_prompts
     VERSION = args.agent_version
 
@@ -912,17 +929,17 @@ if __name__=="__main__":
     # Checking settings with the user. User needs to type y.
     keys_to_use_string = "+".join(KEYS_TO_USE)
     settings_string = get_settings_string(
-            react_prompt = REACT_PROMPT, 
+            react_prompt = REACT_PROMPT,
             agentbench_prompt = AGENTBENCH_PROMPT,
             json_react_prompt = JSON_REACT_PROMPT,
-            agent_type = AGENT_TYPE, 
-            llm_type = llm_type, 
-            model = model, 
-            temperature = temperature, 
-            num_envs = num_envs, 
+            agent_type = AGENT_TYPE,
+            llm_type = llm_type,
+            model = model,
+            temperature = temperature,
+            num_envs = num_envs,
             prompt_ids = PROMPT_IDS,
-            starting_env = start_env_idx, 
-            current_trial_name = CURRENT_TRIAL_NAME, 
+            starting_env = start_env_idx,
+            current_trial_name = CURRENT_TRIAL_NAME,
             keys_to_use_string=keys_to_use_string,
             version = VERSION,
             prompt_name = prompt_name2,
@@ -952,24 +969,24 @@ if __name__=="__main__":
     SAVE_FOLDER = os.path.join(BASE_FOLDER,CURRENT_TRIAL_FOLDER)
     CSV_HEADER = [
         # GENERAL AGENT/ENV Settings
-        "env_idx", 
+        "env_idx",
         "env_type",
         "agent_type",
         "llm_type",
-        "model", 
+        "model",
         "temperature",
-        "prompt_name", 
+        "prompt_name",
         # PER GAME METRICS
         "success",
         "done",
         "total_reward",
         "early_stop",
-        "error", 
+        "error",
         # PER STEP METRICS
-        "num_of_steps", 
-        "num_nothing_happens", 
+        "num_of_steps",
+        "num_nothing_happens",
         "num_repetitions",
-        "num_no_command", 
+        "num_no_command",
         "num_no_json",
         "num_correction",
         "num_resample",
@@ -985,7 +1002,7 @@ if __name__=="__main__":
         "resample_temperature",
         "keys_to_use",
         "additional_prompt_annotation",
-        "trace_file", 
+        "trace_file",
         "prompt_file"
     ]
 
@@ -997,14 +1014,14 @@ if __name__=="__main__":
     #CSV FILE Related Things
     MAIN_CSV_FILEPATH = os.path.join(SAVE_FOLDER,MAIN_CSV_FILE_NAME+".csv")
 
-    # Writing the Header 
+    # Writing the Header
     if not os.path.exists(SAVE_FOLDER):
         os.mkdir(SAVE_FOLDER)
     if CREATE_NEW_LOG_CSV:
         file_counter = 0
         while os.path.exists(MAIN_CSV_FILEPATH):
-            MAIN_CSV_FILEPATH = os.path.join(SAVE_FOLDER,MAIN_CSV_FILE_NAME+str(file_counter)+".csv") 
-            file_counter+=1 
+            MAIN_CSV_FILEPATH = os.path.join(SAVE_FOLDER,MAIN_CSV_FILE_NAME+str(file_counter)+".csv")
+            file_counter+=1
         # Now that we have a new unique csv file name create it and write the header.
         write_line_to_main_log_csv(MAIN_CSV_FILEPATH, CSV_HEADER)
     else:
@@ -1046,17 +1063,32 @@ if __name__=="__main__":
     #######################################################
     # ENV Related
     #######################################################
+    # Old Stuff
     # Env Init
-    with open('playgrounds/base_config.yaml') as reader:
-        config = yaml.safe_load(reader)
+    # with open('playgrounds/base_config.yaml') as reader:
+    #     config = yaml.safe_load(reader)
+
+    # env = getattr(alfworld.agents.environment, config["env"]["type"])(config, train_eval=split)
+    # env = env.init_env(batch_size=1)
+
+
+    # NEW STUFF
     split = args.eval_split
     # split = "eval_in_distribution"
+    # load config
+    # config = generic.load_config()
 
-    env = getattr(alfworld.agents.environment, config["env"]["type"])(config, train_eval=split)
+    with open('playgrounds/base_config.yaml') as reader:
+        config = yaml.safe_load(reader)
+    env_type = config['env']['type'] # 'AlfredTWEnv' or 'AlfredThorEnv' or 'AlfredHybrid'
+
+    # setup environment
+    env = getattr(environment, env_type)(config, train_eval=split)
     env = env.init_env(batch_size=1)
-    
 
-    # Skipping Envs 
+
+
+    # Skipping Envs
     for i in range(start_env_idx):
         observation, info = env.reset()
         # name = '/'.join(info['extra.gamefile'][0].split('/')[-3:-1])
@@ -1070,20 +1102,20 @@ if __name__=="__main__":
 
     #######################################################
     # RUNNING The Trial
-    #######################################################  
+    #######################################################
     # Running Trial
     for env_idx in range(num_envs):
-       
+
 
         #######################################################
         # ENV Init
-        ####################################################### 
+        #######################################################
         # Get new environment
         observation, info = env.reset()
 
         observation = '\n'.join(observation[0].split('\n\n')[1:])
         name = '/'.join(info['extra.gamefile'][0].split('/')[-3:-1])
-        
+
         env_type = get_env_type(name)
         # if not env_type=="clean":
         #     continue
@@ -1098,13 +1130,13 @@ if __name__=="__main__":
 
         #######################################################
         # PROMPT Related
-        #######################################################     
+        #######################################################
         prompt_name, prompt_example, new_base_prompt, num_examples = get_prompt_example(
-            agent_type=AGENT_TYPE, 
-            env_type=env_type, 
-            prompt_ids=PROMPT_IDS, 
-            version=VERSION, 
-            generate_prompt=True, 
+            agent_type=AGENT_TYPE,
+            env_type=env_type,
+            prompt_ids=PROMPT_IDS,
+            version=VERSION,
+            generate_prompt=True,
             keys_to_use=KEYS_TO_USE
         )
 
@@ -1115,7 +1147,7 @@ if __name__=="__main__":
         # Save Raw Prompt
         now = datetime.now()
         prompt_save_path = os.path.join(SAVE_FOLDER, "prompt_"+now.strftime("%d_%m_%Y_%H_%M_%S")+".txt")
-        
+
 
         raw_prompt = generate_prompt_from_example(prompt_example, return_raw_prompt=True, number_of_examples=num_examples, base_prompt=new_base_prompt)
         save_prompt_file(prompt_save_path, raw_prompt)
@@ -1140,7 +1172,7 @@ if __name__=="__main__":
 
         #######################################################
         # Logging Init & Initial values
-        ####################################################### 
+        #######################################################
         logging_dict = get_empty_dict_from_csv_header(CSV_HEADER)
         # 28
         logging_dict["env_idx"]  = env_idx+start_env_idx
@@ -1155,7 +1187,7 @@ if __name__=="__main__":
 
         #######################################################
         # GAME VARIABLES AND SETTINGS
-        #######################################################   
+        #######################################################
         # FIXED VARIABLES
         LIMIT = 100
         INPUT_TOKEN = ""
@@ -1177,7 +1209,7 @@ if __name__=="__main__":
         logging_done = False
         total_reward = 0
 
- 
+
         num_nothing_happens = 0
         num_repetitions = 0
 
@@ -1204,7 +1236,7 @@ if __name__=="__main__":
 
         #######################################################
         # Main Game Loop
-        ####################################################### 
+        #######################################################
         try:
             while game_running_flag:
 
@@ -1217,12 +1249,12 @@ if __name__=="__main__":
                 # #####################
                 # Action related
                 action, token_count_dictionary = agent.act(f"{INPUT_TOKEN}"+observation+f"{OUTPUT_TOKEN}", return_token_count=True)
-                
+
                 total_in_token += token_count_dictionary["in_token_all"]
                 total_in_message_token += token_count_dictionary["in_token_message"]
                 total_out_token += token_count_dictionary["out_token_action"]
 
-                
+
                 #########################
                 # Adding early stop here, as while loop could continue for ever otherwise (in some cases).
                 counter += 1
@@ -1231,7 +1263,7 @@ if __name__=="__main__":
                     print("\nFalse\nFalse")
                     print("EARLY STOP: Limit")
                     break
-                
+
 
 
                 # ###################################
@@ -1249,7 +1281,7 @@ if __name__=="__main__":
                     action = our_text_action_cleaning(action) #Done
 
                     if AGENT_TYPE =="ours-text":
-                        actual_action, was_command = get_action_stringstate(action, key="action") #TODO                      
+                        actual_action, was_command = get_action_stringstate(action, key="action") #TODO
 
                 elif not NOT_JSON_PROMPTS: #i.e.: The JSON prompts
                     action = json_action_cleaning(action) #Done
@@ -1260,11 +1292,11 @@ if __name__=="__main__":
                             if not SILENT_MODE:
                                 print("<> OBSERVATION <>:"+observation)
                             continue_flag = True
-                        
-                        actual_action, was_command, valid_json = get_action_jsonreact(action, version=VERSION, key="action") #Done                      
+
+                        actual_action, was_command, valid_json = get_action_jsonreact(action, version=VERSION, key="action") #Done
 
                     elif AGENT_TYPE == "ours":
-                        actual_action, was_command, valid_json= get_action_jsonstate(action, key="action") #Done                      
+                        actual_action, was_command, valid_json= get_action_jsonstate(action, key="action") #Done
 
                 elif NOT_JSON_PROMPTS:
                     action = nojson_action_cleaning(action) #Done
@@ -1275,7 +1307,7 @@ if __name__=="__main__":
                             if not SILENT_MODE:
                                 print("<> OBSERVATION <>:"+observation)
                             continue_flag = True
-                        
+
                         actual_action = action
 
                     elif AGENT_TYPE == "agentbench":
@@ -1326,7 +1358,7 @@ if __name__=="__main__":
                         print(f"TRANSFORMED_ACTION:{actual_action}")
                     if correction_happened:
                         num_correction += 1
-                
+
                 # Breaking early in case thoughts were repeated as well.
                 if num_current_repetitions == LIMIT_CURRENT_REPETITIONS:
                     early_stop = f"ENV_ERROR: Too many ({LIMIT_CURRENT_REPETITIONS}) consecutive repetitions."
@@ -1337,7 +1369,7 @@ if __name__=="__main__":
                 if continue_flag:
                     continue
 
-            
+
 
                 # ###################################
                 # Observation Related.
@@ -1367,7 +1399,7 @@ if __name__=="__main__":
                         success=False
 
                     if done[0]:
-                        logging_done=True 
+                        logging_done=True
                     else:
                         logging_done=False
 
@@ -1382,7 +1414,7 @@ if __name__=="__main__":
 
 
         except Exception as e:
-            print("ANOTHER EXCEPTION")            
+            print("ANOTHER EXCEPTION")
             print(error)
             print(e)
             error_count += 1
@@ -1431,5 +1463,3 @@ if __name__=="__main__":
             write_line_to_main_log_csv(MAIN_CSV_FILEPATH, logging_dict)
             print(logging_dict)
             agent.save()
-
-    

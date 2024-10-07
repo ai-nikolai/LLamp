@@ -11,3 +11,5 @@ from llamp.llms.api.openai_chat_text import OpenAIChatText
 from llamp.llms.api.openai_chat_text_sampling import OpenAIChatTextSampling
 
 from llamp.llms.api.nvidia_chat_text import NvidiaChatText
+
+from llamp.llms.api.cerebras_chat_text import CerebrasChatText

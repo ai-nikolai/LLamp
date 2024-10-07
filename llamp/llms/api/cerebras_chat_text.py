@@ -1,6 +1,10 @@
-import openai
+# import openai
 import time
 import os
+
+from cerebras.cloud.sdk import Cerebras
+
+
 
 # from tenacity import (
 #     retry,
@@ -10,14 +14,18 @@ import os
 
 from llamp.llms.base_llm_system import BaseLLMSystem
 
-class NvidiaChatText(BaseLLMSystem):
-    def __init__(self, system_name="NvidiaChatText",save_path="game_logs", temperature=0.0, model="mistralai/mixtral-8x22b-instruct-v0.1", stop_sequences=None):
+class CerebrasChatText(BaseLLMSystem):
+    def __init__(self, system_name="CerebrasChatText",save_path="game_logs", temperature=0.0, model="llama3.1-8b", stop_sequences=None):
         
-        super().__init__(system_name, save_path, temperature=temperature)        
-        self.client = openai.OpenAI(
-          base_url = "https://integrate.api.nvidia.com/v1",
-          api_key = os.environ.get("NVIDIA_API_KEY")
-        )
+        super().__init__(system_name, save_path, temperature=temperature)    
+        self.client  = Cerebras(
+            # This is the default and can be omitted
+            api_key=os.environ.get("CEREBRAS_API_KEY"),
+        )    
+        # self.client = openai.OpenAI(
+        #   base_url = "https://api.cerebras.ai/v1/chat/completions",
+        #   api_key = os.environ.get("CEREBRAS_API_KEY")
+        # )
         self.openai_attempts = 0
 
         self.model = model
@@ -26,7 +34,7 @@ class NvidiaChatText(BaseLLMSystem):
 
     # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
     def call_model(self, temperature=None):
-        """Call OpenAI API"""
+        """Call CEREBRAS API"""
 
         prompt = self.generate_text_prompt()
 
@@ -49,7 +57,7 @@ class NvidiaChatText(BaseLLMSystem):
 
 if __name__=="__main__":
     print("Nothing to run here.")
-    agent = NvidiaChatText(save_path="./")
+    agent = CerebrasChatText(save_path="./")
     prompt = []
     agent.save()
 

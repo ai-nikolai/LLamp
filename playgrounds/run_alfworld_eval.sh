@@ -28,11 +28,57 @@ if [ $1 == "test_ours" ]; then
 
 fi;
 
-if [ $1 == "camera_ready_test" ]; then
+
+if [ $1 == "cerebras_test" ]; then
+keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+python3 playgrounds/playground_alfworld_eval.py \
+--agent "ours-text" \
+--llm_type "CerebrasChatText" \
+--model "llama3.1-70b" \
+--trial_name "v4_1_6_test" \
+--start_index 0 \
+--num_envs 1 \
+--keys_to_use $keys_to_use \
+--prompt_ids 1 0 \
+--apply_correction \
+--force_run
+# --end_index \
+fi;
+
+if [ $1 == "cerebras_main" ]; then
+keys_to_use='["goal","current_location","current_inventory","thought","action"]'
+python3 playgrounds/playground_alfworld_eval.py \
+--agent "ours-text" \
+--llm_type "CerebrasChatText" \
+--model "llama3.1-70b" \
+--trial_name "v4_1_9_cerebras" \
+--start_index 0 \
+--num_envs 134 \
+--keys_to_use $keys_to_use \
+--prompt_ids 1 0 \
+--apply_correction \
+--force_run
+# --end_index \
+
+python3 playgrounds/playground_alfworld_eval.py \
+    --agent "react" \
+    --llm_type "CerebrasChatText" \
+    --model "llama3.1-70b" \
+    --trial_name "v4_1_9_cerebras" \
+    --start_index 0 \
+    --num_envs 134 \
+    --prompt_ids 1 0 \
+    --apply_correction \
+    --force_run
+    # --end_index \
+fi;
+
+
+if [ $1 == "cerebras_test2" ]; then
     python3 playgrounds/playground_alfworld_eval.py \
         --agent "react" \
-        --llm_type "NvidiaChatText" \
-        --model "mistralai/mixtral-8x22b-instruct-v0.1" \
+        --llm_type "CerebrasChatText" \
+        --model "llama3.1-8b" \
         --trial_name "v4_1_6_test" \
         --start_index 0 \
         --num_envs 1 \
@@ -40,7 +86,11 @@ if [ $1 == "camera_ready_test" ]; then
         --apply_correction \
         --force_run
         # --end_index \
+fi;
 
+
+
+if [ $1 == "camera_ready_test" ]; then
     keys_to_use='["goal","current_location","current_inventory","thought","action"]'
     python3 playgrounds/playground_alfworld_eval.py \
         --agent "ours-text" \
@@ -266,7 +316,7 @@ if [ $1 == "test_all" ]; then
         --start_index 0 \
         --num_envs 1 \
         --prompt_ids 2 0 1 \
-        --force_run 
+        --force_run
         # --end_index \
 
     echo "=============================="
@@ -279,7 +329,7 @@ if [ $1 == "test_all" ]; then
         --start_index 0 \
         --num_envs 1 \
         --keys_to_use $keys_to_use \
-        --force_run 
+        --force_run
         # --end_index \
 
     echo "=============================="
@@ -291,7 +341,7 @@ if [ $1 == "test_all" ]; then
         --trial_name "v4_1_2_test" \
         --start_index 0 \
         --num_envs 1 \
-        --force_run 
+        --force_run
         # --end_index \
 
     echo "=============================="
@@ -304,7 +354,7 @@ if [ $1 == "test_all" ]; then
         --start_index 0 \
         --num_envs 1 \
         --agent_version 1 \
-        --force_run 
+        --force_run
         # --end_index \
 
     echo "=============================="
@@ -328,7 +378,7 @@ if [ $1 == "test_all" ]; then
         --trial_name "v4_1_2_test" \
         --start_index 0 \
         --num_envs 1 \
-        --force_run 
+        --force_run
         # --end_index \
 
     echo "=============================="
@@ -340,7 +390,7 @@ if [ $1 == "test_all" ]; then
         --trial_name "v4_1_2_test" \
         --start_index 0 \
         --num_envs 1 \
-        --force_run 
+        --force_run
         # --end_index \
 
 fi;
@@ -357,7 +407,7 @@ if [ $1 == "test_cohere_text" ]; then
         --trial_name "v4_1_2_test" \
         --start_index 0 \
         --num_envs 1 \
-        --force_run 
+        --force_run
         # --end_index \
 fi;
 
@@ -373,7 +423,7 @@ if [ $1 == "test_cohere_chat" ]; then
         --trial_name "v4_1_2_test" \
         --start_index 0 \
         --num_envs 1 \
-        --force_run 
+        --force_run
         # --end_index \
 
 fi;
@@ -741,7 +791,7 @@ if [ $1 == "eval_remaining" ]; then
         --num_envs 135 \
         --keys_to_use $keys_to_use \
         --prompt_ids 1 0 \
-        --force_run 
+        --force_run
         # --end_index \
 
     keys_to_use='["goal","current_location","current_inventory","thought","action"]'
@@ -754,7 +804,7 @@ if [ $1 == "eval_remaining" ]; then
         --num_envs 135 \
         --keys_to_use $keys_to_use \
         --prompt_ids 1 0 \
-        --force_run 
+        --force_run
         # --end_index \
 
 
@@ -796,7 +846,7 @@ if [ $1 == "eval_remaining" ]; then
         --num_envs 135 \
         --keys_to_use $keys_to_use \
         --prompt_ids 1 0 \
-        --force_run 
+        --force_run
         # --end_index \
 
 
@@ -1299,7 +1349,7 @@ if [ $1 == "eval_instruct_extra" ]; then
         --start_index 0 \
         --num_envs 135 \
         --prompt_ids 1 0 \
-        --force_run         
+        --force_run
         # --end_index \
 fi;
 
@@ -1328,7 +1378,7 @@ if [ $1 == "eval_instruct_additional" ]; then
     #     --start_index 0 \
     #     --num_envs 135 \
     #     --prompt_ids 1 0 \
-    #     --force_run         
+    #     --force_run
     #     # --end_index \
 fi;
 
@@ -1524,7 +1574,7 @@ if [ $1 == "eval_extra" ]; then
     #     --start_index 0 \
     #     --num_envs 135 \
     #     --prompt_ids 1 0 \
-    #     --force_run 
+    #     --force_run
     #     # --end_index \
 
 
@@ -1594,7 +1644,7 @@ if [ $1 == "test_davinci_002" ]; then
         --start_index 0 \
         --num_envs 1 \
         --prompt_ids 1 0 \
-        --force_run 
+        --force_run
         # --end_index \
 fi;
 
@@ -1638,7 +1688,7 @@ if [ $1 == "eval_additional_0125" ]; then
         --start_index 0 \
         --num_envs 135 \
         --prompt_ids 1 0 \
-        --force_run 
+        --force_run
         # --end_index \
 
     python3 playgrounds/playground_alfworld_eval.py \
@@ -1863,7 +1913,7 @@ fi;
 #         --start_index 0 \
 #         --num_envs 135 \
 #         --prompt_ids 1 0 \
-#         --force_run 
+#         --force_run
 #         # --end_index \
 
 #     python3 playgrounds/playground_alfworld_eval.py \
@@ -1980,7 +2030,7 @@ if [ $1 == "eval_cohere_full" ]; then
         --start_index 0 \
         --num_envs 135 \
         --prompt_ids 1 0 \
-        --force_run 
+        --force_run
         # --end_index \
 
     python3 playgrounds/playground_alfworld_eval.py \

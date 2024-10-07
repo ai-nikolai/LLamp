@@ -6,12 +6,11 @@ from anthropic import HUMAN_PROMPT, AI_PROMPT
 
 from llamp.llms.base_llm_system import BaseLLMSystem
 
-
-from tenacity import (
-    retry,
-    stop_after_attempt, # type: ignore
-    wait_random_exponential, # type: ignore
-)
+# from tenacity import (
+#     retry,
+#     stop_after_attempt, # type: ignore
+#     wait_random_exponential, # type: ignore
+# )
 
 class AnthropicChat(BaseLLMSystem):
 	def __init__(self, system_name="AnthropicChat",save_path="game_logs", temperature=0.0, model="claude-2.1", stop_sequences=None):
@@ -28,7 +27,7 @@ class AnthropicChat(BaseLLMSystem):
 		self.stop_sequences = stop_sequences
 
 
-	@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
+	# @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
 	def call_model(self):
 		"""Call OpenAI API"""
 		message = self.client.messages.create(

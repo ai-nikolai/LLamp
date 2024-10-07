@@ -7,11 +7,11 @@ from anthropic import HUMAN_PROMPT, AI_PROMPT
 from llamp.llms.base_llm_system import BaseLLMSystem
 
 
-from tenacity import (
-    retry,
-    stop_after_attempt, # type: ignore
-    wait_random_exponential, # type: ignore
-)
+# from tenacity import (
+#     retry,
+#     stop_after_attempt, # type: ignore
+#     wait_random_exponential, # type: ignore
+# )
 
 
 class AnthropicText(BaseLLMSystem):
@@ -29,7 +29,7 @@ class AnthropicText(BaseLLMSystem):
         self.stop_sequences = stop_sequences
 
     
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
+    # @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), reraise=True)
     def call_model(self):
         """Call OpenAI API"""
         prompt = self.generate_text_prompt()

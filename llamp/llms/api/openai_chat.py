@@ -2,11 +2,11 @@ import openai
 import time
 import os
 
-from tenacity import (
-    retry,
-    stop_after_attempt, # type: ignore
-    wait_random_exponential, # type: ignore
-)
+# from tenacity import (
+#     retry,
+#     stop_after_attempt, # type: ignore
+#     wait_random_exponential, # type: ignore
+# )
 
 from llamp.llms.base_llm_system import BaseLLMSystem
 
