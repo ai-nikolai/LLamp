@@ -1,5 +1,6 @@
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
+import argparse
 
 
 class QwenLLMMultiGPU():
@@ -39,6 +40,10 @@ class QwenLLMMultiGPU():
 
 
 if __name__ ==  "__main__":
+    parser = argparse.ArgumentParser(description='GPU Count for QWEN')
+    parser.add_argument('--gpus', type=int, default=1, help='Number of GPUs (default: 1)')
+    args = parser.parse_args()
+
     prompt = "Tell me something about large language models."
-    llm = QwenLLMMultiGPU()
+    llm = QwenLLMMultiGPU(tensor_parallel_size=args.gpus)
     llm.call_llm(prompt)
