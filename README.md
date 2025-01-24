@@ -36,7 +36,15 @@ cd root_folder
 ./playgrounds/run_alfworld_eval.sh cerebras_main
 ```
 
+## Creating Conda Env: (Note this might be work in progress)
+```bash
+conda env create -f environment_stateact.yml -n env_name
+```
 
+## Webshop, Run from Docker:
+```bash
+docker container run -p 3000:3000 ainikolai/webshop:latest
+```
 
 
 ---
