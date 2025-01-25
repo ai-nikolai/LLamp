@@ -59,7 +59,7 @@ if __name__=="__main__":
                                 "mistralai/Mixtral-8x22B-Instruct-v0.1",
                                 ],
                         help='Model to use')
-    parser.add_argument('--num_gpus', type=int, default=1,
+    parser.add_argument('--gpus', type=int, default=1,
                         help='Number of GPUs to use for tensor parallelism')
     parser.add_argument('--temperature', type=float, default=0.7,
                         help='Temperature for sampling')
