@@ -3,8 +3,8 @@ from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 
 
-class VLLMSystem(BaseLLMSystem):
-    def __init__(self, system_name="VLLMSystem", save_path="game_logs", temperature=0.0, model="Qwen/Qwen2.5-7B-Instruct", tensor_parallel_size=1, max_model_len=16000):
+class VLLMChat(BaseLLMSystem):
+    def __init__(self, system_name="VLLMChat", save_path="game_logs", temperature=0.0, model="Qwen/Qwen2.5-7B-Instruct", tensor_parallel_size=1, max_model_len=16000):
         super().__init__(system_name, save_path, temperature=temperature)
         
         self.tokenizer = AutoTokenizer.from_pretrained(model)
@@ -54,7 +54,10 @@ if __name__=="__main__":
     parser.add_argument('--model', type=str, default="Qwen/Qwen2.5-7B-Instruct",
                         choices=["Qwen/Qwen2.5-7B-Instruct", 
                                 "Qwen/Qwen2.5-14B-Instruct",
-                                "mistralai/Mixtral-8x7B-Instruct-v0.1"],
+                                "Qwen/Qwen2.5-32B-Instruct",
+                                "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                                "mistralai/Mixtral-8x22B-Instruct-v0.1",
+                                ],
                         help='Model to use')
     parser.add_argument('--num_gpus', type=int, default=1,
                         help='Number of GPUs to use for tensor parallelism')
@@ -66,7 +69,7 @@ if __name__=="__main__":
     
     args = parser.parse_args()
     
-    system = QwenLLMSystem(
+    system = VLLMChat(
         model=args.model,
         tensor_parallel_size=args.num_gpus,
         temperature=args.temperature
@@ -79,6 +82,7 @@ if __name__=="__main__":
     print(f"Input Tokens: {token_info['in_token_all']}")
     print(f"Message Tokens: {token_info['in_token_message']}")
     print(f"Output Tokens: {token_info['out_token_action']}")
+    system.save()
 
     # print(f"\nTesting with prompt: {args.test_prompt}")
     # system.add_message("user", args.test_prompt)
