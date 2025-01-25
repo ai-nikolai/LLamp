@@ -5,7 +5,7 @@ import argparse
 
 class MistralMultiGPU():
 
-    def __init__(self, model_name="mistralai/Mixtral-8x22B-v0.1", tensor_parallel_size=1):
+    def __init__(self, model_name="mistralai/Mixtral-8x22B-v0.1",  tensor_parallel_size=1, max_model_len=16000):
         # Initialize the tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -14,7 +14,7 @@ class MistralMultiGPU():
         self.sampling_params = SamplingParams(temperature=0.7, top_p=0.8, repetition_penalty=1.05, max_tokens=512)
 
         # Input the model name or path. Can be GPTQ or AWQ models.
-        self.llm = LLM(model=model_name, tensor_parallel_size=tensor_parallel_size, dtype="auto")
+        self.llm = LLM(model=model_name, tensor_parallel_size=tensor_parallel_size, dtype="auto", gpu_memory_utilization=0.95, max_model_len=max_model_len)
         print("="*20)
         print(f"Model loaded as: {model_name} with tensors: {tensor_parallel_size}")
 
