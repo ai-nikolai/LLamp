@@ -71,7 +71,7 @@ if __name__=="__main__":
     
     system = VLLMChat(
         model=args.model,
-        tensor_parallel_size=args.num_gpus,
+        tensor_parallel_size=args.gpus,
         temperature=args.temperature
     )
     
