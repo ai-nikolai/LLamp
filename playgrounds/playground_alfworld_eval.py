@@ -18,13 +18,25 @@ import cohere
 
 
 from llamp.llms.human import Human
-from llamp.llms.api import (
-    AnthropicChat, AnthropicText,
-    CohereChat, CohereChatText, CohereText,
-    OpenAIChat, OpenAIChatText, OpenAIText, OpenAIChatTextSampling,
-    NvidiaChatText,
-    CerebrasChatText
-)
+try:
+    from llamp.llms.api import (
+        AnthropicChat, AnthropicText,
+        CohereChat, CohereChatText, CohereText,
+        OpenAIChat, OpenAIChatText, OpenAIText, OpenAIChatTextSampling,
+        NvidiaChatText,
+        CerebrasChatText
+    )
+except Exception as e:
+    print(e)
+    print("Did not import API based models")
+
+try:
+    from llamp.llms.local import (
+        VLLMChat
+    )
+except Exception as e:
+    print(e)
+    print("Did not import local model")
 
 from playground_alfworld_ablation_generator import return_jsonstate_prompt, return_stringstate_prompt
 from playground_alfworld_react_prompt_utils import return_react_examples, return_agentbench_prompts, return_json_react_examples
@@ -477,7 +489,8 @@ AGENT_MODEL_MAPPING = {
     "OpenAIChatText" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview", "gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106", "gpt-4o-mini"],
     "OpenAIChatTextSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview","gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
     "NvidiaChatText" :["mistralai/mixtral-8x22b-instruct-v0.1","meta/llama-3.1-8b-instruct","meta/llama-3.1-70b-instruct"],
-    "CerebrasChatText" :["llama3.1-8b","llama3.1-70b"]
+    "CerebrasChatText" :["llama3.1-8b","llama3.1-70b"],
+    "VLLMChat" : ["Qwen/Qwen2.5-0.5B-Instruct"]
 }
 
 
@@ -605,6 +618,16 @@ def get_agent_and_model(llm_type, temperature=0.0, proposed_model=""):
             else:
                 print("Proposed Model is not available using default model.")
         agent = CerebrasChatText(temperature=temperature, model=model)
+
+    elif llm_type=="VLLMChat":
+        model = "Qwen/Qwen2.5-0.5B-Instruct"
+        if proposed_model:
+            if proposed_model in AGENT_MODEL_MAPPING[llm_type]:
+                model = proposed_model
+            else:
+                print("Proposed Model is not available using default model.")
+        agent = VLLMChat(model=model)
+
 
     elif llm_type=="Human":
         model = "Human"
@@ -774,7 +797,8 @@ def build_arg_parser():
             "OpenAIChatText" ,
             "OpenAIChatTextSampling",
             "NvidiaChatText",
-            "CerebrasChatText"
+            "CerebrasChatText",
+            "VLLMChat"
         ],
         help="The type of llamp.llms to use.",
     )

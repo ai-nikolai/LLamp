@@ -28,6 +28,21 @@ if [ $1 == "test_ours" ]; then
 
 fi;
 
+if [ $1 == "test_ours_local" ]; then
+    keys_to_use='["goal","thought","locations_visited","current_location","current_inventory","action"]'
+    python3 playgrounds/playground_alfworld_eval.py \
+        --agent "ours-text" \
+        --llm_type "VLLMChat" \
+        --model "Qwen/Qwen2.5-0.5B-Instruct" \
+        --trial_name "v5_0_1_test_local" \
+        --start_index 0 \
+        --num_envs 1 \
+        --prompt_ids 0 1 \
+        --keys_to_use $keys_to_use
+        # --end_index \
+
+fi;
+
 
 if [ $1 == "cerebras_test" ]; then
 keys_to_use='["goal","current_location","current_inventory","thought","action"]'
