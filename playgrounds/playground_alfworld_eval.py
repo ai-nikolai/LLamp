@@ -11,6 +11,7 @@ from datetime import datetime
 # import alfworld.agents.environment
 
 import alfworld.agents.environment as environment
+from alfworld.agents.environment import get_environment
 # import alfworld.agents.modules.generic as generic
 
 import cohere
@@ -1072,7 +1073,7 @@ if __name__=="__main__":
     # env = env.init_env(batch_size=1)
 
 
-    # NEW STUFF
+    # NEW STUFF TODO: v0.4.1
     split = args.eval_split
     # split = "eval_in_distribution"
     # load config
@@ -1083,7 +1084,9 @@ if __name__=="__main__":
     env_type = config['env']['type'] # 'AlfredTWEnv' or 'AlfredThorEnv' or 'AlfredHybrid'
 
     # setup environment
-    env = getattr(environment, env_type)(config, train_eval=split)
+    # that's how it was done previously
+    # env = getattr(environment, env_type)(config, train_eval=split)
+    env = get_environment(env_type)(config, train_eval=split)
     env = env.init_env(batch_size=1)
 
 
