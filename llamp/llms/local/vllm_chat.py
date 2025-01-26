@@ -4,16 +4,20 @@ from vllm import LLM, SamplingParams
 
 
 class VLLMChat(BaseLLMSystem):
-    def __init__(self, system_name="VLLMChat", save_path="game_logs", temperature=0.0, model="Qwen/Qwen2.5-7B-Instruct", tensor_parallel_size=1, max_model_len=16000):
+    def __init__(self, system_name="VLLMChat", save_path="game_logs", temperature=0.0, model="Qwen/Qwen2.5-7B-Instruct", tensor_parallel_size=1, max_model_len=16000, stop_sequences=None):
         super().__init__(system_name, save_path, temperature=temperature)
         
         self.tokenizer = AutoTokenizer.from_pretrained(model)
-        self.sampling_params = SamplingParams(
-            temperature=temperature,
-            top_p=1.0,
-            repetition_penalty=1.00,
-            max_tokens=2000
-        )
+        self.temperature = temperature
+
+        # self.sampling_params = SamplingParams(
+        #     temperature=temperature,
+        #     top_p=1.0,
+        #     repetition_penalty=1.00,
+        #     max_tokens=2000
+        # )
+        self.stop_sequences = stop_sequences
+
         self.llm = LLM(
             model=model,
             tensor_parallel_size=tensor_parallel_size,
@@ -25,6 +29,14 @@ class VLLMChat(BaseLLMSystem):
         print(f"Model loaded as: {model} with tensors: {tensor_parallel_size}")
 
     def call_model(self, temperature=None):
+        sampling_params = SamplingParams(
+            temperature=temperature if temperature else self.temperature,
+            top_p=1.0,
+            repetition_penalty=1.00,
+            max_tokens=2000,
+            stop=self.stop_sequences,
+            include_stop_str_in_output=True
+        )
         prompt = self.generate_text_prompt()
         messages = [
             # {"role": "system", "content": "You are a helpful assistant."},
@@ -36,7 +48,7 @@ class VLLMChat(BaseLLMSystem):
             add_generation_prompt=True
         )
 
-        outputs = self.llm.generate([text], self.sampling_params)
+        outputs = self.llm.generate([text], sampling_params)
         return outputs[0].outputs[0].text
 
     def count_tokens(self, optional_text=None, model_name=None):
