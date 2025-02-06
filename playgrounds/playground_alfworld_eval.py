@@ -490,7 +490,7 @@ AGENT_MODEL_MAPPING = {
     "OpenAIChatTextSampling" : ["gpt-3.5-turbo-0125", "gpt-4-turbo-preview","gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106"],
     "NvidiaChatText" :["mistralai/mixtral-8x22b-instruct-v0.1","meta/llama-3.1-8b-instruct","meta/llama-3.1-70b-instruct"],
     "CerebrasChatText" :["llama3.1-8b","llama3.1-70b"],
-    "VLLMChat" : ["Qwen/Qwen2.5-0.5B-Instruct"]
+    "VLLMChat" : ["Qwen/Qwen2.5-0.5B-Instruct","Qwen/Qwen2.5-1.5B-Instruct"]
 }
 
 

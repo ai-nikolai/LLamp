@@ -33,7 +33,7 @@ if [ $1 == "test_ours_local" ]; then
     python3 playgrounds/playground_alfworld_eval.py \
         --agent "ours-text" \
         --llm_type "VLLMChat" \
-        --model "Qwen/Qwen2.5-0.5B-Instruct" \
+        --model "Qwen/Qwen2.5-1.5B-Instruct" \
         --trial_name "v5_0_1_test_local" \
         --start_index 0 \
         --num_envs 1 \
