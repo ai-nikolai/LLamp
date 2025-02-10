@@ -1,1 +1,1 @@
-from vllm_chat import VLLMChat
+from .vllm_chat import VLLMChat
