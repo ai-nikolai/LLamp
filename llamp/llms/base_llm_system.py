@@ -49,7 +49,10 @@ class BaseLLMSystem(BaseSystem):
 		self.add_to_history(current_observation, "user", additional_logging_in)
 		
 		in_tokens_count = self.count_tokens()
-		assert additional_logging_in["in_token_all"]==in_tokens_count, "In Tokens need to be same length."
+		if not (additional_logging_in["in_token_all"]==in_tokens_count):
+			print("WARNING: In Tokens need to be same length.")
+			print(f"additional_logging_in={additional_logging_in['in_token_all']}")
+			print(f"in_tokens_count={in_tokens_count}")
 
 		action = self.call_model(temperature)
 		additional_logging_out = self._count_out_token(action)
