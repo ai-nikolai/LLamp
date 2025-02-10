@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llamp"
-version = "0.0.8"
+version = "0.0.9"
 description = "LLAMP - Large Language Model for Planning"
 authors = [
     {name = "Nikolai Rozanov", email = "nikolai.rozanov@gmail.com"},
 ]
 readme = "README.md"
 
-[tool.setuptools]
-packages = ["llamp"]
+[tool.setuptools.packages.find]
+include = ["llamp*"]
