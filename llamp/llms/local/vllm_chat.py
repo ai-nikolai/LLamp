@@ -84,7 +84,6 @@ if __name__=="__main__":
     # parser.add_argument('--force_model', type=str, 
     #                     default="Tell me a short story about a robot learning to paint.",
     #                     help='Test prompt to try')    
- quantization   
     args = parser.parse_args()
     
     system = VLLMChat(
