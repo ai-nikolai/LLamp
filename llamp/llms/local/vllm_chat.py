@@ -8,6 +8,14 @@ class VLLMChat(BaseLLMSystem):
         super().__init__(system_name, save_path, temperature=temperature)
         
         self.tokenizer = AutoTokenizer.from_pretrained(model)
+        self.max_model_len = max_model_len
+
+        try:
+            self.apply_chat_template("test")
+            self.chat_model = True
+        except:
+            self.chat_model = False
+            
         self.sampling_params = SamplingParams(
             temperature=temperature,
             top_p=1.0,
@@ -32,12 +40,11 @@ class VLLMChat(BaseLLMSystem):
                 quantization="bitsandbytes", 
                 load_format="bitsandbytes"
             )
-        self.max_model_len = max_model_len
         print("="*20)
         print(f"Model loaded as: {model} with tensors: {tensor_parallel_size}")
 
-    def call_model(self, temperature=None):
-        prompt = self.generate_text_prompt()
+    def apply_chat_template(self,prompt):
+        """uses the chat template"""
         messages = [
             # {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt[-self.max_model_len:]}
@@ -47,6 +54,15 @@ class VLLMChat(BaseLLMSystem):
             tokenize=False,
             add_generation_prompt=True
         )
+        return text
+
+    def call_model(self, temperature=None):
+        prompt = self.generate_text_prompt()
+
+        if self.chat_model:
+            text = self.apply_chat_template(prompt)
+        else:
+            text = prompt
 
         outputs = self.llm.generate([text], self.sampling_params)
         return outputs[0].outputs[0].text
