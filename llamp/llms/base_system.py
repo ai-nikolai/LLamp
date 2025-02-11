@@ -3,10 +3,18 @@ import os
 import json
 from copy import deepcopy
 
+
+class AnyDict:
+    def __init__(self, value=-1):
+        self.value = value
+
+    def __getitem__(self,key):
+        return self.value
+
 class BaseSystem():
     LOG_FILE_ENDING = ".json"
 
-    def __init__(self, system_name="base",save_path="game_logs"):
+    def __init__(self, system_name="base",save_path="game_logs", *args, **kwargs):
         self.base_prompt = []
         self.current_prompt = []
         self.full_history = []
@@ -19,7 +27,7 @@ class BaseSystem():
         raise NotImplementedError("call model needs to be implemented")
 
 
-    def act(self, current_observation):
+    def act(self, current_observation, return_token_count=False, *args, **kwargs):
         """ Acting"""
         self.add_to_history(current_observation, "user")
 
@@ -27,24 +35,27 @@ class BaseSystem():
 
         self.add_to_history(action, "assistant")
 
-        return action
+        if return_token_count:
+            return action, AnyDict()
+        else:
+            return action
 
-    def reset(self):
+    def reset(self, *args, **kwargs):
         """Resets the system (so far only the current_prompt)"""
         self.current_prompt = deepcopy(self.base_prompt)
         self.full_history = deepcopy(self.current_prompt)
         self.file_name = self.get_save_path()
 
 
-    def _extend_memory(self, memory):
+    def _extend_memory(self, memory, *args, **kwargs):
         """Extends memory. Change for specific classes to record more data"""
         return memory
 
-    def add_first_observation(self, first_obs):
+    def add_first_observation(self, first_obs, *args, **kwargs):
         """ First Observation """
         self.add_to_history(first_obs, "user")
 
-    def add_to_history(self, content, role, additional_data={}):
+    def add_to_history(self, content, role, additional_data={}, *args, **kwargs):
         """ 
         Adds to the prompt.
         IF ERROR: This function used to be called  `add_to_prompt`
@@ -63,7 +74,7 @@ class BaseSystem():
         self.full_history.append(tmp)
 
 
-    def pop_from_history(self, return_full=True):
+    def pop_from_history(self, return_full=True, *args, **kwargs):
         """Removes last element from history."""
         try:
             if return_full:
@@ -76,7 +87,7 @@ class BaseSystem():
             pass
 
 
-    def update_latest_history(self, content, key="content", old_key="old_content"):
+    def update_latest_history(self, content, key="content", old_key="old_content", *args, **kwargs):
         """
         Updates the latest history with new content. By default uses the key 'content' 
         """
@@ -85,7 +96,7 @@ class BaseSystem():
         self.full_history[-1][old_key] = previous_content
 
 
-    def _extract_prompt_from_history(self, history, keys_to_keep_in_prompt=["role","content"]):
+    def _extract_prompt_from_history(self, history, keys_to_keep_in_prompt=["role","content"], *args, **kwargs):
         """Extracts prompt from history."""
         prompt = []
         for segment in history:
@@ -96,7 +107,7 @@ class BaseSystem():
             prompt.append(tmp)
         return prompt
 
-    def load_from_saved_data(self, previous_history, keys_to_keep_in_prompt=["role","content"]):
+    def load_from_saved_data(self, previous_history, keys_to_keep_in_prompt=["role","content"], *args, **kwargs):
         """
         Loads the saved prompt
         Input Options:
@@ -123,24 +134,24 @@ class BaseSystem():
         self.current_prompt = self._extract_prompt_from_history(self.full_history, keys_to_keep_in_prompt)
 
 
-    def set_base_prompt_and_reset(self,base_prompt):
+    def set_base_prompt_and_reset(self,base_prompt, *args, **kwargs):
         """Sets a new base prompt and resets the agent."""
         self.base_prompt = base_prompt
         self.reset()
 
     
-    def save(self):
+    def save(self, *args, **kwargs):
         """Saves game interaction to file"""
         with open(self.file_name,"w") as file:
             json.dump(self.full_history,file,indent=4)
 
-    def get_file_name(self, base_name="logs"):
+    def get_file_name(self, base_name="logs", *args, **kwargs):
         """creates a file name based on datetime"""
         now = datetime.now()
         file_name = self.system_name+"_"+base_name+"_"+now.strftime("%d_%m_%Y_%H_%M_%S")+self.LOG_FILE_ENDING
         return file_name
 
-    def get_save_path(self, save_path=""):
+    def get_save_path(self, save_path="", *args, **kwargs):
         """ Get Save path """
         if save_path:
             self.save_path_base = save_path
@@ -148,13 +159,13 @@ class BaseSystem():
         file_name = os.path.join(self.save_path_base,self.get_file_name())
         return file_name
 
-    def update_save_path(self,save_path):
+    def update_save_path(self,save_path, *args, **kwargs):
         """ Update Save Path """
         self.save_path_base = save_path
         self.file_name = self.get_save_path(self.save_path_base)
 
     @staticmethod
-    def create_save_path(save_path):
+    def create_save_path(save_path, *args, **kwargs):
         """Creates the save path if it doesn't exist"""
         paths = os.path.split(save_path)
         current_path = ""
@@ -169,7 +180,7 @@ class BaseSystem():
         """ Creating this function for completeness """
         return 0
 
-    def is_resample(self):
+    def is_resample(self, *args, **kwargs):
         """Returns whether this system is designed for resampling."""
         return False
     
