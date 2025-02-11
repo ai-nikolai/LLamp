@@ -4,24 +4,23 @@ from vllm import LLM, SamplingParams
 
 
 class VLLMChat(BaseLLMSystem):
-    def __init__(self, system_name="VLLMChat", save_path="game_logs", temperature=0.0, model="Qwen/Qwen2.5-7B-Instruct", tensor_parallel_size=1, max_model_len=16000, quantization=False):
+    def __init__(self, system_name="VLLMChat", save_path="game_logs", temperature=0.0, model="Qwen/Qwen2.5-7B-Instruct", tensor_parallel_size=1, max_model_len=16000, quantization=False, stop_sequences=None):
         super().__init__(system_name, save_path, temperature=temperature)
         
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         self.max_model_len = max_model_len
+        self.temperature = temperature
+        self.stop_sequences = stop_sequences
+        self.model=model
+        self.tensor_parallel_size = tensor_parallel_size
 
         try:
             self.apply_chat_template("test")
             self.chat_model = True
         except:
             self.chat_model = False
-            
-        self.sampling_params = SamplingParams(
-            temperature=temperature,
-            top_p=1.0,
-            repetition_penalty=1.00,
-            max_tokens=2000
-        )
+
+
         if not quantization:
             self.llm = LLM(
                 model=model,
@@ -55,6 +54,17 @@ class VLLMChat(BaseLLMSystem):
             add_generation_prompt=True
         )
         return text
+    
+    def get_sampling_params(self, temperature=None, stop_sequences=None):
+        """temperature and stop_sequences not updated yet."""
+        sampling_params = SamplingParams(
+            temperature=self.temperature,
+            top_p=1.0,
+            repetition_penalty=1.00,
+            max_tokens=min(2000,self.max_model_len),
+            stop = self.stop_sequences
+        )
+        return sampling_params
 
     def call_model(self, temperature=None):
         prompt = self.generate_text_prompt()
@@ -63,8 +73,9 @@ class VLLMChat(BaseLLMSystem):
             text = self.apply_chat_template(prompt)
         else:
             text = prompt
+        sampling_params = self.get_sampling_params()
 
-        outputs = self.llm.generate([text], self.sampling_params)
+        outputs = self.llm.generate([text], sampling_params)
         return outputs[0].outputs[0].text
 
     def count_tokens(self, optional_text=None, model_name=None):

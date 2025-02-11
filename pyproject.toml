@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llamp"
-version = "0.0.12"
+version = "0.0.13"
 description = "LLAMP - Large Language Model for Planning"
 authors = [
     {name = "Nikolai Rozanov", email = "nikolai.rozanov@gmail.com"},
