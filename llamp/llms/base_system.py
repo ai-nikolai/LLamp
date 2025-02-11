@@ -165,7 +165,7 @@ class BaseSystem():
                     os.mkdir(current_path)
 
 
-    def count_tokens(self):
+    def count_tokens(self, *args, **kwargs):
         """ Creating this function for completeness """
         return 0
 
