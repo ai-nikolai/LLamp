@@ -8,7 +8,7 @@ class VLLMChat(BaseLLMSystem):
         system_name="VLLMChat", 
         save_path="game_logs", 
         temperature=0.0, 
-        model="Qwen/Qwen2.5-7B-Instruct", 
+        model="Qwen/Qwen2.5-0.5B-Instruct", 
         tensor_parallel_size=1, 
         max_model_len=16000, 
         quantization=False, 

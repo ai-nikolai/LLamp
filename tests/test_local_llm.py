@@ -8,7 +8,8 @@ if __name__=="__main__":
     agent = VLLMChat(
         model=model,
         tensor_parallel_size=1,
-        temperature=0.5
+        temperature=0.5,
+        seed=42
     )    
     
     print("\nTesting the act method:")   
