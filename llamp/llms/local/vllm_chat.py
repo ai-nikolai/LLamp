@@ -4,7 +4,17 @@ from vllm import LLM, SamplingParams
 
 
 class VLLMChat(BaseLLMSystem):
-    def __init__(self, system_name="VLLMChat", save_path="game_logs", temperature=0.0, model="Qwen/Qwen2.5-7B-Instruct", tensor_parallel_size=1, max_model_len=16000, quantization=False, stop_sequences=None):
+    def __init__(self, 
+        system_name="VLLMChat", 
+        save_path="game_logs", 
+        temperature=0.0, 
+        model="Qwen/Qwen2.5-7B-Instruct", 
+        tensor_parallel_size=1, 
+        max_model_len=16000, 
+        quantization=False, 
+        stop_sequences=None, 
+        seed=-1
+    ):
         super().__init__(system_name, save_path, temperature=temperature)
         
         self.tokenizer = AutoTokenizer.from_pretrained(model)
@@ -13,6 +23,7 @@ class VLLMChat(BaseLLMSystem):
         self.stop_sequences = stop_sequences
         self.model=model
         self.tensor_parallel_size = tensor_parallel_size
+        self.seed = None if seed == -1 else seed
 
         try:
             self.apply_chat_template("test")
@@ -40,7 +51,7 @@ class VLLMChat(BaseLLMSystem):
                 load_format="bitsandbytes"
             )
         print("="*20)
-        print(f"Model loaded as: {model} with tensors: {tensor_parallel_size}")
+        print(f"Model loaded as: {model} with tensors: {tensor_parallel_size} and seed: {seed}. Is quantization: {quantization}; is chat_model: {self.chat_model}")
 
     def apply_chat_template(self,prompt):
         """uses the chat template"""
@@ -62,7 +73,8 @@ class VLLMChat(BaseLLMSystem):
             top_p=1.0,
             repetition_penalty=1.00,
             max_tokens=min(2000,self.max_model_len),
-            stop = self.stop_sequences
+            stop = self.stop_sequences,
+            seed = self.seed
         )
         return sampling_params
 
@@ -108,6 +120,8 @@ if __name__=="__main__":
                         default="Tell me a short story about a robot learning to paint.",
                         help='Test prompt to try')
     parser.add_argument("--quantization", type=int, default=0, help="Whether a quantized model is being loaded.")
+    parser.add_argument("--seed", type=int, default=-1, help="Default seed to use for vllm, if -1 then a None / random seed will be chosen.")
+
     # parser.add_argument('--force_model', type=str, 
     #                     default="Tell me a short story about a robot learning to paint.",
     #                     help='Test prompt to try')    
@@ -118,7 +132,8 @@ if __name__=="__main__":
         tensor_parallel_size=args.gpus,
         temperature=args.temperature,
         max_model_len=args.max_len,
-        quantization=bool(args.quantization)
+        quantization=bool(args.quantization),
+        seed=args.seed
     )
     
     print("\nTesting the act method:")
