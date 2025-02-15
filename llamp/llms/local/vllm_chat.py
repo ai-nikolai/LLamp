@@ -41,15 +41,25 @@ class VLLMChat(BaseLLMSystem):
                 dtype="auto"
             )
         else:
+            max_num_seq = 4
+            max_memory = 0.9
             self.llm = LLM(
                 model=model,
                 tensor_parallel_size=tensor_parallel_size,
-                gpu_memory_utilization=0.95,
+                gpu_memory_utilization=max_memory,
                 max_model_len=max_model_len,
                 dtype="auto",
                 quantization="bitsandbytes", 
-                load_format="bitsandbytes"
+                load_format="bitsandbytes",
+                enable_chunked_prefill=True,
+                max_num_seqs=max_num_seq,
             )
+            print("Enabled Chunked Prefill")
+            print(f"Max Num Seq: {max_num_seq}")
+            print(f"GPU Utilization: {max_memory}")
+            print(f"Max model len:{max_model_len}")
+
+
         print("="*20)
         print(f"Model loaded as: {model} with tensors: {tensor_parallel_size} and seed: {seed}. Is quantization: {quantization}; is chat_model: {self.chat_model}")
 
